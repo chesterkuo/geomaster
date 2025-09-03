@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEO Platform - AI Search Optimization Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #4F46E5;
+            --primary-dark: #4338CA;
+            --primary-light: #818CF8;
+            --secondary-color: #10B981;
+            --warning-color: #F59E0B;
+            --danger-color: #EF4444;
+            --dark-bg: #0F172A;
+            --dark-card: #1E293B;
+            --dark-border: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100vh;
+            background: var(--dark-card);
+            border-right: 1px solid var(--dark-border);
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 40px;
+            padding: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 10px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .nav-item:hover {
+            background: rgba(79, 70, 229, 0.1);
+            transform: translateX(5px);
+        }
+
+        .nav-item.active {
+            background: rgba(79, 70, 229, 0.2);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            opacity: 0.8;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            height: 70px;
+            background: var(--dark-card);
+            border-bottom: 1px solid var(--dark-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 99;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: var(--dark-bg);
+            border: 1px solid var(--dark-border);
+            border-radius: 10px;
+            padding: 10px 15px;
+            width: 400px;
+        }
+
+        .search-bar input {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            outline: none;
+            flex: 1;
+            margin-left: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .notification-btn, .user-menu {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            background: var(--dark-bg);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .notification-btn:hover, .user-menu:hover {
+            background: var(--primary-color);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            background: var(--danger-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            padding: 100px 30px 30px;
+            min-height: 100vh;
+        }
+
+        /* Quick Actions Bar */
+        .quick-actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .quick-action-btn {
+            padding: 12px 24px;
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .quick-action-btn.secondary {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary-color);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(79, 70, 229, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 13px;
+        }
+
+        .stat-change.positive {
+            color: var(--secondary-color);
+        }
+
+        .stat-change.negative {
+            color: var(--danger-color);
+        }
+
+        /* Charts Section */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chart-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .chart-tab.active {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .chart-container {
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--dark-bg);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* AI Score Ring */
+        .ai-score-container {
+            text-align: center;
+        }
+
+        .score-ring {
+            width: 200px;
+            height: 200px;
+            position: relative;
+            margin: 0 auto 20px;
+        }
+
+        .score-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .score-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 700;
+        }
+
+        .score-label {
+            position: absolute;
+            top: 65%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .platform-scores {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .platform-score {
+            padding: 10px;
+            background: var(--dark-bg);
+            border-radius: 8px;
+        }
+
+        .platform-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .platform-value {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* Recommendations */
+        .recommendations-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 15px;
+            background: var(--dark-bg);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .recommendation-item:hover {
+            transform: translateX(5px);
+            background: rgba(79, 70, 229, 0.1);
+        }
+
+        .priority-indicator {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .priority-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+        }
+
+        .priority-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+        }
+
+        .priority-low {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--secondary-color);
+        }
+
+        .recommendation-content {
+            flex: 1;
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .recommendation-description {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .recommendation-action {
+            padding: 8px 16px;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-action:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.5);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(79, 70, 229, 0.7);
+        }
+
+        .fab-icon {
+            font-size: 24px;
+            color: white;
+        }
+
+        /* Mobile Responsive */
+        .menu-toggle {
+            display: none;
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .header {
+                left: 0;
+                padding: 0 20px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 90px 20px 20px;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .search-bar {
+                display: none;
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-primary);
+            animation: loading 2s ease-in-out infinite;
+            z-index: 9999;
+        }
+
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Bar -->
+    <div class="loading-bar"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GEO Platform</div>
+        </div>
+
+        <nav>
+            <div class="nav-section">
+                <div class="nav-label">主要功能</div>
+                <a href="#" class="nav-item active">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zM10 18a8 8 0 110-16 8 8 0 010 16z"/>
+                    </svg>
+                    <span>儀表板</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1V2z"/>
+                    </svg>
+                    <span>網站掃描</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z"/>
+                    </svg>
+                    <span>內容優化</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                    </svg>
+                    <span>AI 追蹤</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">分析工具</div>
+                <a href="#" class="nav-item">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+                    </svg>
+                    <span>競爭分析</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                    </svg>
+                    <span>關鍵字研究</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 3a1 1 0 012 0v5.586l3.707 3.707a1 1 0 01-1.414 1.414l-4-4A1 1 0 019 9V3z"/>
+                    </svg>
+                    <span>報告中心</span>
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-label">設定</div>
+                <a href="#" class="nav-item">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                    </svg>
+                    <span>團隊管理</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg class="nav-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3z"/>
+                    </svg>
+                    <span>整合設定</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Header -->
+    <header class="header">
+        <button class="menu-toggle" onclick="toggleSidebar()">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </button>
+
+        <div class="search-bar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" placeholder="搜尋頁面、關鍵字或報告...">
+        </div>
+
+        <div class="header-actions">
+            <div class="notification-btn tooltip" data-tooltip="通知">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z"/>
+                </svg>
+                <span class="notification-badge">3</span>
+            </div>
+            <div class="user-menu tooltip" data-tooltip="用戶選單">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <button class="quick-action-btn">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                </svg>
+                掃描網站
+            </button>
+            <button class="quick-action-btn secondary">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793z"/>
+                </svg>
+                優化內容
+            </button>
+            <button class="quick-action-btn secondary">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                </svg>
+                生成報告
+            </button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">AI 可見度分數</span>
+                    <div class="stat-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value">78</div>
+                <div class="stat-change positive">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 10l5-5 5 5H5z"/>
+                    </svg>
+                    <span>12% 本週提升</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">品牌提及次數</span>
+                    <div class="stat-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value">1,284</div>
+                <div class="stat-change positive">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 10l5-5 5 5H5z"/>
+                    </svg>
+                    <span>8.3% 增長</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">引用排名</span>
+                    <div class="stat-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value">#3</div>
+                <div class="stat-change positive">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M5 10l5-5 5 5H5z"/>
+                    </svg>
+                    <span>上升 2 位</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-label">優化頁面</span>
+                    <div class="stat-icon">
+                        <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="stat-value">156</div>
+                <div class="stat-change negative">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M15 10l-5 5-5-5h10z"/>
+                    </svg>
+                    <span>24 待優化</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">AI 平台可見度趨勢</h3>
+                    <div class="chart-tabs">
+                        <button class="chart-tab active">7 天</button>
+                        <button class="chart-tab">30 天</button>
+                        <button class="chart-tab">90 天</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <svg width="100%" height="100%" viewBox="0 0 600 300">
+                        <!-- Grid lines -->
+                        <g stroke="#334155" stroke-width="1" opacity="0.3">
+                            <line x1="50" y1="50" x2="550" y2="50"/>
+                            <line x1="50" y1="100" x2="550" y2="100"/>
+                            <line x1="50" y1="150" x2="550" y2="150"/>
+                            <line x1="50" y1="200" x2="550" y2="200"/>
+                            <line x1="50" y1="250" x2="550" y2="250"/>
+                        </g>
+                        
+                        <!-- ChatGPT Line -->
+                        <polyline
+                            fill="none"
+                            stroke="#10B981"
+                            stroke-width="3"
+                            points="50,200 150,180 250,160 350,140 450,120 550,100"
+                        />
+                        
+                        <!-- Gemini Line -->
+                        <polyline
+                            fill="none"
+                            stroke="#4F46E5"
+                            stroke-width="3"
+                            points="50,220 150,200 250,190 350,170 450,160 550,140"
+                        />
+                        
+                        <!-- Perplexity Line -->
+                        <polyline
+                            fill="none"
+                            stroke="#F59E0B"
+                            stroke-width="3"
+                            points="50,240 150,230 250,210 350,200 450,180 550,170"
+                        />
+                        
+                        <!-- Labels -->
+                        <text x="50" y="280" fill="#94A3B8" font-size="12">週一</text>
+                        <text x="150" y="280" fill="#94A3B8" font-size="12">週二</text>
+                        <text x="250" y="280" fill="#94A3B8" font-size="12">週三</text>
+                        <text x="350" y="280" fill="#94A3B8" font-size="12">週四</text>
+                        <text x="450" y="280" fill="#94A3B8" font-size="12">週五</text>
+                        <text x="550" y="280" fill="#94A3B8" font-size="12">週六</text>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">AI 綜合評分</h3>
+                </div>
+                <div class="ai-score-container">
+                    <div class="score-ring">
+                        <svg width="200" height="200">
+                            <circle cx="100" cy="100" r="90" fill="none" stroke="#1E293B" stroke-width="20"/>
+                            <circle cx="100" cy="100" r="90" fill="none" stroke="url(#gradient)" stroke-width="20"
+                                    stroke-dasharray="440" stroke-dashoffset="110" stroke-linecap="round"/>
+                            <defs>
+                                <linearGradient id="gradient">
+                                    <stop offset="0%" stop-color="#667eea"/>
+                                    <stop offset="100%" stop-color="#764ba2"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="score-value">78</div>
+                        <div class="score-label">綜合分數</div>
+                    </div>
+                    
+                    <div class="platform-scores">
+                        <div class="platform-score">
+                            <div class="platform-name">ChatGPT</div>
+                            <div class="platform-value">82</div>
+                        </div>
+                        <div class="platform-score">
+                            <div class="platform-name">Gemini</div>
+                            <div class="platform-value">75</div>
+                        </div>
+                        <div class="platform-score">
+                            <div class="platform-name">Perplexity</div>
+                            <div class="platform-value">77</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="recommendations-card">
+            <div class="chart-header">
+                <h3 class="chart-title">AI 優化建議</h3>
+                <button class="chart-tab active">查看全部</button>
+            </div>
+            
+            <div class="recommendation-item">
+                <div class="priority-indicator priority-high">!</div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">修復 robots.txt 配置</div>
+                    <div class="recommendation-description">
+                        您的 robots.txt 尚未允許 AI 爬蟲訪問。這會嚴重影響您在 ChatGPT 和其他 AI 平台的可見度。
+                    </div>
+                </div>
+                <button class="recommendation-action">立即修復</button>
+            </div>
+            
+            <div class="recommendation-item">
+                <div class="priority-indicator priority-medium">⚠</div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">添加 FAQ Schema 標記</div>
+                    <div class="recommendation-description">
+                        檢測到 15 個產品頁面缺少 FAQ 結構化資料，添加後預計可提升 25% 的引用率。
+                    </div>
+                </div>
+                <button class="recommendation-action">開始優化</button>
+            </div>
+            
+            <div class="recommendation-item">
+                <div class="priority-indicator priority-low">✓</div>
+                <div class="recommendation-content">
+                    <div class="recommendation-title">更新過時內容</div>
+                    <div class="recommendation-description">
+                        發現 8 篇文章超過 6 個月未更新，建議重新整理內容以提升新鮮度分數。
+                    </div>
+                </div>
+                <button class="recommendation-action">查看詳情</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <div class="fab" onclick="startQuickScan()">
+        <span class="fab-icon">+</span>
+    </div>
+
+    <script>
+        // Toggle Sidebar
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        // Simulate Quick Scan
+        function startQuickScan() {
+            alert('開始快速掃描...\n我們將分析您的網站並在 2-3 分鐘內提供優化建議。');
+        }
+
+        // Remove loading bar after page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelector('.loading-bar').style.display = 'none';
+            }, 1000);
+        });
+
+        // Add interactive hover effects
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.borderColor = '#4F46E5';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.borderColor = '#334155';
+            });
+        });
+
+        // Chart tab switching
+        document.querySelectorAll('.chart-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                this.parentElement.querySelectorAll('.chart-tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                // Add active class to clicked tab
+                this.classList.add('active');
+            });
+        });
+
+        // Simulate real-time updates
+        setInterval(() => {
+            // Update a random stat
+            const stats = document.querySelectorAll('.stat-value');
+            const randomStat = stats[Math.floor(Math.random() * stats.length)];
+            const currentValue = parseInt(randomStat.textContent);
+            if (!isNaN(currentValue)) {
+                const change = Math.floor(Math.random() * 5) - 2;
+                randomStat.textContent = currentValue + change;
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
