@@ -324,4 +324,45 @@ export class WebsiteController {
       }
     });
   });
+
+  public scanInit = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const { url, name } = req.body;
+    const organizationId = req.organization.id;
+
+    // Check if website already exists for this organization
+    let website = await Website.findOne({
+      where: { url, organizationId }
+    });
+
+    if (!website) {
+      // Check if organization can add more websites
+      const websiteCount = await Website.count({
+        where: { organizationId, isActive: true }
+      });
+
+      if (req.organization.maxWebsites !== -1 && websiteCount >= req.organization.maxWebsites) {
+        throw new AppError('Maximum websites limit reached for your plan', 403);
+      }
+
+      // Extract domain from URL
+      const urlObj = new URL(url);
+      const domain = urlObj.hostname;
+
+      // Create new website
+      website = await Website.create({
+        organizationId,
+        url,
+        domain,
+        name: name || domain,
+        scanFrequency: 'weekly'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        website: website.toJSON()
+      }
+    });
+  });
 }

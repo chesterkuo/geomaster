@@ -114,7 +114,8 @@ export const websiteSchemas = {
 export const scanSchemas = {
   create: Joi.object({
     websiteId: commonSchemas.uuid,
-    scanType: Joi.string().valid('quick', 'standard', 'deep').default('standard')
+    scanType: Joi.string().valid('quick', 'standard', 'comprehensive').default('standard'),
+    url: Joi.string().uri().optional()
   })
 };
 

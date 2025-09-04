@@ -7,7 +7,21 @@ import Joi from 'joi';
 const router = Router();
 const scanController = new ScanController();
 
-// Apply authentication and organization middleware
+// Anonymous scan endpoints (no authentication required)
+router.post('/anonymous', 
+  validateRequest({ body: Joi.object({
+    url: Joi.string().uri().required(),
+    scanType: Joi.string().valid('basic', 'quick').default('basic')
+  }) }), 
+  scanController.createAnonymousScan
+);
+
+router.get('/anonymous/:id', 
+  validateRequest({ params: Joi.object({ id: commonSchemas.uuid }) }), 
+  scanController.getAnonymousScan
+);
+
+// Apply authentication and organization middleware for protected routes
 router.use(authenticateToken);
 router.use(requireOrganization);
 

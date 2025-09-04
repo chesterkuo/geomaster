@@ -60,4 +60,15 @@ router.get('/:id/analytics',
   websiteController.getWebsiteAnalytics
 );
 
+// Scan initialization (create or find website for scanning)
+router.post('/scan-init', 
+  validateRequest({ 
+    body: Joi.object({
+      url: Joi.string().uri().required(),
+      name: Joi.string().max(255).optional()
+    })
+  }), 
+  websiteController.scanInit
+);
+
 export default router;

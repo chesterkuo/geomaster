@@ -99,8 +99,11 @@ npm run test:api -- --test=health
 
 #### 自定義 API URL
 ```bash
-# 測試不同環境的 API
-API_URL=https://your-api.com npm run test:api:simple
+# 測試不同環境的 API（預設已為生產環境）
+API_URL=https://api-geo.blitzgame.site npm run test:api:simple
+
+# 或測試本地開發環境
+API_URL=http://localhost:8000 npm run test:api:simple
 ```
 
 ## 🧪 測試涵蓋範圍
@@ -320,7 +323,7 @@ mysql -u $DB_USER -p$DB_PASSWORD $DB_NAME -e "SHOW TABLES"
 
 ```javascript
 const config = {
-  baseURL: process.env.API_URL || 'http://localhost:8000',
+  baseURL: process.env.API_URL || 'https://api-geo.blitzgame.site',
   timeout: 30000,
   testUser: {
     email: `test_${Date.now()}@example.com`,  // 自動生成唯一 email

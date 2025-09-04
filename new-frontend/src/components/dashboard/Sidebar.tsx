@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { 
@@ -23,23 +24,47 @@ interface NavItem {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  active?: boolean;
+  path: string;
 }
 
-const navItems: NavItem[] = [
-  { id: "dashboard", label: "儀表板", icon: LayoutDashboard, active: true },
-  { id: "tracking", label: "網站追蹤", icon: Globe },
-  { id: "optimization", label: "內容優化", icon: BarChart3 },
-  { id: "ai-search", label: "AI 搜尋", icon: Brain },
-  { id: "analytics", label: "數據分析", icon: BarChart3 },
-  { id: "research", label: "關鍵字研究", icon: Search },
-  { id: "reporting", label: "報告中心", icon: Map },
-  { id: "team", label: "團隊管理", icon: Users },
-  { id: "settings", label: "系統設定", icon: Settings },
+const menuSections = [
+  {
+    title: "主要功能",
+    items: [
+      { id: "dashboard", label: "儀表板", icon: LayoutDashboard, path: "/" },
+      { id: "tracking", label: "網站掃描", icon: Globe, path: "/tracking" },
+      { id: "optimization", label: "內容優化", icon: BarChart3, path: "/optimization" },
+      { id: "ai-search", label: "AI 可見度追蹤", icon: Brain, path: "/ai-search" },
+    ]
+  },
+  {
+    title: "分析工具", 
+    items: [
+      { id: "analytics", label: "競爭分析", icon: BarChart3, path: "/analytics" },
+      { id: "research", label: "關鍵字研究", icon: Search, path: "/research" },
+      { id: "reporting", label: "報告中心", icon: Map, path: "/reporting" },
+    ]
+  },
+  {
+    title: "設定功能",
+    items: [
+      { id: "team", label: "團隊管理", icon: Users, path: "/team" },
+      { id: "settings", label: "系統設定", icon: Settings, path: "/settings" },
+    ]
+  }
 ];
 
+// Get all items for finding active item
+const allNavItems = menuSections.flatMap(section => section.items);
+
 export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
-  const [activeItem, setActiveItem] = useState("dashboard");
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const getActiveItem = () => {
+    const currentItem = allNavItems.find(item => item.path === location.pathname);
+    return currentItem?.id || "dashboard";
+  };
 
   return (
     <div className={cn(
@@ -70,30 +95,36 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="p-2 space-y-1">
-        <div className={cn(
-          "text-xs font-medium text-muted-foreground mb-3 px-3",
-          collapsed && "opacity-0"
-        )}>
-          主要功能
-        </div>
-        
-        {navItems.map((item) => (
-          <Button
-            key={item.id}
-            variant={activeItem === item.id ? "default" : "ghost"}
-            className={cn(
-              "w-full justify-start h-10 transition-all duration-200",
-              collapsed ? "px-2" : "px-3",
-              activeItem === item.id && "bg-primary text-primary-foreground shadow-glow"
-            )}
-            onClick={() => setActiveItem(item.id)}
-          >
-            <item.icon className={cn("h-5 w-5", !collapsed && "mr-3")} />
-            {!collapsed && (
-              <span className="transition-all duration-300">{item.label}</span>
-            )}
-          </Button>
+      <nav className="p-2 space-y-4 flex-1 overflow-y-auto">
+        {menuSections.map((section, sectionIndex) => (
+          <div key={section.title}>
+            <div className={cn(
+              "text-xs font-medium text-muted-foreground mb-3 px-3",
+              collapsed && "opacity-0"
+            )}>
+              {section.title}
+            </div>
+            
+            <div className="space-y-1">
+              {section.items.map((item) => (
+                <Button
+                  key={item.id}
+                  variant={getActiveItem() === item.id ? "default" : "ghost"}
+                  className={cn(
+                    "w-full justify-start h-10 transition-all duration-200",
+                    collapsed ? "px-2" : "px-3",
+                    getActiveItem() === item.id && "bg-primary text-primary-foreground shadow-glow"
+                  )}
+                  onClick={() => navigate(item.path)}
+                >
+                  <item.icon className={cn("h-5 w-5", !collapsed && "mr-3")} />
+                  {!collapsed && (
+                    <span className="transition-all duration-300">{item.label}</span>
+                  )}
+                </Button>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 

@@ -35,18 +35,20 @@ class App {
 
     const allowedOrigins = process.env.FRONTEND_URL 
       ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
-      : ['http://localhost:3000', 'http://10.74.100.10:3000'];
+      : [
+          'http://localhost:3000', 
+          'http://10.74.100.10:3000',
+          'http://localhost:8081',
+          'http://10.74.100.10:8081'
+        ];
 
+    // Allow all origins in development for now
     this.app.use(cors({
-      origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error(`Not allowed by CORS: ${origin}`));
-        }
-      },
+      origin: true,
       credentials: true,
-      optionsSuccessStatus: 200
+      optionsSuccessStatus: 200,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Organization-ID']
     }));
 
     // Rate limiting
@@ -161,7 +163,7 @@ class App {
   }
 
   public listen(port: number): void {
-    const server = this.app.listen(port, () => {
+    const server = this.app.listen(port, '0.0.0.0', () => {
       logger.info(`🚀 GEO Platform API server is running on port ${port}`);
       logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`🔗 Health check: http://localhost:${port}/health`);
