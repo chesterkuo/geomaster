@@ -33,8 +33,18 @@ class App {
       },
     }));
 
+    const allowedOrigins = process.env.FRONTEND_URL 
+      ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+      : ['http://localhost:3000', 'http://10.74.100.10:3000'];
+
     this.app.use(cors({
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Not allowed by CORS: ${origin}`));
+        }
+      },
       credentials: true,
       optionsSuccessStatus: 200
     }));

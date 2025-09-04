@@ -97,49 +97,58 @@ const RecommendationsList: React.FC = () => {
   }
 
   return (
-    <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-white">優化建議</h3>
-          <p className="text-slate-400 text-sm">基於 AI 分析的改進建議</p>
+          <h3 className="text-xl font-semibold text-white">AI 優化建議</h3>
+          <p className="text-slate-400 text-sm mt-1">基於智能分析的個性化改進方案</p>
         </div>
-        <button className="text-blue-400 hover:text-blue-300 text-sm font-medium flex items-center space-x-1">
+        <button className="flex items-center gap-2 px-4 py-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-500/10 rounded-lg transition-all duration-200 text-sm font-medium">
           <span>查看全部</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {recommendations.map((recommendation) => (
           <div 
             key={recommendation.id} 
-            className="bg-slate-750 rounded-lg p-4 border border-slate-600 hover:border-slate-500 transition-colors"
+            className="bg-slate-900 border border-slate-700 rounded-xl p-5 hover:border-indigo-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/10 transition-all duration-300 group"
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center space-x-3 mb-2">
-                  {getStatusIcon(recommendation.status)}
-                  <h4 className="font-medium text-white">{recommendation.title}</h4>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(recommendation.status)}
+                    <span className="text-slate-400 text-xs font-medium">{getStatusText(recommendation.status)}</span>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(recommendation.priority)}`}>
+                    {getPriorityText(recommendation.priority)}
+                  </span>
                 </div>
-                <p className="text-slate-400 text-sm mb-3">{recommendation.description}</p>
+                
+                <h4 className="font-semibold text-white mb-2 group-hover:text-indigo-300 transition-colors">
+                  {recommendation.title}
+                </h4>
+                
+                <p className="text-slate-400 text-sm mb-4 leading-relaxed">
+                  {recommendation.description}
+                </p>
                 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <span className={`px-2 py-1 rounded-md text-xs font-medium ${getPriorityColor(recommendation.priority)}`}>
-                      {getPriorityText(recommendation.priority)}
+                  <div className="flex items-center gap-4">
+                    <span className="text-slate-500 text-xs bg-slate-800 px-3 py-1 rounded-lg">
+                      {recommendation.category}
                     </span>
-                    <span className="text-slate-500 text-xs">{recommendation.category}</span>
+                    <span className="text-green-400 text-xs font-medium">
+                      {recommendation.impact}
+                    </span>
                   </div>
-                  <span className="text-slate-400 text-xs">{getStatusText(recommendation.status)}</span>
-                </div>
-                
-                <div className="mt-2 text-xs text-slate-500">
-                  <span>預期效果: {recommendation.impact}</span>
                 </div>
               </div>
               
-              <button className="ml-4 text-blue-400 hover:text-blue-300 text-sm">
-                執行
+              <button className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-200 whitespace-nowrap">
+                立即執行
               </button>
             </div>
           </div>

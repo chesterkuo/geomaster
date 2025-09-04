@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
-import { authAPI } from '../../api/auth'
+import { apiService } from '../../services/api'
 
 interface User {
   id: string
@@ -29,11 +29,11 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  isAuthenticated: false,
+  isAuthenticated: !!localStorage.getItem('accessToken'),
   user: null,
   organizations: [],
   currentOrganization: null,
-  token: localStorage.getItem('token'),
+  token: localStorage.getItem('accessToken'),
   refreshToken: localStorage.getItem('refreshToken'),
   loading: false,
   error: null,
@@ -43,8 +43,8 @@ const initialState: AuthState = {
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async (credentials: { email: string; password: string }) => {
-    const response = await authAPI.login(credentials)
-    return response.data
+    const response = await apiService.login(credentials)
+    return response
   }
 )
 
@@ -56,24 +56,33 @@ export const registerUser = createAsyncThunk(
     fullName: string
     company?: string
   }) => {
-    const response = await authAPI.register(userData)
-    return response.data
+    const response = await apiService.register(userData)
+    return response
   }
 )
 
 export const refreshUserToken = createAsyncThunk(
   'auth/refreshToken',
   async (refreshToken: string) => {
-    const response = await authAPI.refreshToken(refreshToken)
-    return response.data
+    // This is handled automatically by the API service interceptor
+    // Return current token for now
+    return { token: localStorage.getItem('accessToken'), refreshToken }
   }
 )
 
 export const getUserProfile = createAsyncThunk(
   'auth/getUserProfile',
   async () => {
-    const response = await authAPI.getProfile()
-    return response.data
+    const user = await apiService.getProfile()
+    return { user, organizations: [] } // Organizations will be loaded separately if needed
+  }
+)
+
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (profileData: { fullName?: string; company?: string }) => {
+    const user = await apiService.updateProfile(profileData)
+    return user
   }
 )
 
@@ -89,8 +98,9 @@ const authSlice = createSlice({
       state.token = null
       state.refreshToken = null
       state.error = null
-      localStorage.removeItem('token')
+      localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
+      localStorage.removeItem('currentOrgId')
     },
     clearError: (state) => {
       state.error = null
@@ -112,16 +122,17 @@ const authSlice = createSlice({
         state.isAuthenticated = true
         state.user = action.payload.user
         state.organizations = action.payload.organizations || []
-        state.token = action.payload.token
+        state.token = action.payload.token || action.payload.accessToken
         state.refreshToken = action.payload.refreshToken || null
         
-        // Set current organization (first one by default)
-        if (action.payload.organizations && action.payload.organizations.length > 0) {
-          state.currentOrganization = action.payload.organizations[0]
-          localStorage.setItem('currentOrgId', action.payload.organizations[0].id)
+        // Set current organization (first one by default)  
+        if (action.payload.organization) {
+          state.currentOrganization = action.payload.organization
+          state.organizations = [action.payload.organization]
+          localStorage.setItem('currentOrgId', action.payload.organization.id)
         }
 
-        localStorage.setItem('token', action.payload.token)
+        localStorage.setItem('accessToken', action.payload.token || action.payload.accessToken)
         if (action.payload.refreshToken) {
           localStorage.setItem('refreshToken', action.payload.refreshToken)
         }
@@ -142,7 +153,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true
         state.user = action.payload.user
         state.organizations = action.payload.organization ? [action.payload.organization] : []
-        state.token = action.payload.token
+        state.token = action.payload.accessToken
         state.refreshToken = action.payload.refreshToken || null
         
         if (action.payload.organization) {
@@ -150,7 +161,7 @@ const authSlice = createSlice({
           localStorage.setItem('currentOrgId', action.payload.organization.id)
         }
 
-        localStorage.setItem('token', action.payload.token)
+        localStorage.setItem('accessToken', action.payload.token || action.payload.accessToken)
         if (action.payload.refreshToken) {
           localStorage.setItem('refreshToken', action.payload.refreshToken)
         }
@@ -165,7 +176,7 @@ const authSlice = createSlice({
       .addCase(refreshUserToken.fulfilled, (state, action) => {
         state.token = action.payload.token
         state.refreshToken = action.payload.refreshToken || null
-        localStorage.setItem('token', action.payload.token)
+        localStorage.setItem('accessToken', action.payload.token!)
         if (action.payload.refreshToken) {
           localStorage.setItem('refreshToken', action.payload.refreshToken)
         }
@@ -175,7 +186,7 @@ const authSlice = createSlice({
         state.user = null
         state.token = null
         state.refreshToken = null
-        localStorage.removeItem('token')
+        localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
       })
       
@@ -183,6 +194,14 @@ const authSlice = createSlice({
       .addCase(getUserProfile.fulfilled, (state, action) => {
         state.user = action.payload.user
         state.organizations = action.payload.organizations || []
+      })
+      
+      // Update profile
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.user = action.payload
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.error = action.error.message || 'Failed to update profile'
       })
   },
 })

@@ -1,12 +1,20 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes';
 import websiteRoutes from './website.routes';
+import scanRoutes from './scan.routes';
+import contentRoutes from './content.routes';
+import trackingRoutes from './tracking.routes';
+import dashboardRoutes from './dashboard.routes';
 
 const router = Router();
 
 // Mount routes
 router.use('/auth', authRoutes);
 router.use('/websites', websiteRoutes);
+router.use('/scans', scanRoutes);
+router.use('/content', contentRoutes);
+router.use('/tracking', trackingRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 // API health check
 router.get('/health', (req, res) => {

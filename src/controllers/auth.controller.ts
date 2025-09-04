@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { User, Organization } from '../models';
+import { User, Organization, UserOrganization } from '../models';
 import { AppError, asyncHandler } from '../middlewares/error.middleware';
 
 export class AuthController {
@@ -30,9 +30,12 @@ export class AuthController {
       role: 'admin' // First user is admin of their organization
     });
 
-    // Associate user with organization (commented out as association method needs to be properly defined)
-    // TODO: Implement proper user-organization association after defining Sequelize associations
-    // await user.$add('organizations', organization);
+    // Associate user with organization as owner
+    await UserOrganization.create({
+      userId: user.id,
+      organizationId: organization.id,
+      role: 'owner'
+    });
 
     const token = this.generateToken(user.id);
     const refreshToken = this.generateRefreshToken(user.id);
@@ -54,7 +57,11 @@ export class AuthController {
     // Find user with organizations
     const user = await User.findOne({
       where: { email },
-      include: ['organizations']
+      include: [{
+        model: Organization,
+        as: 'organizations',
+        through: { attributes: ['role', 'joinedAt'] }
+      }]
     });
 
     if (!user || !user.isActive) {
@@ -93,10 +100,14 @@ export class AuthController {
     }
 
     try {
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as any;
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET!) as any;
       
       const user = await User.findByPk(decoded.userId, {
-        include: ['organizations']
+        include: [{
+          model: Organization,
+          as: 'organizations',
+          through: { attributes: ['role', 'joinedAt'] }
+        }]
       });
 
       if (!user || !user.isActive) {
@@ -191,7 +202,11 @@ export class AuthController {
     const userId = (req as any).user.id;
     
     const user = await User.findByPk(userId, {
-      include: ['organizations']
+      include: [{
+        model: Organization,
+        as: 'organizations',
+        through: { attributes: ['role', 'joinedAt'] }
+      }]
     });
 
     res.json({
@@ -244,9 +259,7 @@ export class AuthController {
   private generateSlug(name: string): string {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9 -]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .slice(0, 50);
+      .replace(/[^a-z0-9]/g, '')
+      .slice(0, 50) + Date.now().toString().slice(-4);
   }
 }

@@ -122,7 +122,7 @@ Organization.init(
     hooks: {
       beforeCreate: (org) => {
         if (!org.slug) {
-          org.slug = org.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+          org.slug = org.name.toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now().toString().slice(-4);
         }
       }
     }

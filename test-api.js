@@ -18,13 +18,13 @@ const colors = require('colors');
 
 // 配置
 const config = {
-  baseURL: process.env.API_URL || 'http://localhost:8000',
+  baseURL: process.env.API_URL || 'https://api-geo.blitzgame.site',
   timeout: 30000,
   testUser: {
     email: `test_${Date.now()}@example.com`,
-    password: 'Test123!',
-    fullName: '測試用戶',
-    company: '測試公司'
+    password: 'Test123456',
+    fullName: 'Test User',
+    company: 'Test Company'
   }
 };
 
@@ -47,10 +47,13 @@ const api = axios.create({
   }
 });
 
-// 請求攔截器 - 添加認證 token
+// 請求攔截器 - 添加認證 token 和組織 ID
 api.interceptors.request.use((config) => {
   if (testData.accessToken) {
     config.headers.Authorization = `Bearer ${testData.accessToken}`;
+  }
+  if (testData.organization) {
+    config.headers['X-Organization-ID'] = testData.organization.id;
   }
   return config;
 });
@@ -168,8 +171,11 @@ async function testAuth(runner) {
     await runner.assert(response.data.data.user, '登入應該返回用戶資料');
     await runner.assert(response.data.data.token, '登入應該返回訪問令牌');
     
-    // 更新令牌
+    // 更新令牌和組織
     testData.accessToken = response.data.data.token;
+    if (response.data.data.organizations && response.data.data.organizations.length > 0) {
+      testData.organization = response.data.data.organizations[0];
+    }
     
     runner.log(`用戶已登入: ${response.data.data.user.email}`, 'info');
   });
@@ -180,9 +186,93 @@ async function testAuth(runner) {
     
     await runner.assert(response.status === 200, '獲取用戶資料應該返回 200 狀態碼');
     await runner.assert(response.data.success === true, '獲取用戶資料應該返回 success: true');
-    await runner.assert(response.data.data.id === testData.user.id, '返回的用戶 ID 應該匹配');
+    await runner.assert(response.data.data.user && response.data.data.user.id === testData.user.id, '返回的用戶 ID 應該匹配');
     
-    runner.log(`用戶資料: ${response.data.data.email}`, 'info');
+    runner.log(`用戶資料: ${response.data.data.user.email}`, 'info');
+  });
+
+  // 更新用戶資料
+  await runner.test('更新用戶資料', async () => {
+    const updateData = {
+      fullName: '更新後的測試用戶',
+      company: '更新後的測試公司'
+    };
+    
+    const response = await api.put('/auth/profile', updateData);
+    
+    await runner.assert(response.status === 200, '更新用戶資料應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '更新用戶資料應該返回 success: true');
+    await runner.assert(response.data.data.user.fullName === updateData.fullName, '用戶姓名應該已更新');
+    await runner.assert(response.data.data.user.company === updateData.company, '公司名稱應該已更新');
+    
+    runner.log(`用戶資料已更新: ${response.data.data.user.fullName}`, 'info');
+  });
+
+  // 令牌刷新
+  await runner.test('刷新訪問令牌', async () => {
+    const response = await api.post('/auth/refresh', {
+      refreshToken: testData.refreshToken
+    });
+    
+    await runner.assert(response.status === 200, '刷新令牌應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '刷新令牌應該返回 success: true');
+    await runner.assert(response.data.data.token, '應該返回新的訪問令牌');
+    await runner.assert(response.data.data.refreshToken, '應該返回新的刷新令牌');
+    
+    // 更新令牌
+    testData.accessToken = response.data.data.token;
+    testData.refreshToken = response.data.data.refreshToken;
+    
+    runner.log('訪問令牌已刷新', 'info');
+  });
+
+  // 忘記密碼
+  await runner.test('請求密碼重置', async () => {
+    const response = await api.post('/auth/forgot-password', {
+      email: config.testUser.email
+    });
+    
+    await runner.assert(response.status === 200, '請求密碼重置應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '請求密碼重置應該返回 success: true');
+    await runner.assert(response.data.message, '應該返回提示訊息');
+    
+    // 在開發環境中保存重置令牌用於測試
+    if (response.data.resetToken) {
+      testData.resetToken = response.data.resetToken;
+    }
+    
+    runner.log('密碼重置請求已發送', 'info');
+  });
+
+  // 重置密碼（僅在開發環境中測試）
+  if (process.env.NODE_ENV === 'development' && testData.resetToken) {
+    await runner.test('重置密碼', async () => {
+      const newPassword = 'NewPass123456';
+      const response = await api.post('/auth/reset-password', {
+        token: testData.resetToken,
+        password: newPassword
+      });
+      
+      await runner.assert(response.status === 200, '重置密碼應該返回 200 狀態碼');
+      await runner.assert(response.data.success === true, '重置密碼應該返回 success: true');
+      await runner.assert(response.data.message, '應該返回成功訊息');
+      
+      // 更新測試用戶密碼
+      config.testUser.password = newPassword;
+      
+      runner.log('密碼已成功重置', 'info');
+    });
+  }
+
+  // 用戶登出
+  await runner.test('用戶登出', async () => {
+    const response = await api.post('/auth/logout');
+    
+    await runner.assert(response.status === 200, '登出應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '登出應該返回 success: true');
+    await runner.assert(response.data.message, '應該返回登出訊息');
+    
+    runner.log('用戶已登出', 'info');
   });
 }
 
@@ -192,8 +282,8 @@ async function testWebsites(runner) {
   await runner.test('創建網站', async () => {
     const websiteData = {
       url: 'https://example.com',
-      name: '測試網站',
-      description: '用於 API 測試的網站',
+      name: 'Test Website',
+      description: 'Website for API testing',
       scanFrequency: 'weekly'
     };
     
@@ -201,12 +291,12 @@ async function testWebsites(runner) {
     
     await runner.assert(response.status === 201, '創建網站應該返回 201 狀態碼');
     await runner.assert(response.data.success === true, '創建網站應該返回 success: true');
-    await runner.assert(response.data.data.url === websiteData.url, '網站 URL 應該匹配');
+    await runner.assert(response.data.data.website && response.data.data.website.url === websiteData.url, '網站 URL 應該匹配');
     
     // 保存網站資料
-    testData.website = response.data.data;
+    testData.website = response.data.data.website;
     
-    runner.log(`網站已創建: ${response.data.data.name} (${response.data.data.url})`, 'info');
+    runner.log(`網站已創建: ${response.data.data.website.name} (${response.data.data.website.url})`, 'info');
   });
 
   // 獲取網站列表
@@ -227,25 +317,63 @@ async function testWebsites(runner) {
     
     await runner.assert(response.status === 200, '獲取網站應該返回 200 狀態碼');
     await runner.assert(response.data.success === true, '獲取網站應該返回 success: true');
-    await runner.assert(response.data.data.id === testData.website.id, '網站 ID 應該匹配');
+    await runner.assert(response.data.data.website && response.data.data.website.id === testData.website.id, '網站 ID 應該匹配');
     
-    runner.log(`網站詳情: ${response.data.data.name}`, 'info');
+    runner.log(`網站詳情: ${response.data.data.website.name}`, 'info');
   });
 
   // 更新網站
   await runner.test('更新網站', async () => {
     const updateData = {
-      name: '更新後的測試網站',
-      description: '已更新的網站描述'
+      name: 'Updated Test Website',
+      description: 'Updated website description'
     };
     
     const response = await api.put(`/websites/${testData.website.id}`, updateData);
     
     await runner.assert(response.status === 200, '更新網站應該返回 200 狀態碼');
     await runner.assert(response.data.success === true, '更新網站應該返回 success: true');
-    await runner.assert(response.data.data.name === updateData.name, '網站名稱應該已更新');
+    await runner.assert(response.data.data.website && response.data.data.website.name === updateData.name, '網站名稱應該已更新');
     
-    runner.log(`網站已更新: ${response.data.data.name}`, 'info');
+    runner.log(`網站已更新: ${response.data.data.website.name}`, 'info');
+  });
+
+  // 獲取網站內容
+  await runner.test('獲取網站內容', async () => {
+    const response = await api.get(`/websites/${testData.website.id}/content`);
+    
+    await runner.assert(response.status === 200, '獲取網站內容應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '獲取網站內容應該返回 success: true');
+    await runner.assert(Array.isArray(response.data.data.contents), '內容列表應該是數組');
+    await runner.assert(response.data.data.pagination, '應該包含分頁資訊');
+    
+    runner.log(`網站內容頁數: ${response.data.data.contents.length}`, 'info');
+  });
+
+  // 獲取網站分析
+  await runner.test('獲取網站分析', async () => {
+    const response = await api.get(`/websites/${testData.website.id}/analytics`);
+    
+    await runner.assert(response.status === 200, '獲取網站分析應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '獲取網站分析應該返回 success: true');
+    await runner.assert(response.data.data.website, '應該包含網站資料');
+    await runner.assert(response.data.data.analytics, '應該包含分析資料');
+    await runner.assert(response.data.data.analytics.content, '應該包含內容分析');
+    await runner.assert(response.data.data.analytics.scans, '應該包含掃描分析');
+    
+    runner.log('網站分析數據已獲取', 'info');
+  });
+
+  // 測試網站列表搜尋功能
+  await runner.test('搜尋網站', async () => {
+    const response = await api.get(`/websites?search=Test&page=1&limit=5`);
+    
+    await runner.assert(response.status === 200, '搜尋網站應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '搜尋網站應該返回 success: true');
+    await runner.assert(Array.isArray(response.data.data.websites), '搜尋結果應該是數組');
+    await runner.assert(response.data.data.pagination, '應該包含分頁資訊');
+    
+    runner.log(`搜尋到 ${response.data.data.websites.length} 個網站`, 'info');
   });
 }
 
@@ -255,7 +383,7 @@ async function testScans(runner) {
   await runner.test('開始網站掃描', async () => {
     const response = await api.post('/scans', {
       websiteId: testData.website.id,
-      type: 'quick'
+      scanType: 'quick'
     });
     
     await runner.assert(response.status === 201, '開始掃描應該返回 201 狀態碼');
@@ -289,21 +417,57 @@ async function testScans(runner) {
     
     runner.log(`找到 ${response.data.data.length} 個掃描記錄`, 'info');
   });
+
+  // 測試不同掃描類型
+  await runner.test('開始標準掃描', async () => {
+    const response = await api.post('/scans', {
+      websiteId: testData.website.id,
+      scanType: 'standard'
+    });
+    
+    await runner.assert(response.status === 201, '標準掃描應該返回 201 狀態碼');
+    await runner.assert(response.data.success === true, '標準掃描應該返回 success: true');
+    await runner.assert(response.data.data.scanType === 'standard', '掃描類型應該是 standard');
+    
+    testData.standardScan = response.data.data;
+    runner.log(`標準掃描已開始: ${response.data.data.id}`, 'info');
+  });
+
+  // 測試掃描列表分頁
+  await runner.test('測試掃描列表分頁', async () => {
+    const response = await api.get(`/scans?websiteId=${testData.website.id}&page=1&limit=5`);
+    
+    await runner.assert(response.status === 200, '掃描列表分頁應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '掃描列表分頁應該返回 success: true');
+    await runner.assert(response.data.pagination, '應該包含分頁資訊');
+    await runner.assert(Array.isArray(response.data.data), '掃描結果應該是數組');
+    
+    runner.log(`分頁掃描列表: ${response.data.data.length} 項`, 'info');
+  });
+
+  // 測試獲取所有掃描（不限制網站）
+  await runner.test('獲取所有掃描', async () => {
+    const response = await api.get('/scans');
+    
+    await runner.assert(response.status === 200, '獲取所有掃描應該返回 200 狀態碼');
+    await runner.assert(response.data.success === true, '獲取所有掃描應該返回 success: true');
+    await runner.assert(Array.isArray(response.data.data), '所有掃描列表應該是數組');
+    
+    runner.log(`用戶所有掃描記錄: ${response.data.data.length} 項`, 'info');
+  });
 }
 
 // 內容優化測試
 async function testOptimization(runner) {
   await runner.test('獲取優化建議', async () => {
-    const response = await api.get(`/optimization/suggestions/${testData.website.id}`);
-    
-    // 這個端點可能返回 404 如果沒有內容，這是預期的
-    if (response.status === 404) {
-      runner.log('沒有找到優化建議（預期行為）', 'warning');
-      return;
-    }
+    const response = await api.post('/content/optimization-suggestions', {
+      url: testData.website.url,
+      content: 'Sample content for optimization'
+    });
     
     await runner.assert(response.status === 200, '獲取優化建議應該返回 200 狀態碼');
     await runner.assert(response.data.success === true, '獲取優化建議應該返回 success: true');
+    await runner.assert(response.data.data.suggestions, '應該包含優化建議');
     
     runner.log(`找到優化建議`, 'info');
   });
@@ -312,22 +476,23 @@ async function testOptimization(runner) {
 // AI 追蹤測試
 async function testAITracking(runner) {
   await runner.test('獲取 AI 提及', async () => {
-    const response = await api.get(`/tracking/mentions/${testData.website.id}`);
+    const response = await api.get(`/tracking/mentions?websiteId=${testData.website.id}`);
     
     // 這個端點可能返回空數組，這是預期的
     await runner.assert(response.status === 200, '獲取 AI 提及應該返回 200 狀態碼');
     await runner.assert(response.data.success === true, '獲取 AI 提及應該返回 success: true');
-    await runner.assert(Array.isArray(response.data.data), 'AI 提及應該是數組');
+    await runner.assert(response.data.data.mentions && Array.isArray(response.data.data.mentions), 'AI 提及應該是數組');
     
-    runner.log(`找到 ${response.data.data.length} 個 AI 提及記錄`, 'info');
+    runner.log(`找到 ${response.data.data.mentions.length} 個 AI 提及記錄`, 'info');
   });
 
   await runner.test('獲取可見度趨勢', async () => {
-    const response = await api.get(`/tracking/trends/${testData.website.id}`);
+    const response = await api.get(`/tracking/visibility-trends?websiteId=${testData.website.id}`);
     
     // 這個端點可能返回空資料，這是預期的
     await runner.assert(response.status === 200, '獲取可見度趨勢應該返回 200 狀態碼');
     await runner.assert(response.data.success === true, '獲取可見度趨勢應該返回 success: true');
+    await runner.assert(response.data.data.trends, '應該包含趨勢資料');
     
     runner.log('可見度趨勢資料已獲取', 'info');
   });
@@ -368,7 +533,7 @@ async function runTests() {
   
   console.log('🚀 開始 GEO Platform API 測試'.bold.green);
   console.log(`📡 目標 API: ${config.baseURL}`.blue);
-  console.log('=' * 50);
+  console.log('='.repeat(50));
   
   // 解析命令行參數
   const args = process.argv.slice(2);

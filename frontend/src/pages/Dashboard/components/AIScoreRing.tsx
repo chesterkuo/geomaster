@@ -12,13 +12,15 @@ const AIScoreRing: React.FC = () => {
   const strokeDashoffset = circumference - (score / 100) * circumference
 
   return (
-    <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-semibold text-white">GEO 總分</h3>
-          <p className="text-slate-400 text-sm">AI 搜尋優化評分</p>
+          <h3 className="text-xl font-semibold text-white">GEO 總分</h3>
+          <p className="text-slate-400 text-sm mt-1">AI 搜尋優化評分</p>
         </div>
-        <Target className="w-5 h-5 text-blue-400" />
+        <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-600 bg-opacity-10 flex items-center justify-center">
+          <Target className="w-5 h-5 text-blue-400" />
+        </div>
       </div>
 
       {/* Score Ring */}

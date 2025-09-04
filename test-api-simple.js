@@ -14,13 +14,13 @@ const url = require('url');
 
 // 配置
 const config = {
-  baseURL: process.env.API_URL || 'http://localhost:8000',
+  baseURL: process.env.API_URL || 'https://api-geo.blitzgame.site',
   timeout: 30000,
   testUser: {
     email: `test_${Date.now()}@example.com`,
-    password: 'Test123!',
-    fullName: '測試用戶',
-    company: '測試公司'
+    password: 'Test123456',
+    fullName: 'Test User',
+    company: 'Test Company'
   }
 };
 
@@ -28,6 +28,7 @@ const config = {
 let testData = {
   accessToken: null,
   user: null,
+  organization: null,
   website: null
 };
 
@@ -46,6 +47,10 @@ function makeRequest(method, endpoint, data = null, headers = {}) {
     
     if (testData.accessToken) {
       defaultHeaders.Authorization = `Bearer ${testData.accessToken}`;
+    }
+    
+    if (testData.organization) {
+      defaultHeaders['X-Organization-ID'] = testData.organization.id;
     }
     
     const requestData = data ? JSON.stringify(data) : null;
@@ -182,6 +187,7 @@ async function runTests() {
     if (response.data.data) {
       testData.accessToken = response.data.data.token;
       testData.user = response.data.data.user;
+      testData.organization = response.data.data.organization;
     }
     
     log(`用戶已註冊: ${config.testUser.email}`, 'INFO');
@@ -200,10 +206,14 @@ async function runTests() {
     runner.assert(response.data.success === true, '登入應該返回 success: true');
     runner.assert(response.data.data && response.data.data.user, '登入應該返回用戶資料');
     runner.assert(response.data.data && response.data.data.token, '登入應該返回訪問令牌');
+    runner.assert(response.data.data && response.data.data.organizations, '登入應該返回組織列表');
     
-    // 更新令牌
+    // 更新令牌和組織資料
     if (response.data.data && response.data.data.token) {
       testData.accessToken = response.data.data.token;
+    }
+    if (response.data.data && response.data.data.organizations && response.data.data.organizations.length > 0) {
+      testData.organization = response.data.data.organizations[0];
     }
     
     log(`用戶已登入: ${config.testUser.email}`, 'INFO');
@@ -215,17 +225,18 @@ async function runTests() {
     
     runner.assert(response.status === 200, `獲取用戶資料應該返回 200，實際返回 ${response.status}`);
     runner.assert(response.data.success === true, '獲取用戶資料應該返回 success: true');
-    runner.assert(response.data.data && response.data.data.id, '應該返回用戶資料');
+    runner.assert(response.data.data && response.data.data.user && response.data.data.user.id, '應該返回用戶資料');
+    runner.assert(response.data.data && response.data.data.organizations, '應該返回組織列表');
     
-    log(`獲取用戶資料成功: ${response.data.data.email || 'N/A'}`, 'INFO');
+    log(`獲取用戶資料成功: ${response.data.data.user?.email || 'N/A'}`, 'INFO');
   });
 
   // 創建測試網站
   await runner.test('創建網站', async () => {
     const websiteData = {
       url: 'https://example.com',
-      name: '測試網站',
-      description: '用於 API 測試的網站',
+      name: 'Test Website',
+      description: 'Website for API testing',
       scanFrequency: 'weekly'
     };
     
@@ -233,11 +244,11 @@ async function runTests() {
     
     runner.assert(response.status === 201, `創建網站應該返回 201，實際返回 ${response.status}`);
     runner.assert(response.data.success === true, '創建網站應該返回 success: true');
-    runner.assert(response.data.data && response.data.data.url === websiteData.url, '網站 URL 應該匹配');
+    runner.assert(response.data.data && response.data.data.website && response.data.data.website.url === websiteData.url, '網站 URL 應該匹配');
     
     // 保存網站資料
-    if (response.data.data) {
-      testData.website = response.data.data;
+    if (response.data.data && response.data.data.website) {
+      testData.website = response.data.data.website;
     }
     
     log(`網站已創建: ${websiteData.name} (${websiteData.url})`, 'INFO');

@@ -72,7 +72,8 @@ const websiteSlice = createSlice({
       })
       .addCase(fetchWebsites.fulfilled, (state, action) => {
         state.loading = false
-        state.websites = action.payload
+        // Handle both old and new response formats
+        state.websites = action.payload.websites || action.payload
       })
       .addCase(fetchWebsites.rejected, (state, action) => {
         state.loading = false
@@ -86,12 +87,14 @@ const websiteSlice = createSlice({
       })
       .addCase(fetchWebsite.fulfilled, (state, action) => {
         state.loading = false
-        state.currentWebsite = action.payload
+        // Handle new response format with website and metrics
+        const website = action.payload.website || action.payload
+        state.currentWebsite = website
         
         // Update in websites array if it exists
-        const index = state.websites.findIndex(w => w.id === action.payload.id)
+        const index = state.websites.findIndex(w => w.id === website.id)
         if (index !== -1) {
-          state.websites[index] = action.payload
+          state.websites[index] = website
         }
       })
       .addCase(fetchWebsite.rejected, (state, action) => {

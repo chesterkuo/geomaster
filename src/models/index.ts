@@ -1,6 +1,7 @@
 import sequelize from '../config/database';
 import User from './User';
 import Organization from './Organization';
+import UserOrganization from './UserOrganization';
 import Website from './Website';
 import Scan from './Scan';
 import Content from './Content';
@@ -9,17 +10,38 @@ import AITrackingResult from './AITrackingResult';
 // Define associations
 // User-Organization many-to-many relationship
 User.belongsToMany(Organization, {
-  through: 'user_organizations',
-  foreignKey: 'user_id',
-  otherKey: 'organization_id',
+  through: UserOrganization,
+  foreignKey: 'userId',
+  otherKey: 'organizationId',
   as: 'organizations'
 });
 
 Organization.belongsToMany(User, {
-  through: 'user_organizations',
-  foreignKey: 'organization_id',
-  otherKey: 'user_id',
+  through: UserOrganization,
+  foreignKey: 'organizationId',
+  otherKey: 'userId',
   as: 'users'
+});
+
+// Direct associations with the junction table
+User.hasMany(UserOrganization, {
+  foreignKey: 'userId',
+  as: 'userOrganizations'
+});
+
+Organization.hasMany(UserOrganization, {
+  foreignKey: 'organizationId',
+  as: 'organizationUsers'
+});
+
+UserOrganization.belongsTo(User, {
+  foreignKey: 'userId',
+  as: 'user'
+});
+
+UserOrganization.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
 });
 
 // Organization-Website one-to-many relationship
@@ -74,7 +96,7 @@ export const initializeDatabase = async (): Promise<void> => {
     
     // Sync models in development
     if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync({ alter: true });
+      await sequelize.sync();
       console.log('Database synchronized successfully.');
     }
   } catch (error) {
@@ -87,6 +109,7 @@ export {
   sequelize,
   User,
   Organization,
+  UserOrganization,
   Website,
   Scan,
   Content,

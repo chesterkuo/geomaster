@@ -17,42 +17,30 @@ import Register from './pages/Auth/Register'
 import { LoadingProvider } from './contexts/LoadingContext'
 
 const App: React.FC = () => {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth)
-  // const user = useSelector((state: RootState) => state.auth.user) // Available if needed later
-
-  if (!isAuthenticated) {
-    return (
-      <LoadingProvider>
-        <div className="min-h-screen bg-slate-900">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </div>
-      </LoadingProvider>
-    )
-  }
+  const { isAuthenticated, token } = useSelector((state: RootState) => state.auth)
+  
+  // DEBUG: Force show authenticated view to test
+  console.log('Auth State:', { isAuthenticated, token, hasToken: !!token })
 
   return (
     <LoadingProvider>
-      <div className="min-h-screen bg-slate-900">
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/scan" element={<WebsiteScanning />} />
-            <Route path="/optimize" element={<ContentOptimization />} />
-            <Route path="/tracking" element={<AITracking />} />
-            <Route path="/competitors" element={<CompetitorAnalysis />} />
-            <Route path="/keywords" element={<KeywordResearch />} />
-            <Route path="/reports" element={<ReportCenter />} />
-            <Route path="/team" element={<TeamManagement />} />
-            <Route path="/settings" element={<IntegrationSettings />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </Layout>
-      </div>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/scan" element={<WebsiteScanning />} />
+          <Route path="/optimize" element={<ContentOptimization />} />
+          <Route path="/tracking" element={<AITracking />} />
+          <Route path="/competitors" element={<CompetitorAnalysis />} />
+          <Route path="/keywords" element={<KeywordResearch />} />
+          <Route path="/reports" element={<ReportCenter />} />
+          <Route path="/team" element={<TeamManagement />} />
+          <Route path="/settings" element={<IntegrationSettings />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </Layout>
     </LoadingProvider>
   )
 }

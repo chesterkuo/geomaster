@@ -114,7 +114,8 @@ const scanSlice = createSlice({
       })
       .addCase(fetchScans.fulfilled, (state, action) => {
         state.loading = false
-        state.scans = action.payload
+        // Handle new response format with data array
+        state.scans = action.payload.data || action.payload
       })
       .addCase(fetchScans.rejected, (state, action) => {
         state.loading = false

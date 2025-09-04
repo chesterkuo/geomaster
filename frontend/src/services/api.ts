@@ -61,20 +61,27 @@ class ApiService {
 
   constructor() {
     this.client = axios.create({
-      baseURL: (import.meta as any).env?.VITE_API_URL || 'http://localhost:8000/api/v1',
+      baseURL: (import.meta as any).env?.VITE_API_URL || 'http://10.74.100.10:8000/api/v1',
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
       },
     })
 
-    // Request interceptor to add auth token
+    // Request interceptor to add auth token and organization header
     this.client.interceptors.request.use(
       (config) => {
         const token = localStorage.getItem('accessToken')
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }
+        
+        // Add organization ID header for organization-scoped endpoints
+        const orgId = localStorage.getItem('currentOrgId')
+        if (orgId && !config.url?.includes('/auth/') && !config.url?.includes('/health')) {
+          config.headers['X-Organization-ID'] = orgId
+        }
+        
         return config
       },
       (error) => {
@@ -138,34 +145,69 @@ class ApiService {
     return response.data.data!
   }
 
-  // Website endpoints
-  async getWebsites(): Promise<Website[]> {
-    const response = await this.client.get<ApiResponse<Website[]>>('/websites')
+  async updateProfile(profileData: { fullName?: string; company?: string }): Promise<User> {
+    const response = await this.client.put<ApiResponse<User>>('/auth/profile', profileData)
     return response.data.data!
   }
 
-  async getWebsite(id: string): Promise<Website> {
-    const response = await this.client.get<ApiResponse<Website>>(`/websites/${id}`)
+  async forgotPassword(email: string): Promise<void> {
+    await this.client.post('/auth/forgot-password', { email })
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    await this.client.post('/auth/reset-password', { token, password })
+  }
+
+  // Website endpoints
+  async getWebsites(params?: { search?: string; page?: number; limit?: number }): Promise<{ websites: Website[]; pagination: any }> {
+    const queryParams = new URLSearchParams()
+    if (params?.search) queryParams.append('search', params.search)
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    
+    const url = queryParams.toString() ? `/websites?${queryParams.toString()}` : '/websites'
+    const response = await this.client.get<ApiResponse<{ websites: Website[]; pagination: any }>>(url)
+    return response.data.data!
+  }
+
+  async getWebsite(id: string): Promise<{ website: Website; metrics: any }> {
+    const response = await this.client.get<ApiResponse<{ website: Website; metrics: any }>>(`/websites/${id}`)
     return response.data.data!
   }
 
   async createWebsite(websiteData: Partial<Website>): Promise<Website> {
-    const response = await this.client.post<ApiResponse<Website>>('/websites', websiteData)
-    return response.data.data!
+    const response = await this.client.post<ApiResponse<{ website: Website }>>('/websites', websiteData)
+    return response.data.data!.website
   }
 
   async updateWebsite(id: string, websiteData: Partial<Website>): Promise<Website> {
-    const response = await this.client.put<ApiResponse<Website>>(`/websites/${id}`, websiteData)
-    return response.data.data!
+    const response = await this.client.put<ApiResponse<{ website: Website }>>(`/websites/${id}`, websiteData)
+    return response.data.data!.website
   }
 
   async deleteWebsite(id: string): Promise<void> {
     await this.client.delete(`/websites/${id}`)
   }
 
+  async getWebsiteContent(id: string, params?: { page?: number; limit?: number; search?: string }): Promise<{ contents: any[]; pagination: any }> {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.search) queryParams.append('search', params.search)
+    
+    const url = queryParams.toString() ? `/websites/${id}/content?${queryParams.toString()}` : `/websites/${id}/content`
+    const response = await this.client.get<ApiResponse<{ contents: any[]; pagination: any }>>(url)
+    return response.data.data!
+  }
+
+  async getWebsiteAnalytics(id: string): Promise<{ website: Website; analytics: any }> {
+    const response = await this.client.get<ApiResponse<{ website: Website; analytics: any }>>(`/websites/${id}/analytics`)
+    return response.data.data!
+  }
+
   // Scan endpoints
-  async startScan(websiteId: string): Promise<Scan> {
-    const response = await this.client.post<ApiResponse<Scan>>('/scans', { websiteId })
+  async startScan(websiteId: string, scanType: 'quick' | 'standard' = 'quick'): Promise<Scan> {
+    const response = await this.client.post<ApiResponse<Scan>>('/scans', { websiteId, scanType })
     return response.data.data!
   }
 
@@ -174,35 +216,47 @@ class ApiService {
     return response.data.data!
   }
 
-  async getScans(websiteId?: string): Promise<Scan[]> {
-    const url = websiteId ? `/scans?websiteId=${websiteId}` : '/scans'
-    const response = await this.client.get<ApiResponse<Scan[]>>(url)
-    return response.data.data!
+  async getScans(params?: { websiteId?: string; page?: number; limit?: number }): Promise<{ data: Scan[]; pagination?: any }> {
+    const queryParams = new URLSearchParams()
+    if (params?.websiteId) queryParams.append('websiteId', params.websiteId)
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    
+    const url = queryParams.toString() ? `/scans?${queryParams.toString()}` : '/scans'
+    const response = await this.client.get<ApiResponse<{ data: Scan[]; pagination?: any }>>(url)
+    
+    // Handle different response formats (with or without pagination)
+    if (response.data.pagination) {
+      return { data: response.data.data as Scan[], pagination: response.data.pagination }
+    } else {
+      return { data: response.data.data as Scan[] }
+    }
   }
 
-  // Optimization endpoints
-  async optimizeContent(contentId: string, optimizationType: string): Promise<any> {
-    const response = await this.client.post<ApiResponse>('/content/optimize', {
-      contentId,
-      optimizationType
+  // Content Optimization endpoints
+  async getOptimizationSuggestions(url: string, content?: string): Promise<any> {
+    const response = await this.client.post<ApiResponse>('/content/optimization-suggestions', {
+      url,
+      content
     })
     return response.data.data!
   }
 
-  async getOptimizationSuggestions(websiteId: string): Promise<any[]> {
-    const response = await this.client.get<ApiResponse<any[]>>(`/optimization/suggestions/${websiteId}`)
-    return response.data.data!
-  }
-
   // AI Tracking endpoints
-  async getAIMentions(websiteId: string, platform?: string): Promise<any[]> {
-    const url = platform ? `/tracking/mentions/${websiteId}?platform=${platform}` : `/tracking/mentions/${websiteId}`
-    const response = await this.client.get<ApiResponse<any[]>>(url)
+  async getAIMentions(websiteId: string, params?: { platform?: string; dateRange?: string; page?: number; limit?: number }): Promise<any> {
+    const queryParams = new URLSearchParams()
+    queryParams.append('websiteId', websiteId)
+    if (params?.platform) queryParams.append('platform', params.platform)
+    if (params?.dateRange) queryParams.append('dateRange', params.dateRange)
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    
+    const response = await this.client.get<ApiResponse>(`/tracking/mentions?${queryParams.toString()}`)
     return response.data.data!
   }
 
-  async getVisibilityTrends(websiteId: string): Promise<any> {
-    const response = await this.client.get<ApiResponse>(`/tracking/trends/${websiteId}`)
+  async getVisibilityTrends(websiteId: string, period: '7d' | '30d' | '90d' | '1y' = '30d'): Promise<any> {
+    const response = await this.client.get<ApiResponse>(`/tracking/visibility-trends?websiteId=${websiteId}&period=${period}`)
     return response.data.data!
   }
 

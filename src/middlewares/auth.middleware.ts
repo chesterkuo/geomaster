@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models';
+import { User, Organization } from '../models';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -22,9 +22,13 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
     
-    // Find user with organization data
+    // Find user with organizations
     const user = await User.findByPk(decoded.userId, {
-      include: ['organizations']
+      include: [{
+        model: Organization,
+        as: 'organizations',
+        through: { attributes: ['role', 'joinedAt'] }
+      }]
     });
 
     if (!user || !user.isActive) {
@@ -81,15 +85,15 @@ export const requireOrganization = async (req: AuthRequest, res: Response, next:
   if (!organizationId) {
     res.status(400).json({
       success: false,
-      message: 'Organization ID required in headers'
+      message: 'Organization ID required in X-Organization-ID header'
     });
     return;
   }
 
   try {
     // Check if user belongs to the organization
-    const userOrgs = req.user.organizations || [];
-    const organization = userOrgs.find((org: any) => org.id === organizationId);
+    const userOrganizations = req.user.organizations || [];
+    const organization = userOrganizations.find((org: any) => org.id === organizationId);
 
     if (!organization) {
       res.status(403).json({
