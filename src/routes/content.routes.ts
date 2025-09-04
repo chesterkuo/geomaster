@@ -16,7 +16,7 @@ router.post('/optimization-suggestions',
   validateRequest({ 
     body: Joi.object({
       url: Joi.string().uri().required(),
-      content: Joi.string().optional()
+      content: Joi.string().allow('').optional()
     })
   }),
   contentController.getOptimizationSuggestions

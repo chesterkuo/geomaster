@@ -41,8 +41,21 @@ export interface OptimizationResponse {
 // 內容服務
 export const contentService = {
   // 獲取優化建議
-  async getOptimizationSuggestions(data: OptimizationRequest): Promise<ApiResponse<OptimizationResponse>> {
-    const response = await apiClient.post<ApiResponse<OptimizationResponse>>('/content/optimization-suggestions', data);
+  async getOptimizationSuggestions(data: { url: string; content?: string }): Promise<ApiResponse<{
+    suggestions: Array<{
+      type: string;
+      current: string;
+      suggested: string;
+      reason: string;
+      priority: string;
+    }>;
+    geoScore: number;
+    improvements: {
+      current: number;
+      potential: number;
+    };
+  }>> {
+    const response = await apiClient.post('/content/optimization-suggestions', data);
     return response.data;
   },
 

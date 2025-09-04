@@ -13,7 +13,6 @@ interface ScanAttributes {
   errorMessage?: string;
   results?: object;
   createdAt?: Date;
-  updatedAt?: Date;
 }
 
 interface ScanCreationAttributes extends Optional<ScanAttributes, 'id' | 'scanType' | 'status' | 'progress'> {}
@@ -28,8 +27,7 @@ class Scan extends Model<ScanAttributes, ScanCreationAttributes> implements Scan
   public completedAt?: Date;
   public errorMessage?: string;
   public results?: object;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  public createdAt?: Date;
 
   // Instance methods
   async updateProgress(progress: number): Promise<void> {
@@ -125,13 +123,18 @@ Scan.init(
     },
     results: {
       type: DataTypes.JSON
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      field: 'created_at',
+      defaultValue: DataTypes.NOW
     }
   },
   {
     sequelize,
     modelName: 'Scan',
     tableName: 'scans',
-    timestamps: true,
+    timestamps: false,
     underscored: true
   }
 );

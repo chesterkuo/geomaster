@@ -34,6 +34,21 @@ export const validateRequest = (schema: {
     }
 
     if (errors.length > 0) {
+      // Debug logging for validation errors
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Validation Error Details:', {
+          url: req.url,
+          method: req.method,
+          body: req.body,
+          headers: {
+            authorization: req.headers.authorization ? 'present' : 'missing',
+            'x-organization-id': req.headers['x-organization-id'] ? 'present' : 'missing',
+            'content-type': req.headers['content-type']
+          },
+          errors
+        });
+      }
+      
       res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -113,10 +128,10 @@ export const websiteSchemas = {
 // Scan validation schemas
 export const scanSchemas = {
   create: Joi.object({
-    websiteId: commonSchemas.uuid,
+    websiteId: Joi.string().uuid().optional(),
     scanType: Joi.string().valid('quick', 'standard', 'comprehensive').default('standard'),
     url: Joi.string().uri().optional()
-  })
+  }).or('websiteId', 'url')
 };
 
 // Content validation schemas

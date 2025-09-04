@@ -234,37 +234,72 @@ export class ScanController {
 
   public createScan = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { websiteId, scanType = 'standard', url } = req.body;
+    const organizationId = req.organization.id;
     
     // 如果提供了 URL，直接使用該 URL，否則從 website 表查詢
     let scanUrl = url;
+    let targetWebsiteId = websiteId;
+    
     if (!scanUrl && websiteId) {
       // 查詢網站資料獲取 URL
       const { Website } = await import('../models');
-      const website = await Website.findByPk(websiteId);
+      const website = await Website.findOne({
+        where: { 
+          id: websiteId, 
+          organizationId: organizationId 
+        }
+      });
       if (website) {
         scanUrl = website.url;
       }
     }
-    scanUrl = scanUrl || `https://example.com`; // 最後的默認值
     
-    // Create scan response for authenticated users
-    const scanId = uuidv4();
-    const mockScan: any = {
-      id: scanId,
-      websiteId,
-      url: scanUrl,
+    if (!scanUrl) {
+      res.status(400).json({
+        success: false,
+        message: 'URL is required'
+      });
+      return;
+    }
+    
+    // Create or find website if not provided
+    if (!targetWebsiteId) {
+      const { Website } = await import('../models');
+      const domain = new URL(scanUrl).hostname;
+      
+      let website = await Website.findOne({
+        where: { 
+          url: scanUrl,
+          organizationId: organizationId 
+        }
+      });
+      
+      if (!website) {
+        website = await Website.create({
+          organizationId,
+          url: scanUrl,
+          domain,
+          name: domain,
+          description: `Website scan for ${domain}`,
+          isActive: true
+        });
+      }
+      
+      targetWebsiteId = website.id;
+    }
+    
+    // Create scan record in database
+    const { Scan } = await import('../models');
+    const scan = await Scan.create({
+      websiteId: targetWebsiteId,
       scanType,
       status: 'pending',
-      progress: 0,
-      createdAt: new Date().toISOString(),
-      startedAt: new Date().toISOString(),
-      completedAt: null,
-      results: null
-    };
+      progress: 0
+    });
 
-    // Store the scan data for later retrieval (in production, this would be in database)
-    anonymousScans.set(scanId, { ...mockScan });
-
+    // Start the scan process
+    scan.markAsStarted();
+    
     // Perform real website scanning for authenticated users
     setTimeout(async () => {
       try {
@@ -273,83 +308,151 @@ export class ScanController {
         // Use real website scanner
         const realResults = await websiteScanner.scanWebsite(scanUrl);
         
-        // Update scan with real results
-        mockScan.status = 'completed';
-        mockScan.progress = 100;
-        mockScan.completedAt = new Date().toISOString();
-        
-        // Return full detailed results for authenticated users
-        mockScan.results = realResults;
-        
-        // Update stored scan data
-        anonymousScans.set(scanId, { ...mockScan });
+        // Update scan with real results in database
+        await scan.markAsCompleted(realResults);
         
         console.log(`✅ Authenticated real scan completed for ${scanUrl} - Score: ${realResults.score}`);
       } catch (error) {
         console.error(`❌ Authenticated real scan failed for ${scanUrl}:`, error);
         
-        // Fallback to mock data on error
-        mockScan.status = 'completed';
-        mockScan.progress = 100;
-        mockScan.completedAt = new Date().toISOString();
-        mockScan.results = generateDetailedScanResults(scanUrl);
-        
-        // Update stored scan data with fallback
-        anonymousScans.set(scanId, { ...mockScan });
+        // Mark scan as failed in database
+        await scan.markAsFailed(error instanceof Error ? error.message : 'Scan failed');
       }
     }, 1000);
 
     res.status(201).json({
       success: true,
-      data: mockScan
+      data: {
+        id: scan.id,
+        websiteId: scan.websiteId,
+        scanType: scan.scanType,
+        status: scan.status,
+        progress: scan.progress,
+        startedAt: scan.startedAt,
+        completedAt: scan.completedAt,
+        results: scan.results
+      }
     });
   });
 
   public getScan = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { id } = req.params;
     
-    // Try to retrieve scan data from memory storage (same as anonymous scans for now)
+    // First try to retrieve from memory storage (for temporary storage during scan processing)
     const storedScan = anonymousScans.get(id);
     
-    if (!storedScan) {
-      // If scan not found, return a not found error
-      res.status(404).json({
-        success: false,
-        message: 'Scan not found'
+    if (storedScan) {
+      res.json({
+        success: true,
+        data: storedScan
       });
       return;
     }
 
-    res.json({
-      success: true,
-      data: storedScan
-    });
+    // Try to query from database
+    try {
+      const { Scan, Website } = await import('../models');
+      const organizationId = req.organization.id;
+      
+      const scan = await Scan.findOne({
+        where: { id },
+        attributes: ['id', 'websiteId', 'scanType', 'status', 'progress', 'startedAt', 'completedAt', 'errorMessage', 'results', 'createdAt'],
+        include: [{
+          model: Website,
+          as: 'website',
+          attributes: ['id', 'url', 'domain', 'name'],
+          where: {
+            organizationId: organizationId
+          }
+        }]
+      });
+
+      if (!scan) {
+        res.status(404).json({
+          success: false,
+          message: 'Scan not found'
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: scan
+      });
+    } catch (error) {
+      console.error('獲取單個掃描記錄失敗:', error);
+      
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
   });
 
   public getScans = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
     const { websiteId, page = 1, limit = 10 } = req.query;
+    const organizationId = req.organization.id;
     
-    // Mock scans list
-    const mockScans = [
-      {
-        id: uuidv4(),
-        websiteId: websiteId || 'mock-website-id',
-        scanType: 'standard',
-        status: 'completed',
-        progress: 100,
-        createdAt: new Date().toISOString()
+    try {
+      // 載入模型
+      const { Scan, Website } = await import('../models');
+      
+      // 建立查詢條件
+      const whereCondition: any = {};
+      if (websiteId) {
+        whereCondition.websiteId = websiteId;
       }
-    ];
-
-    res.json({
-      success: true,
-      data: mockScans,
-      pagination: {
-        page: Number(page),
+      
+      // 查詢掃描記錄，包含相關的網站資訊
+      const { rows: scans, count } = await Scan.findAndCountAll({
+        where: whereCondition,
+        attributes: ['id', 'websiteId', 'scanType', 'status', 'progress', 'startedAt', 'completedAt', 'errorMessage', 'results', 'createdAt'],
+        include: [
+          {
+            model: Website,
+            as: 'website',
+            attributes: ['id', 'url', 'domain', 'name'],
+            where: {
+              organizationId: organizationId
+            }
+          }
+        ],
+        order: [['createdAt', 'DESC']],
         limit: Number(limit),
-        total: mockScans.length,
-        pages: 1
-      }
-    });
+        offset: (Number(page) - 1) * Number(limit)
+      });
+      
+      // 轉換結果格式
+      const formattedScans = scans.map((scan: any) => {
+        const scanData = scan.toJSON();
+        return {
+          ...scanData,
+          website: scanData.website ? {
+            id: scanData.website.id,
+            url: scanData.website.url,
+            domain: scanData.website.domain,
+            name: scanData.website.name
+          } : null
+        };
+      });
+      
+      res.json({
+        success: true,
+        data: formattedScans,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total: count,
+          pages: Math.ceil(count / Number(limit))
+        }
+      });
+    } catch (error) {
+      console.error('獲取掃描列表失敗:', error);
+      
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
   });
 }

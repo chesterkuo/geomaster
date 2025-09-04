@@ -95,6 +95,27 @@ export const requireOrganization = async (req: AuthRequest, res: Response, next:
     const userOrganizations = req.user.organizations || [];
     const organization = userOrganizations.find((org: any) => org.id === organizationId);
 
+    // Debug logging for organization access issues
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Organization Authorization Debug:', {
+        url: req.url,
+        method: req.method,
+        userId: req.user.id,
+        requestedOrgId: organizationId,
+        userOrganizations: userOrganizations.map((org: any) => ({
+          id: org.id,
+          name: org.name,
+          role: org.UserOrganization?.role
+        })),
+        foundOrganization: !!organization,
+        organizationDetails: organization ? {
+          id: organization.id,
+          name: organization.name,
+          role: organization.UserOrganization?.role
+        } : null
+      });
+    }
+
     if (!organization) {
       res.status(403).json({
         success: false,
@@ -106,6 +127,7 @@ export const requireOrganization = async (req: AuthRequest, res: Response, next:
     req.organization = organization;
     next();
   } catch (error) {
+    console.error('Organization validation error:', error);
     res.status(500).json({
       success: false,
       message: 'Error validating organization access'

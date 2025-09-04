@@ -157,7 +157,7 @@ const Tracking = () => {
   const [scanHistory, setScanHistory] = useState<ScanType[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const { toast } = useToast();
-  const { isAuthenticated, user, checkAuthStatus } = useAuth();
+  const { isAuthenticated, user, isLoading, checkAuthStatus } = useAuth();
 
   // 載入掃描歷史記錄
   const loadScanHistory = async () => {
@@ -191,7 +191,8 @@ const Tracking = () => {
 
   // 處理優化建議
   const handleOptimization = async (websiteUrl?: string) => {
-    if (!isAuthenticated) {
+    // 檢查認證狀態 - 如果正在載入或未認證則阻止請求
+    if (isLoading || !isAuthenticated) {
       toast({
         title: "需要登入",
         description: "請先登入以使用優化功能",
@@ -201,11 +202,36 @@ const Tracking = () => {
       return;
     }
 
-    const optimizationUrl = websiteUrl || url;
+    // 優先使用參數傳入的URL，否則使用當前掃描的URL，最後使用頁面輸入的URL
+    const optimizationUrl = websiteUrl || (currentScan?.website?.url) || url;
+    
+    // Debug logging to understand URL selection
+    console.log('🎯 Optimization URL Selection:', {
+      websiteUrl,
+      currentScanUrl: currentScan?.website?.url,
+      currentScanId: currentScan?.id,
+      inputUrl: url,
+      finalUrl: optimizationUrl
+    });
+    
     if (!optimizationUrl) {
       toast({
-        title: "錯誤",
-        description: "需要網站 URL 才能進行優化分析",
+        title: "需要網站 URL", 
+        description: currentScan ? 
+          `當前掃描缺少URL資訊，請重新掃描或手動輸入URL` : 
+          "請先進行一次掃描，或在上方輸入網站 URL",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 驗證 URL 格式
+    try {
+      new URL(optimizationUrl);
+    } catch (error) {
+      toast({
+        title: "URL 格式錯誤",
+        description: `請輸入有效的網站 URL，例如：https://example.com\n當前輸入：${optimizationUrl}`,
         variant: "destructive",
       });
       return;
@@ -217,25 +243,42 @@ const Tracking = () => {
         description: "正在分析您的網站並生成優化建議...",
       });
 
-      // 準備優化請求數據
-      const optimizationRequest: OptimizationRequest = {
-        websiteId: currentScan?.websiteId || '', // Use current scan's website ID if available
+      // 準備優化請求數據（符合後端API格式）
+      const optimizationRequest = {
         url: optimizationUrl,
-        focusAreas: ['technical', 'content', 'seo', 'performance'],
-        businessGoals: ['increase_visibility', 'improve_rankings', 'enhance_performance']
+        content: '' // 可選的內容字段
       };
+      
+      // Debug: log the exact request being sent
+      console.log('📤 Sending optimization request:', {
+        requestData: optimizationRequest,
+        urlLength: optimizationRequest.url.length,
+        isValidUrl: (() => {
+          try { new URL(optimizationRequest.url); return true; }
+          catch { return false; }
+        })()
+      });
 
       const response = await contentService.getOptimizationSuggestions(optimizationRequest);
 
       if (response.success && response.data) {
         toast({
           title: "優化分析完成",
-          description: `發現 ${response.data.suggestions.length} 項優化建議，預計可提升 ${response.data.potentialImprovement}% 表現`,
+          description: `發現 ${response.data.suggestions.length} 項優化建議，當前 GEO 分數：${response.data.geoScore}`,
         });
 
         // 可以在這裡處理優化建議的顯示
         // 例如，打開一個新的頁面或模態框來顯示建議
         console.log('Optimization suggestions:', response.data);
+        
+        // 顯示優化建議的詳細信息
+        const suggestionsList = response.data.suggestions
+          .map(s => `${s.type}: ${s.suggested}`)
+          .join('\n');
+          
+        setTimeout(() => {
+          alert(`優化建議：\n\n${suggestionsList}\n\n當前分數：${response.data.improvements.current}\n潛在分數：${response.data.improvements.potential}`);
+        }, 1000);
       } else {
         throw new Error(response.message || '優化分析失敗');
       }
@@ -847,14 +890,40 @@ const Tracking = () => {
       <Card className="bg-gradient-card border-border">
         <CardContent className="pt-6">
           <div className="text-center space-y-4">
-            <h3 className="text-lg font-semibold">準備開始優化？</h3>
+            <h3 className="text-lg font-semibold">
+              {currentScan?.website?.url ? 
+                `為 ${(() => {
+                  try { return new URL(currentScan.website.url).hostname; }
+                  catch { return currentScan.website.url; }
+                })()} 生成優化建議` : 
+                "準備開始優化？"
+              }
+            </h3>
             <p className="text-muted-foreground">
-              使用我們的 AI 優化工具，快速提升您的網站在 AI 搜索中的可見度
+              {currentScan?.website?.url ? 
+                `基於掃描結果為您生成專業的 GEO 優化建議` :
+                "使用我們的 AI 優化工具，快速提升您的網站在 AI 搜索中的可見度"
+              }
             </p>
+            {/* Debug info - remove in production */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-muted-foreground mb-2 p-2 bg-muted rounded">
+                Debug: currentScan?.website?.url: {currentScan?.website?.url || 'none'} | 
+                url: {url || 'none'} | 
+                isLoading: {isLoading.toString()} | 
+                isAuthenticated: {isAuthenticated.toString()}
+              </div>
+            )}
             <div className="flex gap-4 justify-center">
               <Button 
                 className="bg-primary text-primary-foreground"
+                disabled={(!currentScan?.website?.url && !url) || isLoading}
                 onClick={() => handleOptimization()}
+                title={(!currentScan?.website?.url && !url) ? "請先進行一次掃描或輸入網站 URL" : 
+                  currentScan?.website?.url ? (() => {
+                    try { return `為 ${new URL(currentScan.website.url).hostname} 生成優化建議`; }
+                    catch { return "生成優化建議"; }
+                  })() : ""}
               >
                 開始優化
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -938,8 +1007,8 @@ const Tracking = () => {
                         }`} />
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate">
-                            {/* Extract domain from scan or use scan ID */}
-                            {scan.id}
+                            {/* Display website name/domain if available, otherwise scan ID */}
+                            {scan.website ? scan.website.name || scan.website.domain || scan.website.url : `掃描 ${scan.id.substring(0, 8)}`}
                           </p>
                           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                             <span>類型: {
@@ -964,12 +1033,52 @@ const Tracking = () => {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => {
-                              // 載入掃描結果
-                              if (scan.results) {
-                                setScanResults(scan.results);
-                                setShowResults(true);
-                                setShowScanHistory(false);
+                            onClick={async () => {
+                              try {
+                                // 顯示載入狀態
+                                toast({
+                                  title: "載入中",
+                                  description: "正在獲取掃描結果...",
+                                });
+
+                                // 調用 API 獲取掃描結果（使用現有的 getScan 端點）
+                                const scanResponse = await scanService.getStatus(scan.id);
+                                
+                                if (scanResponse.success && scanResponse.data) {
+                                  const updatedScan = scanResponse.data;
+                                  
+                                  // 更新當前掃描資訊
+                                  setCurrentScan(updatedScan);
+                                  
+                                  // 設置掃描結果
+                                  if (updatedScan.results) {
+                                    setScanResults(updatedScan.results);
+                                    
+                                    // 顯示結果並隱藏掃描歷史
+                                    setShowResults(true);
+                                    setShowScanHistory(false);
+                                    
+                                    toast({
+                                      title: "載入成功",
+                                      description: "掃描結果已顯示",
+                                    });
+                                  } else {
+                                    toast({
+                                      title: "無結果",
+                                      description: "該掃描還沒有結果，請稍後再試",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                } else {
+                                  throw new Error('無法獲取掃描結果');
+                                }
+                              } catch (error: any) {
+                                console.error('載入掃描結果失敗:', error);
+                                toast({
+                                  title: "載入失敗",
+                                  description: error.response?.data?.message || error.message || '無法載入掃描結果，請稍後重試',
+                                  variant: "destructive",
+                                });
                               }
                             }}
                           >
@@ -982,10 +1091,11 @@ const Tracking = () => {
                             size="sm"
                             onClick={async () => {
                               try {
-                                // 重新使用相同的 websiteId 和掃描類型
+                                // 重新使用相同的 websiteId 和掃描類型，並提供 URL 作為備用
                                 const response = await scanService.start({
                                   websiteId: scan.websiteId,
-                                  scanType: scan.scanType
+                                  scanType: scan.scanType,
+                                  url: scan.website?.url || scan.url
                                 });
                                 
                                 if (response.success) {

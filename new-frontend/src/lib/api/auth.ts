@@ -68,12 +68,14 @@ export const authService = {
     
     // 儲存 tokens
     if (response.data.success && response.data.data) {
-      const { token, refreshToken, organizations } = response.data.data;
+      const { token, refreshToken, organization, organizations } = response.data.data;
       tokenManager.setAccessToken(token);
       tokenManager.setRefreshToken(refreshToken);
       
-      // 如果有組織，使用第一個
-      if (organizations && organizations.length > 0) {
+      // 儲存組織 ID - 優先使用 organization，否則使用 organizations[0]
+      if (organization) {
+        tokenManager.setOrganizationId(organization.id);
+      } else if (organizations && organizations.length > 0) {
         tokenManager.setOrganizationId(organizations[0].id);
       }
     }

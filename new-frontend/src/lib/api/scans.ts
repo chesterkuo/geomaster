@@ -19,6 +19,12 @@ export interface Scan {
   results?: ScanResults;
   createdAt: string;
   updatedAt: string;
+  website?: {
+    id: string;
+    url: string;
+    domain: string;
+    name: string;
+  };
 }
 
 // 基礎掃描結果（免費版）

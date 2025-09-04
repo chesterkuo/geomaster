@@ -49,6 +49,19 @@ apiClient.interceptors.request.use(
       config.headers['X-Organization-ID'] = orgId;
     }
     
+    // Debug logging for authentication issues  
+    if (config.url?.includes('/content/') || config.url?.includes('optimization')) {
+      console.log('🔍 API Request Debug:', {
+        url: config.url,
+        method: config.method,
+        hasToken: !!token,
+        hasOrgId: !!orgId,
+        tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
+        orgId: orgId || 'none',
+        headers: config.headers
+      });
+    }
+    
     return config;
   },
   (error) => {
