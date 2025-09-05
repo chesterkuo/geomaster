@@ -38,6 +38,30 @@ export interface OptimizationResponse {
   createdAt: string;
 }
 
+// 頁面資料類型
+export interface Page {
+  id: string;
+  title: string;
+  url: string;
+  type: '產品頁' | '部落格' | 'FAQ' | '服務頁' | '其他';
+  traffic: '高' | '中' | '低';
+  geoScore?: number;
+  lastAnalyzedAt?: string;
+  analysisStatus: 'pending' | 'analyzing' | 'completed' | 'failed';
+  issues?: string[];
+  estimatedImprovement?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// 頁面新增資料類型
+export interface PageCreateData {
+  title: string;
+  url: string;
+  type: '產品頁' | '部落格' | 'FAQ' | '服務頁' | '其他';
+  traffic: '高' | '中' | '低';
+}
+
 // 內容服務
 export const contentService = {
   // 獲取優化建議
@@ -129,6 +153,65 @@ export const contentService = {
       insights: string[];
       recommendations: string[];
     }>>('/content/competitor-analysis', { websiteId, competitors });
+    return response.data;
+  },
+
+  // 頁面管理相關API
+  // 獲取所有頁面
+  async getPages(): Promise<ApiResponse<Page[]>> {
+    const response = await apiClient.get<ApiResponse<Page[]>>('/content/pages');
+    return response.data;
+  },
+
+  // 新增頁面
+  async addPage(data: PageCreateData): Promise<ApiResponse<Page>> {
+    const response = await apiClient.post<ApiResponse<Page>>('/content/pages', data);
+    return response.data;
+  },
+
+  // 更新頁面
+  async updatePage(pageId: string, data: Partial<PageCreateData>): Promise<ApiResponse<Page>> {
+    const response = await apiClient.put<ApiResponse<Page>>(`/content/pages/${pageId}`, data);
+    return response.data;
+  },
+
+  // 刪除頁面
+  async deletePage(pageId: string): Promise<ApiResponse<void>> {
+    const response = await apiClient.delete<ApiResponse<void>>(`/content/pages/${pageId}`);
+    return response.data;
+  },
+
+  // 分析單個頁面
+  async analyzePage(pageId: string): Promise<ApiResponse<{
+    pageId: string;
+    geoScore: number;
+    estimatedImprovement: number;
+    issues: string[];
+    message: string;
+  }>> {
+    const response = await apiClient.post<ApiResponse<{
+      pageId: string;
+      geoScore: number;
+      estimatedImprovement: number;
+      issues: string[];
+      message: string;
+    }>>(`/content/pages/${pageId}/analyze`);
+    return response.data;
+  },
+
+  // 批量分析頁面
+  async batchAnalyzePages(pageIds: string[]): Promise<ApiResponse<{
+    message: string;
+    total: number;
+    successful: number;
+    failed: number;
+  }>> {
+    const response = await apiClient.post<ApiResponse<{
+      message: string;
+      total: number;
+      successful: number;
+      failed: number;
+    }>>('/content/pages/batch-analyze', { pageIds });
     return response.data;
   }
 };

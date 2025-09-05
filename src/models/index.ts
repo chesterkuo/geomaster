@@ -6,6 +6,11 @@ import Website from './Website';
 import Scan from './Scan';
 import Content from './Content';
 import AITrackingResult from './AITrackingResult';
+import { Page } from './Page';
+import Keyword from './Keyword';
+import Competitor from './Competitor';
+import TrackingSettings from './TrackingSettings';
+import PlatformSettings from './PlatformSettings';
 
 // Define associations
 // User-Organization many-to-many relationship
@@ -88,17 +93,72 @@ AITrackingResult.belongsTo(Website, {
   as: 'website'
 });
 
+// Organization-Page one-to-many relationship
+Organization.hasMany(Page, {
+  foreignKey: 'organizationId',
+  as: 'pages'
+});
+
+Page.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// Organization-Keyword one-to-many relationship
+Organization.hasMany(Keyword, {
+  foreignKey: 'organization_id',
+  as: 'keywords'
+});
+
+Keyword.belongsTo(Organization, {
+  foreignKey: 'organization_id',
+  as: 'organization'
+});
+
+// Organization-Competitor one-to-many relationship
+Organization.hasMany(Competitor, {
+  foreignKey: 'organization_id',
+  as: 'competitors'
+});
+
+Competitor.belongsTo(Organization, {
+  foreignKey: 'organization_id',
+  as: 'organization'
+});
+
+// Organization-TrackingSettings one-to-one relationship
+Organization.hasOne(TrackingSettings, {
+  foreignKey: 'organization_id',
+  as: 'trackingSettings'
+});
+
+TrackingSettings.belongsTo(Organization, {
+  foreignKey: 'organization_id',
+  as: 'organization'
+});
+
+// Organization-PlatformSettings one-to-many relationship
+Organization.hasMany(PlatformSettings, {
+  foreignKey: 'organization_id',
+  as: 'platformSettings'
+});
+
+PlatformSettings.belongsTo(Organization, {
+  foreignKey: 'organization_id',
+  as: 'organization'
+});
+
 // Initialize database
 export const initializeDatabase = async (): Promise<void> => {
   try {
     await sequelize.authenticate();
-    console.log('Database connection established successfully.');
+    console.log('✅ Database connection established successfully.');
     
-    // Sync models in development
-    if (process.env.NODE_ENV === 'development') {
-      await sequelize.sync();
-      console.log('Database synchronized successfully.');
-    }
+    // Skip automatic sync in development since pages table exists manually
+    // if (process.env.NODE_ENV === 'development') {
+    //   await sequelize.sync({ alter: false });
+    //   console.log('Database synchronized successfully.');
+    // }
   } catch (error) {
     console.error('Unable to connect to the database:', error);
     throw error;
@@ -113,5 +173,10 @@ export {
   Website,
   Scan,
   Content,
-  AITrackingResult
+  AITrackingResult,
+  Page,
+  Keyword,
+  Competitor,
+  TrackingSettings,
+  PlatformSettings
 };

@@ -13,6 +13,7 @@ import { authService } from "@/lib/api/auth";
 import { useToast } from "@/hooks/use-toast";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/hooks/use-auth";
+import OptimizationResults from "@/components/OptimizationResults";
 
 // 類型守衛
 function isBasicScanResults(results: ScanResults): results is BasicScanResults {
@@ -156,6 +157,8 @@ const Tracking = () => {
   const [showScanHistory, setShowScanHistory] = useState(false);
   const [scanHistory, setScanHistory] = useState<ScanType[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [optimizationResults, setOptimizationResults] = useState<any>(null);
+  const [showOptimizationResults, setShowOptimizationResults] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated, user, isLoading, checkAuthStatus } = useAuth();
 
@@ -262,23 +265,16 @@ const Tracking = () => {
       const response = await contentService.getOptimizationSuggestions(optimizationRequest);
 
       if (response.success && response.data) {
+        // 設置優化結果並顯示結果組件
+        setOptimizationResults(response.data);
+        setShowOptimizationResults(true);
+        
         toast({
           title: "優化分析完成",
-          description: `發現 ${response.data.suggestions.length} 項優化建議，當前 GEO 分數：${response.data.geoScore}`,
+          description: `發現 ${response.data.suggestions.length} 項優化建議，GEO 分數：${response.data.geoScore}/100`,
         });
 
-        // 可以在這裡處理優化建議的顯示
-        // 例如，打開一個新的頁面或模態框來顯示建議
-        console.log('Optimization suggestions:', response.data);
-        
-        // 顯示優化建議的詳細信息
-        const suggestionsList = response.data.suggestions
-          .map(s => `${s.type}: ${s.suggested}`)
-          .join('\n');
-          
-        setTimeout(() => {
-          alert(`優化建議：\n\n${suggestionsList}\n\n當前分數：${response.data.improvements.current}\n潛在分數：${response.data.improvements.potential}`);
-        }, 1000);
+        console.log('Optimization analysis completed:', response.data);
       } else {
         throw new Error(response.message || '優化分析失敗');
       }
@@ -293,8 +289,9 @@ const Tracking = () => {
   };
 
   // 處理掃描
-  const handleScan = async (requestedScanType: 'basic' | 'detailed' = 'basic') => {
-    if (!url) {
+  const handleScan = async (requestedScanType: 'basic' | 'detailed' = 'basic', targetUrl?: string) => {
+    const scanUrl = targetUrl || url;
+    if (!scanUrl) {
       toast({
         title: "錯誤",
         description: "請輸入網站 URL",
@@ -305,7 +302,7 @@ const Tracking = () => {
 
     // 驗證 URL 格式
     try {
-      new URL(url);
+      new URL(scanUrl);
     } catch {
       toast({
         title: "錯誤",
@@ -340,10 +337,10 @@ const Tracking = () => {
         // 根據用戶認證狀態選擇API端點
         if (isAuthenticated) {
           // 已登入用戶 - 使用認證掃描端點，獲得完整詳細結果
-          response = await scanService.startWebsiteScan(url, 'standard');
+          response = await scanService.startWebsiteScan(scanUrl, 'standard');
         } else {
           // 未登入用戶 - 使用匿名掃描，僅獲得基本結果
-          response = await scanService.startAnonymousScan(url);
+          response = await scanService.startAnonymousScan(scanUrl);
         }
         
         if (!response.success) {
@@ -364,7 +361,7 @@ const Tracking = () => {
               
               // 根據掃描類型生成對應的模擬結果
               const mockResults = requestedScanType === 'basic' ? 
-                generateMockBasicResults(url) : generateMockDetailedResults(url);
+                generateMockBasicResults(scanUrl) : generateMockDetailedResults(scanUrl);
               
               setScanResults(mockResults);
               setTimeout(() => {
@@ -931,7 +928,7 @@ const Tracking = () => {
               <Button 
                 variant="outline" 
                 className="border-border"
-                onClick={() => handleScan('detailed')}
+                onClick={() => handleScan('detailed', currentScan?.website?.url || url)}
               >
                 重新深度掃描
               </Button>
@@ -1335,6 +1332,17 @@ const Tracking = () => {
           });
         }}
       />
+
+      {/* 優化結果 Modal */}
+      {showOptimizationResults && optimizationResults && (
+        <OptimizationResults
+          data={optimizationResults}
+          onClose={() => {
+            setShowOptimizationResults(false);
+            setOptimizationResults(null);
+          }}
+        />
+      )}
     </DashboardLayout>
   );
 };

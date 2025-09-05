@@ -39,7 +39,9 @@ class App {
           'http://localhost:3000', 
           'http://10.74.100.10:3000',
           'http://localhost:8081',
-          'http://10.74.100.10:8081'
+          'http://10.74.100.10:8081',
+          'http://localhost:5173',
+          'https://api-geo.blitzgame.site'
         ];
 
     // Allow all origins in development for now

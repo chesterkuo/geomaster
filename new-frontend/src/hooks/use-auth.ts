@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { authService, User } from '@/lib/api/auth';
+import { tokenManager } from '@/lib/api/client';
 
 export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -9,8 +10,17 @@ export function useAuth() {
   const checkAuthStatus = async () => {
     setIsLoading(true);
     try {
-      if (authService.isAuthenticated()) {
-        // 嘗試獲取用戶資料來驗證 token 是否有效
+      const token = tokenManager.getAccessToken();
+      
+      if (!token) {
+        // 沒有 token，直接設為未認證
+        setIsAuthenticated(false);
+        setUser(null);
+        return;
+      }
+
+      // 有 token，嘗試獲取用戶資料來驗證 token 是否有效
+      try {
         const response = await authService.getProfile();
         if (response.success && response.data) {
           setUser(response.data.user);
@@ -21,12 +31,15 @@ export function useAuth() {
           setIsAuthenticated(false);
           setUser(null);
         }
-      } else {
+      } catch (profileError) {
+        // 如果獲取用戶資料失敗，清除認證狀態和 token
+        console.warn('Profile fetch failed, clearing auth:', profileError);
+        tokenManager.clearTokens();
         setIsAuthenticated(false);
         setUser(null);
       }
     } catch (error) {
-      // 如果獲取用戶資料失敗，清除認證狀態
+      console.error('Auth status check failed:', error);
       setIsAuthenticated(false);
       setUser(null);
     } finally {

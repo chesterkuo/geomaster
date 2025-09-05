@@ -1,132 +1,201 @@
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { 
   FileText, 
-  Search, 
-  Lightbulb, 
-  Target, 
-  TrendingUp, 
-  AlertTriangle, 
   Filter,
   ArrowLeft,
-  Wand2,
-  Edit,
-  Database,
-  BarChart3,
-  Globe
+  TrendingUp, 
+  Plus,
+  Search,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Lock,
+  User
 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
+import { contentService, Page, PageCreateData } from "@/lib/api/content";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 const Optimization = () => {
-  const [selectedPage, setSelectedPage] = useState(null);
+  const { isAuthenticated } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
+  // State management
+  const [pages, setPages] = useState<Page[]>([]);
+  const [selectedPage, setSelectedPage] = useState<Page | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [filters, setFilters] = useState({
-    geoScore: "",
-    traffic: "",
-    type: ""
+    geoScore: "all",
+    traffic: "all", 
+    type: "all"
   });
+  
+  // Add page form state
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [newPageData, setNewPageData] = useState<PageCreateData>({
+    title: "",
+    url: "",
+    type: "其他",
+    traffic: "中"
+  });
+  const [isAddingPage, setIsAddingPage] = useState(false);
 
-  const handleAddPageAnalysis = () => {
-    toast("新增頁面分析功能開發中...");
-  };
+  // Load pages on component mount
+  useEffect(() => {
+    loadPages();
+  }, []);
 
-  const handleAutoGenerate = (type: string) => {
-    toast(`正在生成${type}...`);
-  };
+  const loadPages = async () => {
+    try {
+      setIsLoading(true);
+      
+      if (!isAuthenticated) {
+        // Show empty data when not authenticated
+        setPages([]);
+        setIsLoading(false);
+        return;
+      }
 
-  const handleApplyAllSuggestions = () => {
-    toast("正在套用所有優化建議...");
-  };
-
-  const handleManualEdit = () => {
-    toast("切換至手動編輯模式");
-  };
-
-  const handleGenerateSchema = () => {
-    toast("正在生成 Schema 標記...");
-  };
-
-  const contentPages = [
-    {
-      id: 1,
-      title: "主要產品頁面",
-      url: "/products/main",
-      geoScore: 45,
-      traffic: "高",
-      type: "產品頁",
-      issues: ["缺少問答段落", "需要權威引用", "標題結構待優化"],
-      estimatedImprovement: 78
-    },
-    {
-      id: 2,
-      title: "AI 開發指南",
-      url: "/blog/ai-guide", 
-      geoScore: 62,
-      traffic: "中",
-      type: "部落格",
-      issues: ["統計數據不足", "內容長度偏短", "Schema 標記缺失"],
-      estimatedImprovement: 82
-    },
-    {
-      id: 3,
-      title: "常見問題解答",
-      url: "/faq",
-      geoScore: 38,
-      traffic: "高",
-      type: "FAQ",
-      issues: ["結構化資料不完整", "問答覆蓋率低", "搜尋意圖不明確"],
-      estimatedImprovement: 75
-    },
-    {
-      id: 4,
-      title: "服務介紹頁面",
-      url: "/services/intro",
-      geoScore: 52,
-      traffic: "中",
-      type: "產品頁",
-      issues: ["專家引述缺失", "競爭優勢不突出", "呼籲行動不明確"],
-      estimatedImprovement: 74
-    },
-    {
-      id: 5,
-      title: "技術文檔",
-      url: "/docs/technical",
-      geoScore: 58,
-      traffic: "低",
-      type: "部落格",
-      issues: ["實用性不足", "範例代碼缺失", "更新頻率低"],
-      estimatedImprovement: 73
+      const response = await contentService.getPages();
+      if (response.success) {
+        setPages(response.data);
+      } else {
+        toast.error("載入頁面失敗: " + response.message);
+      }
+    } catch (error: any) {
+      console.error('載入頁面錯誤:', error);
+      toast.error("載入頁面失敗: " + (error.message || '未知錯誤'));
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
-  const getScoreColor = (score) => {
+  const handleAddPage = async () => {
+    if (!newPageData.title.trim() || !newPageData.url.trim()) {
+      toast.error("請填寫完整的標題和URL");
+      return;
+    }
+
+    // URL validation
+    try {
+      new URL(newPageData.url);
+    } catch {
+      toast.error("請輸入有效的URL (例如: https://example.com)");
+      return;
+    }
+
+    try {
+      setIsAddingPage(true);
+      const response = await contentService.addPage(newPageData);
+      if (response.success) {
+        toast.success("頁面新增成功！");
+        setPages(prev => [response.data, ...prev]);
+        setShowAddDialog(false);
+        setNewPageData({
+          title: "",
+          url: "",
+          type: "其他",
+          traffic: "中"
+        });
+      } else {
+        toast.error("新增失敗: " + response.message);
+      }
+    } catch (error: any) {
+      console.error('新增頁面錯誤:', error);
+      toast.error("新增失敗: " + (error.message || '未知錯誤'));
+    } finally {
+      setIsAddingPage(false);
+    }
+  };
+
+  const handleAnalyzePage = async (page: Page) => {
+    try {
+      setIsAnalyzing(true);
+      toast.info(`開始分析 ${page.title}...`);
+      
+      const response = await contentService.analyzePage(page.id);
+      if (response.success) {
+        toast.success(`${page.title} 分析完成！GEO 分數: ${response.data.geoScore}`);
+        // Refresh pages to get updated analysis data
+        loadPages();
+      } else {
+        toast.error("分析失敗: " + response.message);
+      }
+    } catch (error: any) {
+      console.error('分析頁面錯誤:', error);
+      toast.error("分析失敗: " + (error.message || '未知錯誤'));
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleDeletePage = async (pageId: string, title: string) => {
+    if (!confirm(`確定要刪除「${title}」嗎？`)) {
+      return;
+    }
+
+    try {
+      const response = await contentService.deletePage(pageId);
+      if (response.success) {
+        toast.success("頁面已刪除");
+        setPages(prev => prev.filter(p => p.id !== pageId));
+      } else {
+        toast.error("刪除失敗: " + response.message);
+      }
+    } catch (error: any) {
+      console.error('刪除頁面錯誤:', error);
+      toast.error("刪除失敗: " + (error.message || '未知錯誤'));
+    }
+  };
+
+  const getScoreColor = (score?: number) => {
+    if (!score) return "text-gray-500";
     if (score >= 70) return "text-green-600";
     if (score >= 50) return "text-yellow-600";
     return "text-red-600";
   };
 
-  const getScoreBgColor = (score) => {
+  const getScoreBgColor = (score?: number) => {
+    if (!score) return "bg-gray-100";
     if (score >= 70) return "bg-green-100";
     if (score >= 50) return "bg-yellow-100";
     return "bg-red-100";
   };
 
-  const filteredPages = contentPages.filter(page => {
-    if (filters.geoScore === "low" && page.geoScore >= 60) return false;
-    if (filters.traffic && filters.traffic !== "all" && page.traffic !== filters.traffic) return false;
-    if (filters.type && filters.type !== "all" && page.type !== filters.type) return false;
+  const getStatusIcon = (status: Page['analysisStatus']) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'analyzing':
+        return <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />;
+      case 'failed':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <AlertTriangle className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const filteredPages = pages.filter(page => {
+    if (filters.geoScore === "low" && (page.geoScore ?? 0) >= 60) return false;
+    if (filters.traffic !== "all" && page.traffic !== filters.traffic) return false;
+    if (filters.type !== "all" && page.type !== filters.type) return false;
     return true;
   });
 
+  // 詳細頁面視圖
   if (selectedPage) {
-    const page = contentPages.find(p => p.id === selectedPage);
-    
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -141,149 +210,155 @@ const Optimization = () => {
                 返回列表
               </Button>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">內容優化編輯器</h1>
-                <p className="text-muted-foreground">{page?.url}</p>
+                <h1 className="text-3xl font-bold tracking-tight">頁面詳細分析</h1>
+                <p className="text-muted-foreground">{selectedPage.url}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className={getScoreBgColor(page?.geoScore)}>
-                當前 GEO: {page?.geoScore}
-              </Badge>
-              <Badge variant="default" className="bg-green-100 text-green-800">
-                預估: {page?.estimatedImprovement}
-              </Badge>
+              {selectedPage.geoScore && (
+                <>
+                  <Badge variant="secondary" className={getScoreBgColor(selectedPage.geoScore)}>
+                    當前 GEO: {selectedPage.geoScore}
+                  </Badge>
+                  {selectedPage.estimatedImprovement && (
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      預估: {selectedPage.estimatedImprovement}
+                    </Badge>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
-            {/* 原始內容 */}
-            <Card className="bg-gradient-card border-border flex flex-col">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 頁面資訊卡片 */}
+            <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <FileText className="mr-2 h-5 w-5" />
-                  原始內容
+                  頁面資訊
                 </CardTitle>
-                <div className="flex items-center justify-between">
-                  <CardDescription>{page?.title}</CardDescription>
-                  <Badge variant="outline" className={`${getScoreColor(page?.geoScore)} border-current`}>
-                    GEO 分數: {page?.geoScore}
-                  </Badge>
-                </div>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col">
-                <Textarea 
-                  placeholder="在此編輯您的內容..."
-                  className="flex-1 min-h-[400px] resize-none"
-                  defaultValue={`# ${page?.title}
-
-這是您當前的頁面內容。您可以在此處編輯內容，或參考右側的 AI 優化建議來改善您的內容。
-
-## 當前內容架構
-- 基本介紹段落
-- 主要特點說明
-- 簡單的產品描述
-
-## 識別的問題
-${page?.issues.map(issue => `- ${issue}`).join('\n')}
-
-這些問題影響了您的 GEO 分數，建議參考右側的優化建議進行改善。`}
-                />
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>頁面標題</Label>
+                  <p className="text-sm text-muted-foreground mt-1">{selectedPage.title}</p>
+                </div>
+                <div>
+                  <Label>URL</Label>
+                  <p className="text-sm text-muted-foreground mt-1 break-all">{selectedPage.url}</p>
+                </div>
+                <div className="flex justify-between">
+                  <div>
+                    <Label>類型</Label>
+                    <Badge variant="outline" className="mt-1 block w-fit">
+                      {selectedPage.type}
+                    </Badge>
+                  </div>
+                  <div>
+                    <Label>流量等級</Label>
+                    <Badge variant={selectedPage.traffic === "高" ? "default" : "secondary"} className="mt-1 block w-fit">
+                      {selectedPage.traffic}流量
+                    </Badge>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label>分析狀態</Label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      {getStatusIcon(selectedPage.analysisStatus)}
+                      <span className="text-sm capitalize">{selectedPage.analysisStatus}</span>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={() => handleAnalyzePage(selectedPage)}
+                    disabled={isAnalyzing}
+                    size="sm"
+                    className="bg-primary text-primary-foreground"
+                  >
+                    {isAnalyzing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    重新分析
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
-            {/* 優化建議 */}
-            <Card className="bg-gradient-card border-border flex flex-col">
+            {/* 分析結果卡片 */}
+            <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Lightbulb className="mr-2 h-5 w-5 text-primary" />
-                  優化建議
+                  <Search className="mr-2 h-5 w-5 text-primary" />
+                  分析結果
                 </CardTitle>
-                <div className="flex items-center justify-between">
-                  <CardDescription>AI 智能分析建議</CardDescription>
-                  <Badge variant="default" className="bg-green-100 text-green-800">
-                    預估優化後: {page?.estimatedImprovement}
-                  </Badge>
-                </div>
               </CardHeader>
-              <CardContent className="flex-1 space-y-6">
-                <div className="space-y-4">
-                  <div className="p-4 bg-gradient-subtle rounded-lg border border-border">
-                    <h4 className="font-medium mb-2 flex items-center">
-                      <Target className="mr-2 h-4 w-4 text-blue-500" />
-                      1. 添加問答段落
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      在內容中加入 3-5 個常見問題與詳細解答，提升 AI 對內容的理解度
-                    </p>
-                    <div className="text-xs text-muted-foreground mb-2">預估影響: +12 分</div>
-                    <Button size="sm" variant="outline" className="w-full" onClick={() => handleAutoGenerate("問答段落")}>
-                      <Wand2 className="mr-1 h-3 w-3" />
-                      自動生成問答段落
-                    </Button>
-                  </div>
+              <CardContent>
+                {selectedPage.analysisStatus === 'completed' ? (
+                  <div className="space-y-4">
+                    {selectedPage.geoScore && (
+                      <div className="flex items-center justify-between">
+                        <span>GEO 分數</span>
+                        <span className={`font-bold text-lg ${getScoreColor(selectedPage.geoScore)}`}>
+                          {selectedPage.geoScore} / 100
+                        </span>
+                      </div>
+                    )}
+                    
+                    {selectedPage.estimatedImprovement && (
+                      <div className="flex items-center space-x-2">
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        <span className="text-sm text-green-600">
+                          預估可提升至 {selectedPage.estimatedImprovement} 分
+                        </span>
+                      </div>
+                    )}
 
-                  <div className="p-4 bg-gradient-subtle rounded-lg border border-border">
-                    <h4 className="font-medium mb-2 flex items-center">
-                      <BarChart3 className="mr-2 h-4 w-4 text-green-500" />
-                      2. 增加統計數據
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      加入相關的市場數據、使用統計或效果證明來增強內容可信度
-                    </p>
-                    <div className="text-xs text-muted-foreground mb-2">預估影響: +8 分</div>
-                    <Button size="sm" variant="outline" className="w-full" onClick={() => handleAutoGenerate("統計數據")}>
-                      <BarChart3 className="mr-1 h-3 w-3" />
-                      建議相關統計數據
-                    </Button>
-                  </div>
+                    {selectedPage.issues && selectedPage.issues.length > 0 && (
+                      <div>
+                        <Label className="text-sm font-medium">發現的問題</Label>
+                        <ul className="mt-2 space-y-1">
+                          {selectedPage.issues.map((issue, index) => (
+                            <li key={index} className="text-sm text-muted-foreground flex items-center">
+                              <AlertTriangle className="h-3 w-3 mr-2 text-yellow-500 flex-shrink-0" />
+                              {issue}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
-                  <div className="p-4 bg-gradient-subtle rounded-lg border border-border">
-                    <h4 className="font-medium mb-2 flex items-center">
-                      <Globe className="mr-2 h-4 w-4 text-purple-500" />
-                      3. 加入專家引述
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      引用行業專家觀點或權威機構聲明，提升內容權威性
-                    </p>
-                    <div className="text-xs text-muted-foreground mb-2">預估影響: +10 分</div>
-                    <Button size="sm" variant="outline" className="w-full" onClick={() => handleAutoGenerate("專家引述")}>
-                      <Globe className="mr-1 h-3 w-3" />
-                      尋找專家引述
-                    </Button>
+                    {selectedPage.lastAnalyzedAt && (
+                      <p className="text-xs text-muted-foreground">
+                        最後分析時間: {new Date(selectedPage.lastAnalyzedAt).toLocaleString('zh-TW')}
+                      </p>
+                    )}
                   </div>
-
-                  <div className="p-4 bg-gradient-subtle rounded-lg border border-border">
-                    <h4 className="font-medium mb-2 flex items-center">
-                      <FileText className="mr-2 h-4 w-4 text-orange-500" />
-                      4. 優化標題結構
-                    </h4>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      重新組織 H1-H6 標題層級，確保邏輯清晰且包含關鍵字
-                    </p>
-                    <div className="text-xs text-muted-foreground mb-2">預估影響: +5 分</div>
-                    <Button size="sm" variant="outline" className="w-full" onClick={() => handleAutoGenerate("標題結構")}>
-                      <FileText className="mr-1 h-3 w-3" />
-                      重構標題結構
-                    </Button>
+                ) : selectedPage.analysisStatus === 'analyzing' ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+                      <p className="text-sm text-muted-foreground">正在分析中...</p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="pt-4 border-t border-border space-y-3">
-                  <Button className="w-full bg-primary text-primary-foreground" onClick={handleApplyAllSuggestions}>
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    一鍵套用所有建議
-                  </Button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" className="w-full" onClick={handleManualEdit}>
-                      <Edit className="mr-1 h-3 w-3" />
-                      手動編輯
-                    </Button>
-                    <Button variant="outline" className="w-full" onClick={handleGenerateSchema}>
-                      <Database className="mr-1 h-3 w-3" />
-                      生成 Schema
-                    </Button>
+                ) : (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-muted-foreground">尚未進行分析</p>
+                      <Button 
+                        onClick={() => handleAnalyzePage(selectedPage)}
+                        disabled={isAnalyzing}
+                        size="sm"
+                        className="mt-2"
+                      >
+                        開始分析
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -292,18 +367,95 @@ ${page?.issues.map(issue => `- ${issue}`).join('\n')}
     );
   }
 
+  // 主列表視圖
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* 頂部操作區 */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">內容優化</h1>
-            <p className="text-muted-foreground">選擇需要優化的頁面開始 GEO 內容優化</p>
+            <p className="text-muted-foreground">管理和優化您的網站頁面以提升 GEO 分數</p>
           </div>
-          <Button className="bg-primary text-primary-foreground" onClick={handleAddPageAnalysis}>
-            <FileText className="mr-2 h-4 w-4" />
-            新增頁面分析
-          </Button>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground">
+                <Plus className="mr-2 h-4 w-4" />
+                新增頁面分析
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>新增頁面分析</DialogTitle>
+                <DialogDescription>
+                  輸入要分析的頁面資訊，系統會對該頁面進行 GEO 分析
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title">頁面標題</Label>
+                  <Input
+                    id="title"
+                    placeholder="例如：產品介紹頁面"
+                    value={newPageData.title}
+                    onChange={(e) => setNewPageData({ ...newPageData, title: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="url">頁面URL</Label>
+                  <Input
+                    id="url"
+                    placeholder="https://example.com/page"
+                    value={newPageData.url}
+                    onChange={(e) => setNewPageData({ ...newPageData, url: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>頁面類型</Label>
+                    <Select value={newPageData.type} onValueChange={(value: any) => setNewPageData({ ...newPageData, type: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="產品頁">產品頁</SelectItem>
+                        <SelectItem value="部落格">部落格</SelectItem>
+                        <SelectItem value="FAQ">FAQ</SelectItem>
+                        <SelectItem value="服務頁">服務頁</SelectItem>
+                        <SelectItem value="其他">其他</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>流量等級</Label>
+                    <Select value={newPageData.traffic} onValueChange={(value: any) => setNewPageData({ ...newPageData, traffic: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="高">高流量</SelectItem>
+                        <SelectItem value="中">中等流量</SelectItem>
+                        <SelectItem value="低">低流量</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                    取消
+                  </Button>
+                  <Button onClick={handleAddPage} disabled={isAddingPage}>
+                    {isAddingPage ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="mr-2 h-4 w-4" />
+                    )}
+                    新增頁面
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* 篩選器 */}
@@ -317,7 +469,7 @@ ${page?.issues.map(issue => `- ${issue}`).join('\n')}
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">GEO 分數</label>
+                <Label className="text-sm font-medium mb-2 block">GEO 分數</Label>
                 <Select value={filters.geoScore} onValueChange={(value) => setFilters({...filters, geoScore: value})}>
                   <SelectTrigger>
                     <SelectValue placeholder="選擇分數範圍" />
@@ -329,7 +481,7 @@ ${page?.issues.map(issue => `- ${issue}`).join('\n')}
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">流量等級</label>
+                <Label className="text-sm font-medium mb-2 block">流量等級</Label>
                 <Select value={filters.traffic} onValueChange={(value) => setFilters({...filters, traffic: value})}>
                   <SelectTrigger>
                     <SelectValue placeholder="選擇流量等級" />
@@ -343,7 +495,7 @@ ${page?.issues.map(issue => `- ${issue}`).join('\n')}
                 </Select>
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">頁面類型</label>
+                <Label className="text-sm font-medium mb-2 block">頁面類型</Label>
                 <Select value={filters.type} onValueChange={(value) => setFilters({...filters, type: value})}>
                   <SelectTrigger>
                     <SelectValue placeholder="選擇頁面類型" />
@@ -353,6 +505,8 @@ ${page?.issues.map(issue => `- ${issue}`).join('\n')}
                     <SelectItem value="產品頁">產品頁</SelectItem>
                     <SelectItem value="部落格">部落格</SelectItem>
                     <SelectItem value="FAQ">FAQ</SelectItem>
+                    <SelectItem value="服務頁">服務頁</SelectItem>
+                    <SelectItem value="其他">其他</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -363,50 +517,148 @@ ${page?.issues.map(issue => `- ${issue}`).join('\n')}
         {/* 頁面列表 */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle>內容頁面列表</CardTitle>
-            <CardDescription>共找到 {filteredPages.length} 個頁面需要優化</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>內容頁面列表</CardTitle>
+                <CardDescription>
+                  {isLoading ? "載入中..." : `共找到 ${filteredPages.length} 個頁面`}
+                </CardDescription>
+              </div>
+              <Button variant="outline" onClick={loadPages} disabled={isLoading}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                重新載入
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {filteredPages.map((page) => (
-                <div key={page.id} className="flex items-center justify-between p-4 border border-border rounded-lg bg-gradient-subtle hover:bg-gradient-subtle/80 transition-colors">
-                  <div className="flex items-center space-x-4 flex-1">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
-                      <FileText className="h-6 w-6 text-primary" />
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-center">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
+                  <p className="text-sm text-muted-foreground">載入頁面中...</p>
+                </div>
+              </div>
+            ) : filteredPages.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  {!isAuthenticated ? (
+                    <>
+                      <div className="relative mb-6">
+                        <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Lock className="h-6 w-6 text-primary" />
+                        </div>
+                      </div>
+                      <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看頁面優化報告</p>
+                      <p className="text-sm text-muted-foreground mb-6">登入後即可新增頁面並進行完整的 GEO 分析</p>
+                      <div className="space-y-3">
+                        <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                          <User className="mr-2 h-4 w-4" />
+                          立即登入
+                        </Button>
+                        <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <p className="text-lg font-medium text-muted-foreground mb-2">尚無頁面</p>
+                      <p className="text-sm text-muted-foreground mb-4">開始新增頁面進行 GEO 分析</p>
+                      <Button onClick={() => setShowAddDialog(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        新增第一個頁面
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredPages.map((page) => (
+                  <div 
+                    key={page.id} 
+                    className="flex items-center justify-between p-4 border border-border rounded-lg bg-gradient-subtle hover:bg-gradient-subtle/80 transition-colors"
+                  >
+                    <div className="flex items-center space-x-4 flex-1">
+                      <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10">
+                        <FileText className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-1">
+                          <h3 className="font-medium">{page.title}</h3>
+                          <Badge variant="outline" className="text-xs">{page.type}</Badge>
+                          <Badge variant={page.traffic === "高" ? "default" : "secondary"} className="text-xs">
+                            {page.traffic}流量
+                          </Badge>
+                          {getStatusIcon(page.analysisStatus)}
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2 break-all">{page.url}</p>
+                        <div className="flex items-center space-x-4">
+                          {page.geoScore ? (
+                            <>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-muted-foreground">GEO:</span>
+                                <span className={`font-bold ${getScoreColor(page.geoScore)}`}>{page.geoScore} 分</span>
+                              </div>
+                              {page.estimatedImprovement && (
+                                <div className="flex items-center space-x-2">
+                                  <TrendingUp className="h-3 w-3 text-green-500" />
+                                  <span className="text-sm text-green-600">可提升至 {page.estimatedImprovement} 分</span>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">尚未分析</span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-1">
-                        <h3 className="font-medium">{page.title}</h3>
-                        <Badge variant="outline" className="text-xs">{page.type}</Badge>
-                        <Badge variant={page.traffic === "高" ? "default" : "secondary"} className="text-xs">
-                          {page.traffic}流量
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{page.url}</p>
-                      <div className="flex items-center space-x-4">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm text-muted-foreground">GEO:</span>
-                          <span className={`font-bold ${getScoreColor(page.geoScore)}`}>{page.geoScore} 分</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <TrendingUp className="h-3 w-3 text-green-500" />
-                          <span className="text-sm text-green-600">可提升至 {page.estimatedImprovement} 分</span>
-                        </div>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <Button 
+                        onClick={() => handleAnalyzePage(page)}
+                        disabled={isAnalyzing || page.analysisStatus === 'analyzing'}
+                        size="sm"
+                        variant="outline"
+                        className="border-border"
+                      >
+                        {page.analysisStatus === 'analyzing' ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                        )}
+                        分析
+                      </Button>
+                      <Button 
+                        onClick={() => setSelectedPage(page)}
+                        className="bg-primary text-primary-foreground shadow-glow"
+                      >
+                        查看詳情
+                      </Button>
+                      <Button 
+                        onClick={() => handleDeletePage(page.id, page.title)}
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        刪除
+                      </Button>
                     </div>
                   </div>
-                  <Button 
-                    onClick={() => setSelectedPage(page.id)}
-                    className="bg-primary text-primary-foreground shadow-glow"
-                  >
-                    立即優化
-                  </Button>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+      
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          loadPages(); // Reload data after login
+        }}
+      />
     </DashboardLayout>
   );
 };

@@ -4,6 +4,9 @@ import websiteRoutes from './website.routes';
 import scanRoutes from './scan.routes';
 import contentRoutes from './content.routes';
 import trackingRoutes from './tracking.routes';
+import trackingConfigRoutes from './trackingConfig.routes';
+import competitionRoutes from './competition.routes';
+import keywordRoutes from './keyword.routes';
 import dashboardRoutes from './dashboard.routes';
 
 const router = Router();
@@ -14,6 +17,11 @@ router.use('/websites', websiteRoutes);
 router.use('/scans', scanRoutes);
 router.use('/content', contentRoutes);
 router.use('/tracking', trackingRoutes);
+router.use('/tracking', trackingConfigRoutes);
+router.use('/tracking', competitionRoutes);
+router.use('/keywords', keywordRoutes);
+router.use('/tracking/keywords', keywordRoutes);
+router.use('/tracking/keyword-types', keywordRoutes);
 router.use('/dashboard', dashboardRoutes);
 
 // API health check
@@ -39,6 +47,7 @@ router.get('/', (req, res) => {
       scans: '/api/v1/scans',
       content: '/api/v1/content',
       tracking: '/api/v1/tracking',
+      keywords: '/api/v1/keywords',
       reports: '/api/v1/reports'
     }
   });

@@ -2,20 +2,29 @@
 
 ## 🏗️ 專案概述
 
-GEO Platform 的 new-frontend 是使用現代 React 技術棧構建的 AI 可見度追蹤平台前端應用。該應用採用組件化架構、暗色主題設計，並整合了完整的 UI 元件庫。
+GEO Platform 的 new-frontend 是使用現代 React 技術棧構建的 Generative Engine Optimization (GEO) 平台前端應用。該應用專注於 AI 可見度追蹤、內容優化和競爭分析，採用組件化架構、響應式暗色主題設計，並整合了完整的 UI 元件庫。
+
+### 核心功能
+- **內容優化分析**: 基於 Google Gemini 和 OpenAI 的 GEO 分數評估
+- **AI 可見度追蹤**: 多平台 AI 引擎監控 (ChatGPT, Gemini, Perplexity, Claude)
+- **競爭對手分析**: 競爭對手表現追蹤與比較
+- **關鍵字研究**: 關鍵字策略規劃與管理
+- **實時分析報告**: 詳細的優化建議與執行計劃
 
 ### 技術棧
 - **框架**: React 18.3.1 + TypeScript 5.8.3
 - **構建工具**: Vite 5.4.19
 - **路由**: React Router DOM 6.30.1
-- **狀態管理**: TanStack Query 5.83.0
+- **狀態管理**: TanStack Query 5.83.0 (伺服器狀態管理)
 - **UI 框架**: 
   - Tailwind CSS 3.4.17 (樣式系統)
-  - Radix UI (無樣式元件庫)
-  - shadcn/ui (元件庫)
-- **圖表**: Recharts 2.15.4
-- **表單**: React Hook Form 7.61.1 + Zod 3.25.76
-- **圖標**: Lucide React 0.462.0
+  - 50+ Radix UI 元件 (無樣式、可訪問性元件庫)
+  - shadcn/ui (設計系統)
+- **圖表**: Recharts 2.15.4 (響應式圖表庫)
+- **表單**: React Hook Form 7.61.1 + Zod 3.25.76 (表單驗證)
+- **圖標**: Lucide React 0.462.0 (現代化圖標庫)
+- **通知**: Sonner 1.7.4 (Toast 通知系統)
+- **HTTP 客戶端**: Axios 1.11.0 (API 請求處理)
 
 ## 📁 目錄結構
 
@@ -30,35 +39,49 @@ new-frontend/
 │   │   │   ├── MetricsGrid.tsx       # 指標卡片網格
 │   │   │   ├── ChartSection.tsx      # 圖表區域
 │   │   │   └── TabsSection.tsx       # 標籤區域
-│   │   └── ui/               # 基礎 UI 元件 (50+ 個元件)
-│   │       ├── button.tsx
-│   │       ├── card.tsx
-│   │       ├── dialog.tsx
-│   │       └── ... (shadcn/ui 元件庫)
+│   │   ├── auth/             # 認證相關元件
+│   │   │   └── AuthModal.tsx         # 認證模態框
+│   │   ├── ui/               # 基礎 UI 元件庫 (50+ 個元件)
+│   │   │   ├── button.tsx            # 按鈕元件
+│   │   │   ├── card.tsx              # 卡片元件
+│   │   │   ├── dialog.tsx            # 對話框元件
+│   │   │   ├── input.tsx             # 輸入框元件
+│   │   │   ├── select.tsx            # 下拉選擇器
+│   │   │   ├── badge.tsx             # 標籤元件
+│   │   │   ├── progress.tsx          # 進度條元件
+│   │   │   ├── tabs.tsx              # 標籤頁元件
+│   │   │   ├── toast.tsx             # 通知元件
+│   │   │   ├── chart.tsx             # 圖表元件
+│   │   │   └── ... (完整 shadcn/ui 元件庫)
+│   │   └── OptimizationResults.tsx  # 優化結果展示元件
 │   ├── pages/                # 頁面元件
 │   │   ├── Index.tsx         # 儀表板首頁
-│   │   ├── Tracking.tsx      # 網站掃描頁
-│   │   ├── Optimization.tsx  # 內容優化頁
+│   │   ├── Tracking.tsx      # 網站掃描追蹤頁
+│   │   ├── Optimization.tsx  # 內容優化分析頁
 │   │   ├── AISearch.tsx      # AI 可見度追蹤頁
 │   │   ├── Analytics.tsx     # 競爭分析頁
 │   │   ├── Research.tsx      # 關鍵字研究頁
 │   │   ├── Reporting.tsx     # 報告中心頁
 │   │   ├── Team.tsx          # 團隊管理頁
 │   │   ├── Settings.tsx      # 系統設定頁
-│   │   └── NotFound.tsx      # 404 頁面
-│   ├── hooks/                # 自定義 Hooks
-│   │   ├── use-mobile.tsx    # 響應式偵測
-│   │   └── use-toast.ts      # Toast 通知
-│   ├── lib/                  # 工具函數
+│   │   └── NotFound.tsx      # 404 錯誤頁面
+│   ├── lib/                  # 工具函數與 API
+│   │   ├── api/              # API 服務層
+│   │   │   ├── client.ts     # HTTP 客戶端配置
+│   │   │   ├── content.ts    # 內容優化 API
+│   │   │   └── aiSearch.ts   # AI 搜尋追蹤 API
 │   │   └── utils.ts          # 通用工具函數 (cn 函數)
-│   ├── App.tsx               # 主應用元件
-│   ├── main.tsx              # 應用入口
+│   ├── hooks/                # 自定義 React Hooks
+│   │   ├── use-mobile.tsx    # 響應式偵測 Hook
+│   │   └── use-toast.ts      # Toast 通知 Hook
+│   ├── App.tsx               # 主應用元件 (路由配置)
+│   ├── main.tsx              # 應用入口點 (React 18)
 │   └── index.css             # 全域樣式與設計系統
-├── public/                   # 靜態資源
-├── vite.config.ts           # Vite 配置
-├── tailwind.config.ts       # Tailwind 配置
-├── tsconfig.json            # TypeScript 配置
-└── package.json             # 專案配置
+├── public/                   # 靜態資源目錄
+├── vite.config.ts           # Vite 構建工具配置
+├── tailwind.config.ts       # Tailwind CSS 配置
+├── tsconfig.json            # TypeScript 編譯配置
+└── package.json             # 專案依賴與腳本配置
 ```
 
 ## 🎨 設計系統
@@ -101,137 +124,249 @@ new-frontend/
 主要佈局容器，管理側邊欄和主內容區域的佈局。
 
 **特性**:
-- 響應式側邊欄收合
-- 固定頭部導航
-- 可滾動的內容區域
-- 動態邊距調整
+- 響應式側邊欄收合機制
+- 固定頭部導航列
+- 可滾動的主內容區域
+- 動態邊距調整適配
+- 暗色主題優化設計
 
 ### 2. Sidebar
-左側導航欄，包含三個主要區塊：
+左側導航欄，包含三個主要功能區塊：
+
+**主要功能** 🏠:
+- 儀表板 (Dashboard)
+- 網站掃描追蹤 (Tracking) 
+- 內容優化分析 (Optimization)
+- AI 可見度追蹤 (AI Search)
+
+**分析工具** 📊:
+- 競爭對手分析 (Analytics)
+- 關鍵字研究 (Research) 
+- 報告中心 (Reporting)
+
+**管理設定** ⚙️:
+- 團隊管理 (Team)
+- 系統設定 (Settings)
+
+**特性**:
+- 可收合/展開切換
+- 活躍路由高亮顯示
+- 漸層升級提示卡片
+- 響應式導航適配
+
+### 3. Optimization 頁面
+內容優化分析的核心頁面，提供完整的 GEO 分析功能：
 
 **主要功能**:
-- 儀表板
-- 網站掃描
-- 內容優化
-- AI 可見度追蹤
+- 頁面管理：新增、編輯、刪除要分析的頁面
+- GEO 分析：整合 Google Gemini 和 OpenAI 進行內容分析  
+- 實時狀態：顯示分析進度 (pending/analyzing/completed/failed)
+- 篩選系統：按 GEO 分數、流量等級、頁面類型篩選
+- 詳細檢視：個別頁面的深度分析結果
 
-**分析工具**:
-- 競爭分析
-- 關鍵字研究
-- 報告中心
+**分析指標**:
+- GEO 分數評估 (0-100)
+- 預估改善潛力
+- 問題識別與建議
+- 最後分析時間追蹤
 
-**設定功能**:
-- 團隊管理
-- 系統設定
+### 4. OptimizationResults 元件
+優化結果展示的模態對話框元件：
 
-**特性**:
-- 可收合/展開
-- 活躍項目高亮
-- 漸層升級提示卡片
+**功能特性**:
+- 響應式全屏模態設計
+- ESC 鍵關閉支援
+- 分數視覺化展示
+- 分類優化建議 (技術健康、內容品質、AI 可見度)
+- 執行計劃時間軸
+- 一鍵複製建議內容
+- 報告下載功能
 
-### 3. MetricsGrid
-顯示關鍵指標的卡片網格，包含：
-- AI 可見度分數
-- 品牌曝光次數
-- 引用排名
-- 優化提醒
+**分析維度**:
+- **技術健康** (40%): HTTPS、結構化資料、響應時間
+- **內容品質** (30%): 字數、圖片、標題結構
+- **AI 可見度** (30%): Meta 描述、FAQ、Schema 標記
 
-**特性**:
-- 動態圖標顏色
-- 趨勢指標（上升/下降）
-- 懸停動畫效果
-- 響應式網格佈局
+### 5. API 服務層
+完整的 TypeScript API 服務抽象：
 
-### 4. ChartSection
-圖表展示區域，使用 Recharts 庫渲染：
-- 線圖：顯示趨勢數據
-- 環形圖：展示比例分佈
+**contentService**:
+- 頁面 CRUD 操作 (getPages, addPage, updatePage, deletePage)
+- GEO 分析功能 (analyzePage, batchAnalyzePages)
+- 優化建議生成 (getOptimizationSuggestions)
+- 內容分析服務 (analyzeContent)
 
-### 5. TabsSection
-標籤內容區域，用於分組展示不同類型的資訊。
+**aiSearchService**:
+- 關鍵字管理 (CRUD 操作)
+- 追蹤配置管理
+- 競爭對手分析
+- 平台設定管理 (ChatGPT, Gemini, Perplexity, Claude)
+
+### 6. 響應式設計系統
+基於 Tailwind CSS 的完整響應式系統：
+
+**斷點設計**:
+- `sm`: 640px+ (手機橫屏)
+- `md`: 768px+ (平板)
+- `lg`: 1024px+ (桌面)
+- `xl`: 1280px+ (大螢幕)
+- `2xl`: 1536px+ (超大螢幕)
+
+**自適應特性**:
+- 側邊欄自動收合
+- 卡片網格自適應排列
+- 表格水平滾動
+- 模態框尺寸調整
 
 ## 🔧 路由架構
 
-```javascript
+```typescript
+// App.tsx - 路由配置
 <Routes>
-  <Route path="/" element={<Index />} />              // 儀表板首頁
-  <Route path="/tracking" element={<Tracking />} />   // 網站掃描
-  <Route path="/optimization" element={<Optimization />} />  // 內容優化
-  <Route path="/ai-search" element={<AISearch />} />  // AI 追蹤
-  <Route path="/analytics" element={<Analytics />} /> // 競爭分析
-  <Route path="/research" element={<Research />} />   // 關鍵字研究
-  <Route path="/reporting" element={<Reporting />} /> // 報告中心
-  <Route path="/team" element={<Team />} />          // 團隊管理
-  <Route path="/settings" element={<Settings />} />   // 系統設定
-  <Route path="*" element={<NotFound />} />          // 404 頁面
+  <Route path="/" element={<Index />} />                    // 儀表板首頁 - GEO 概覽
+  <Route path="/tracking" element={<Tracking />} />         // 網站掃描追蹤
+  <Route path="/optimization" element={<Optimization />} /> // 內容優化分析 ⭐
+  <Route path="/ai-search" element={<AISearch />} />        // AI 可見度追蹤
+  <Route path="/analytics" element={<Analytics />} />       // 競爭對手分析
+  <Route path="/research" element={<Research />} />         // 關鍵字策略研究
+  <Route path="/reporting" element={<Reporting />} />       // 分析報告中心
+  <Route path="/team" element={<Team />} />                 // 團隊協作管理
+  <Route path="/settings" element={<Settings />} />         // 系統偏好設定
+  <Route path="*" element={<NotFound />} />                // 404 錯誤處理
 </Routes>
 ```
 
+**路由特性**:
+- 基於 React Router DOM v6.30.1
+- 支援巢狀路由與動態路由
+- 404 錯誤頁面處理
+- 路由守衛與權限控制 (規劃中)
+- SEO 友善的 URL 結構
+
 ## 📦 主要依賴
 
-### 核心框架
-- **React**: UI 框架
-- **TypeScript**: 類型安全
-- **Vite**: 快速開發伺服器和構建工具
+### 核心框架層
+- **React 18.3.1**: 現代化 UI 框架，支援並發特性
+- **TypeScript 5.8.3**: 靜態類型檢查與 IntelliSense
+- **Vite 5.4.19**: 極速開發伺服器與 ESM 構建工具
 
-### UI 元件庫
-- **@radix-ui/react-***: 50+ 個無樣式、可訪問的 UI 元件
-- **shadcn/ui**: 基於 Radix UI 的元件庫
-- **lucide-react**: 現代化圖標庫
+### UI 元件生態
+- **@radix-ui/react-***: 50+ 個無樣式、完全可訪問的 UI 基礎元件
+- **shadcn/ui**: 基於 Radix UI 構建的現代化設計系統
+- **lucide-react 0.462.0**: 1000+ 個一致性圖標庫
+- **class-variance-authority**: 元件變體與條件樣式管理
 
-### 樣式系統
-- **Tailwind CSS**: 實用優先的 CSS 框架
-- **tailwindcss-animate**: 動畫擴展
-- **class-variance-authority**: 元件變體管理
-- **clsx + tailwind-merge**: 類名管理工具
+### 樣式與動畫系統
+- **Tailwind CSS 3.4.17**: Utility-first CSS 框架
+- **tailwindcss-animate 1.0.7**: CSS 動畫與過渡效果
+- **@tailwindcss/typography 0.5.16**: 豐富的文字排版樣式
+- **clsx 2.1.1 + tailwind-merge 2.6.0**: 智能類名合併工具
 
-### 資料與表單
-- **@tanstack/react-query**: 伺服器狀態管理
-- **react-hook-form**: 高性能表單庫
-- **zod**: 架構驗證
-- **@hookform/resolvers**: 表單驗證整合
+### 資料管理與表單
+- **@tanstack/react-query 5.83.0**: 強大的伺服器狀態管理
+- **axios 1.11.0**: Promise 基礎的 HTTP 客戶端
+- **react-hook-form 7.61.1**: 高效能、最少重渲染的表單庫
+- **zod 3.25.76**: TypeScript 優先的 schema 驗證
+- **@hookform/resolvers 3.10.0**: 表單驗證器整合層
 
-### 其他工具
-- **recharts**: 圖表庫
-- **date-fns**: 日期處理
-- **sonner**: Toast 通知
-- **cmdk**: 命令選單
+### 視覺化與互動
+- **recharts 2.15.4**: React 響應式圖表庫
+- **date-fns 3.6.0**: 現代化 JavaScript 日期處理
+- **sonner 1.7.4**: 優雅的 Toast 通知系統
+- **cmdk 1.1.1**: 快速命令面板元件
+- **embla-carousel-react 8.6.0**: 現代化輪播元件
+- **react-resizable-panels 2.1.9**: 可調整大小的面板佈局
+
+### 開發工具鏈
+- **@vitejs/plugin-react-swc 3.11.0**: SWC 編譯器整合
+- **eslint 9.32.0 + typescript-eslint 8.38.0**: 程式碼品質檢查
+- **autoprefixer 10.4.21**: 自動 CSS 前綴
+- **lovable-tagger 1.1.9**: 開發輔助標記工具
 
 ## 🚀 開發指令
 
 ```bash
-# 開發模式 (運行在 http://localhost:8081)
+# 開發模式 (運行在 http://localhost:5173，Vite 預設)
 npm run dev
 
-# 生產構建
+# 生產環境構建 (最佳化輸出)
 npm run build
 
-# 開發構建
+# 開發環境構建 (保留 debug 資訊)
 npm run build:dev
 
-# 預覽構建結果
+# 本地預覽構建結果
 npm run preview
 
-# 代碼檢查
+# ESLint 程式碼檢查
 npm run lint
+
+# 安裝專案依賴
+npm install
 ```
 
-## 🌟 設計特點
+**構建輸出**:
+- 生產構建：`dist/` 目錄，包含最佳化的靜態檔案
+- 開發構建：保留 source map 與 debug 資訊
+- 自動 CSS 最佳化與 dead code elimination
+- 現代化 ES 模組輸出格式
 
-1. **暗色主題優先**: 整個應用採用深色設計，減少眼睛疲勞
-2. **漸層與發光效果**: 使用紫藍漸層作為品牌識別
-3. **微動畫**: 所有互動元素都有細微的過渡動畫
-4. **響應式設計**: 適配各種螢幕尺寸
-5. **模組化元件**: 高度可重用的元件系統
-6. **類型安全**: 完整的 TypeScript 支援
-7. **可訪問性**: 基於 Radix UI 的無障礙設計
+## 🌟 設計特點與使用者體驗
 
-## 🔄 狀態管理
+### 視覺設計
+1. **暗色主題優先**: 深色背景 (`hsl(220 27% 8%)`) 減少眼睛疲勞，適合長時間使用
+2. **漸層品牌識別**: 紫色到藍色的 135° 漸層 (`hsl(262 83% 58%)` → `hsl(213 94% 68%)`)
+3. **發光效果系統**: `shadow-glow` 用於強調重要互動元素
+4. **微動畫交互**: 300ms cubic-bezier 過渡，提升操作反饋
 
-- **伺服器狀態**: TanStack Query 管理 API 請求和快取
-- **表單狀態**: React Hook Form 處理表單邏輯
-- **本地狀態**: React useState/useReducer 處理元件狀態
-- **路由狀態**: React Router DOM 管理導航狀態
+### 使用者體驗
+5. **響應式優先**: 從手機到 4K 螢幕的完整適配
+6. **直覺式導航**: 側邊欄分類清晰，路由狀態高亮
+7. **實時狀態反饋**: Loading、Success、Error 狀態的視覺化呈現
+8. **鍵盤支援**: ESC 關閉模態框、Tab 焦點管理
+
+### 技術特性
+9. **模組化架構**: 高度可重用的元件系統，便於維護擴展
+10. **TypeScript 全覆蓋**: API 介面、元件 Props、狀態管理完全類型化
+11. **無障礙設計**: 基於 Radix UI，支援螢幕閱讀器、鍵盤導航
+12. **性能最佳化**: TanStack Query 快取、React 18 並發特性、Vite 極速構建
+
+## 🔄 狀態管理架構
+
+### 伺服器狀態管理
+- **TanStack Query 5.83.0**: 
+  - API 請求快取與同步
+  - 樂觀更新與錯誤重試
+  - 背景重新驗證
+  - 分頁與無限查詢支援
+
+### 表單狀態管理  
+- **React Hook Form 7.61.1**:
+  - 最少重渲染策略
+  - 即時驗證與錯誤處理
+  - 與 Zod schema 深度整合
+  - 支援複雜表單邏輯
+
+### 本地狀態管理
+- **React Built-in Hooks**:
+  - `useState`: 元件內部狀態
+  - `useReducer`: 複雜狀態邏輯
+  - `useContext`: 跨元件資料共享
+  - 自定義 Hooks: `use-mobile`、`use-toast`
+
+### 導航狀態管理
+- **React Router DOM 6.30.1**:
+  - 宣告式路由定義
+  - 程序化導航控制
+  - 路由參數與查詢字串
+  - 巢狀路由支援
+
+### 通知狀態管理
+- **Sonner Toast System**:
+  - 全域通知狀態
+  - 多類型通知 (success, error, info, warning)
+  - 自動消失與手動關閉
+  - 位置與動畫自定義
 
 ## 📱 響應式設計
 
@@ -242,21 +377,95 @@ npm run lint
 - `xl`: 1280px+
 - `2xl`: 1536px+
 
-## 🔐 API 整合準備
+## 🔐 API 整合架構
 
-前端已準備好與後端 API (https://api-geo.blitzgame.site) 整合：
-- TanStack Query 用於資料獲取和快取
-- 已配置的 QueryClient
-- 支援 JWT 認證 (Bearer Token)
-- 組織級別的存取控制 (X-Organization-ID)
+### 後端 API 整合
+**API Base URL**: `https://api-geo.blitzgame.site/api/v1`
 
-## 📝 待辦事項
+### HTTP 客戶端配置
+```typescript
+// src/lib/api/client.ts - Axios 配置
+const apiClient = axios.create({
+  baseURL: process.env.REACT_APP_API_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
 
-- [ ] 整合後端 API 端點
-- [ ] 實現使用者認證流程
-- [ ] 添加資料視覺化元件
-- [ ] 完善錯誤處理機制
-- [ ] 添加載入狀態指示器
-- [ ] 實現多語言支援
-- [ ] 添加單元測試
-- [ ] 優化 SEO 和性能
+// 請求攔截器：自動添加認證 Token
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  const orgId = localStorage.getItem('organizationId');
+  if (orgId) {
+    config.headers['X-Organization-ID'] = orgId;
+  }
+  
+  return config;
+});
+```
+
+### API 服務層架構
+- **contentService**: 內容優化相關 API (11 個端點)
+- **aiSearchService**: AI 搜尋追蹤相關 API (15 個端點)
+- **認證服務**: JWT Token 管理與刷新 (規劃中)
+- **組織服務**: 多租戶組織管理 (規劃中)
+
+### 資料流架構
+```
+🔄 React Component → API Service → HTTP Client → Backend API
+                    ↓
+📦 TanStack Query ← Response Data ← API Response
+```
+
+### 錯誤處理機制
+- HTTP 狀態碼統一處理
+- API 錯誤訊息本地化
+- 網路錯誤自動重試
+- 使用者友善的錯誤提示
+
+### 認證與授權
+- **JWT Bearer Token**: 使用者身份驗證
+- **組織級別控制**: `X-Organization-ID` header
+- **Token 自動刷新**: 即將到期時自動更新
+- **權限控制**: 基於角色的路由與功能存取 (規劃中)
+
+## 🚀 功能實現狀態
+
+### ✅ 已完成功能
+- [x] **完整 UI 設計系統**: 50+ shadcn/ui 元件，暗色主題
+- [x] **內容優化模組**: 頁面管理、GEO 分析、Gemini/OpenAI 整合
+- [x] **API 服務層**: 完整的 TypeScript API 抽象層
+- [x] **響應式佈局**: 手機到桌面的完整適配
+- [x] **狀態管理**: TanStack Query + React Hook Form 整合
+- [x] **優化結果展示**: 詳細分析報告與執行計劃
+- [x] **實時狀態反饋**: Loading/Success/Error 狀態管理
+- [x] **Toast 通知系統**: Sonner 整合
+
+### 🔄 開發中功能
+- [ ] **使用者認證系統**: JWT 登入/註冊流程
+- [ ] **儀表板資料視覺化**: 圖表與指標展示
+- [ ] **AI 搜尋追蹤**: 多平台監控介面
+- [ ] **競爭對手分析**: 競爭力比較圖表
+- [ ] **關鍵字研究工具**: 關鍵字管理與分析
+
+### 📋 規劃中功能
+- [ ] **多語言國際化**: i18n 支援 (繁中/英文)
+- [ ] **深色/淺色主題切換**: 使用者偏好設定
+- [ ] **離線功能支援**: Service Worker + 資料快取
+- [ ] **即時通知**: WebSocket 整合
+- [ ] **單元測試覆蓋**: Jest + React Testing Library
+- [ ] **E2E 測試**: Playwright 整合
+- [ ] **SEO 最佳化**: Meta 標籤與 OpenGraph
+- [ ] **性能監控**: Web Vitals 追蹤
+
+### 🎯 技術債務與最佳化
+- [ ] **程式碼分割**: 路由層級的 lazy loading
+- [ ] **Bundle 分析**: 依賴大小最佳化
+- [ ] **快取策略**: API 回應快取最佳化
+- [ ] **無障礙測試**: axe-core 整合
+- [ ] **TypeScript 嚴格模式**: 提升類型安全性

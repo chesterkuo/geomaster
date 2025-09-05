@@ -22,41 +22,174 @@ import {
   Clock,
   X
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { aiSearchService, Keyword, Competitor, TrackingSettings, PlatformSettings } from "@/lib/api/aiSearch";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 const AISearch = () => {
-  const [brandKeywords, setBrandKeywords] = useState(["公司名稱", "產品名稱"]);
-  const [industryKeywords, setIndustryKeywords] = useState(["CRM 軟體", "專案管理"]);
-  const [competitors, setCompetitors] = useState(["Competitor A", "Competitor B"]);
+  const { isAuthenticated } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [keywords, setKeywords] = useState<Keyword[]>([]);
+  const [competitors, setCompetitors] = useState<Competitor[]>([]);
+  const [trackingSettings, setTrackingSettings] = useState<TrackingSettings | null>(null);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings[]>([]);
   const [newKeyword, setNewKeyword] = useState("");
+  const [newCompetitor, setNewCompetitor] = useState("");
+  const [loading, setLoading] = useState(true);
   const [selectedPlatforms, setSelectedPlatforms] = useState({
     chatgpt: true,
     gemini: true,
-    perplexity: true
+    perplexity: true,
+    claude: false
   });
 
-  const addKeyword = (type, value) => {
-    if (!value.trim()) return;
-    
-    if (type === "brand") {
-      setBrandKeywords([...brandKeywords, value]);
-    } else if (type === "industry") {
-      setIndustryKeywords([...industryKeywords, value]);
-    } else if (type === "competitor") {
-      setCompetitors([...competitors, value]);
+  // Load initial data
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      if (!isAuthenticated) {
+        // Show preview/mock data when not authenticated
+        setTimeout(() => {
+          setKeywords([
+            { id: '1', keyword: '專案管理', intent: 'informational', isActive: true, createdAt: '2024-01-01' },
+            { id: '2', keyword: '團隊協作工具', intent: 'commercial', isActive: true, createdAt: '2024-01-01' },
+            { id: '3', keyword: 'Scrum 方法論', intent: 'informational', isActive: true, createdAt: '2024-01-01' },
+          ]);
+          setCompetitors([
+            { id: '1', name: 'Competitor A', websiteUrl: 'https://competitor-a.com', isActive: true, createdAt: '2024-01-01' },
+            { id: '2', name: 'Competitor B', websiteUrl: 'https://competitor-b.com', isActive: true, createdAt: '2024-01-01' },
+          ]);
+          setLoading(false);
+        }, 1000);
+        return;
+      }
+
+      // Load real data for authenticated users
+      const [keywordsRes, competitorsRes, trackingRes, platformsRes] = await Promise.all([
+        aiSearchService.getKeywords(),
+        aiSearchService.getCompetitors(),
+        aiSearchService.getTrackingSettings(),
+        aiSearchService.getPlatformSettings()
+      ]);
+
+      if (keywordsRes.success) setKeywords(keywordsRes.data.keywords || []);
+      if (competitorsRes.success) setCompetitors(competitorsRes.data.competitors || []);
+      if (trackingRes.success) setTrackingSettings(trackingRes.data);
+      if (platformsRes.success) {
+        setPlatformSettings(platformsRes.data);
+        // Update selected platforms based on API data
+        const platformMap: any = {};
+        platformsRes.data.forEach(p => {
+          platformMap[p.platform] = p.enabled;
+        });
+        setSelectedPlatforms(prev => ({ ...prev, ...platformMap }));
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast.error('Failed to load tracking data');
+    } finally {
+      setLoading(false);
     }
-    setNewKeyword("");
   };
 
-  const removeKeyword = (type, index) => {
-    if (type === "brand") {
-      setBrandKeywords(brandKeywords.filter((_, i) => i !== index));
-    } else if (type === "industry") {
-      setIndustryKeywords(industryKeywords.filter((_, i) => i !== index));
-    } else if (type === "competitor") {
-      setCompetitors(competitors.filter((_, i) => i !== index));
+  const addKeyword = async (intent: string) => {
+    if (!newKeyword.trim()) return;
+    
+    try {
+      const response = await aiSearchService.createKeyword({
+        keyword: newKeyword,
+        intent: intent as any
+      });
+      
+      if (response.success) {
+        setKeywords([...keywords, response.data]);
+        setNewKeyword("");
+        toast.success('Keyword added successfully');
+      }
+    } catch (error) {
+      console.error('Error adding keyword:', error);
+      toast.error('Failed to add keyword');
     }
   };
+
+  const removeKeyword = async (keywordId: string) => {
+    try {
+      const response = await aiSearchService.deleteKeyword(keywordId);
+      if (response.success) {
+        setKeywords(keywords.filter(k => k.id !== keywordId));
+        toast.success('Keyword removed successfully');
+      }
+    } catch (error) {
+      console.error('Error removing keyword:', error);
+      toast.error('Failed to remove keyword');
+    }
+  };
+
+  const addCompetitor = async () => {
+    if (!newCompetitor.trim()) return;
+    
+    try {
+      const response = await aiSearchService.addCompetitor({
+        websiteUrl: newCompetitor,
+        name: newCompetitor
+      });
+      
+      if (response.success) {
+        setCompetitors([...competitors, response.data]);
+        setNewCompetitor("");
+        toast.success('Competitor added successfully');
+      }
+    } catch (error) {
+      console.error('Error adding competitor:', error);
+      toast.error('Failed to add competitor');
+    }
+  };
+
+  const removeCompetitor = async (competitorId: string) => {
+    try {
+      const response = await aiSearchService.removeCompetitor(competitorId);
+      if (response.success) {
+        setCompetitors(competitors.filter(c => c.id !== competitorId));
+        toast.success('Competitor removed successfully');
+      }
+    } catch (error) {
+      console.error('Error removing competitor:', error);
+      toast.error('Failed to remove competitor');
+    }
+  };
+
+  const updateTrackingSettings = async (frequency: string) => {
+    try {
+      const enabledPlatforms = Object.entries(selectedPlatforms)
+        .filter(([_, enabled]) => enabled)
+        .map(([platform]) => platform);
+      
+      const response = await aiSearchService.updateTrackingSettings({
+        trackingEnabled: true,
+        trackingFrequency: frequency as any,
+        platforms: enabledPlatforms
+      });
+      
+      if (response.success) {
+        setTrackingSettings(response.data);
+        toast.success('Tracking settings updated');
+      }
+    } catch (error) {
+      console.error('Error updating tracking settings:', error);
+      toast.error('Failed to update tracking settings');
+    }
+  };
+
+  // Get keywords by intent
+  const getBrandKeywords = () => keywords.filter(k => k.intent === 'commercial' || k.intent === 'navigational');
+  const getIndustryKeywords = () => keywords.filter(k => k.intent === 'informational' || k.intent === 'transactional');
 
   const trackingData = {
     brandMentionRate: { value: 23, change: 5, trend: "up" },
@@ -81,9 +214,16 @@ const AISearch = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">AI 可見度追蹤</h1>
-            <p className="text-muted-foreground">監控您的品牌在 AI 平台上的可見度表現</p>
+            <p className="text-muted-foreground">
+              監控您的品牌在 AI 平台上的可見度表現
+              {!isAuthenticated && <span className="ml-2 text-amber-600">• 需要登入查看完整報告</span>}
+            </p>
           </div>
-          <Button className="bg-primary text-primary-foreground">
+          <Button 
+            className="bg-primary text-primary-foreground" 
+            disabled={!isAuthenticated}
+            onClick={isAuthenticated ? undefined : () => setShowAuthModal(true)}
+          >
             <Settings className="mr-2 h-4 w-4" />
             追蹤設定
           </Button>
@@ -107,14 +247,14 @@ const AISearch = () => {
                 <div className="space-y-3">
                   <h4 className="font-medium">品牌關鍵字：</h4>
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {brandKeywords.map((keyword, index) => (
-                      <Badge key={index} variant="default" className="flex items-center gap-2">
-                        {keyword}
+                    {getBrandKeywords().map((keyword) => (
+                      <Badge key={keyword.id} variant="default" className="flex items-center gap-2">
+                        {keyword.keyword}
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-4 w-4 p-0 hover:bg-destructive"
-                          onClick={() => removeKeyword("brand", index)}
+                          onClick={() => removeKeyword(keyword.id)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -126,9 +266,9 @@ const AISearch = () => {
                       placeholder="新增品牌關鍵字"
                       value={newKeyword}
                       onChange={(e) => setNewKeyword(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addKeyword("brand", newKeyword)}
+                      onKeyPress={(e) => e.key === 'Enter' && addKeyword('commercial')}
                     />
-                    <Button onClick={() => addKeyword("brand", newKeyword)}>
+                    <Button onClick={() => isAuthenticated ? addKeyword('commercial') : setShowAuthModal(true)}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -138,14 +278,14 @@ const AISearch = () => {
                 <div className="space-y-3">
                   <h4 className="font-medium">產業關鍵字：</h4>
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {industryKeywords.map((keyword, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-2">
-                        {keyword}
+                    {getIndustryKeywords().map((keyword) => (
+                      <Badge key={keyword.id} variant="secondary" className="flex items-center gap-2">
+                        {keyword.keyword}
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-4 w-4 p-0 hover:bg-destructive"
-                          onClick={() => removeKeyword("industry", index)}
+                          onClick={() => removeKeyword(keyword.id)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -157,9 +297,9 @@ const AISearch = () => {
                       placeholder="新增產業關鍵字"
                       value={newKeyword}
                       onChange={(e) => setNewKeyword(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addKeyword("industry", newKeyword)}
+                      onKeyPress={(e) => e.key === 'Enter' && addKeyword('informational')}
                     />
-                    <Button onClick={() => addKeyword("industry", newKeyword)}>
+                    <Button onClick={() => isAuthenticated ? addKeyword('informational') : setShowAuthModal(true)}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -169,14 +309,14 @@ const AISearch = () => {
                 <div className="space-y-3">
                   <h4 className="font-medium">競爭對手：</h4>
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {competitors.map((competitor, index) => (
-                      <Badge key={index} variant="outline" className="flex items-center gap-2">
-                        {competitor}
+                    {competitors.map((competitor) => (
+                      <Badge key={competitor.id} variant="outline" className="flex items-center gap-2">
+                        {competitor.name || competitor.domain}
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-4 w-4 p-0 hover:bg-destructive"
-                          onClick={() => removeKeyword("competitor", index)}
+                          onClick={() => removeCompetitor(competitor.id)}
                         >
                           <X className="h-3 w-3" />
                         </Button>
@@ -185,12 +325,12 @@ const AISearch = () => {
                   </div>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="新增競爭對手"
-                      value={newKeyword}
-                      onChange={(e) => setNewKeyword(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addKeyword("competitor", newKeyword)}
+                      placeholder="新增競爭對手 (URL)"
+                      value={newCompetitor}
+                      onChange={(e) => setNewCompetitor(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addCompetitor()}
                     />
-                    <Button onClick={() => addKeyword("competitor", newKeyword)}>
+                    <Button onClick={() => isAuthenticated ? addCompetitor() : setShowAuthModal(true)}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -200,14 +340,17 @@ const AISearch = () => {
                   {/* 追蹤頻率 */}
                   <div className="space-y-3">
                     <h4 className="font-medium">追蹤頻率：</h4>
-                    <Select defaultValue="daily">
+                    <Select 
+                      defaultValue={trackingSettings?.trackingFrequency || "daily"}
+                      onValueChange={(value) => updateTrackingSettings(value)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="daily">每日</SelectItem>
                         <SelectItem value="weekly">每週</SelectItem>
-                        <SelectItem value="monthly">每月</SelectItem>
+                        <SelectItem value="hourly">每小時</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -245,6 +388,16 @@ const AISearch = () => {
                           }
                         />
                         <label htmlFor="perplexity" className="text-sm">Perplexity</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="claude" 
+                          checked={selectedPlatforms.claude}
+                          onCheckedChange={(checked) => 
+                            setSelectedPlatforms({...selectedPlatforms, claude: checked as boolean})
+                          }
+                        />
+                        <label htmlFor="claude" className="text-sm">Claude</label>
                       </div>
                     </div>
                   </div>
@@ -426,6 +579,15 @@ const AISearch = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          loadData(); // Reload data after login
+        }}
+      />
     </DashboardLayout>
   );
 };
