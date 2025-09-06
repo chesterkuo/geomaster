@@ -20,7 +20,10 @@ import {
   MessageSquare,
   Star,
   Clock,
-  X
+  X,
+  Lock,
+  User,
+  Loader2
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { aiSearchService, Keyword, Competitor, TrackingSettings, PlatformSettings } from "@/lib/api/aiSearch";
@@ -237,11 +240,35 @@ const AISearch = () => {
           </TabsList>
 
           <TabsContent value="setup" className="space-y-6">
-            <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle>關鍵字追蹤設定</CardTitle>
-                <CardDescription>設定您要追蹤的品牌、產業關鍵字和競爭對手</CardDescription>
-              </CardHeader>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <Settings className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能設定AI追蹤</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可設定品牌關鍵字、競爭對手和追蹤頻率</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card className="bg-gradient-card border-border">
+                <CardHeader>
+                  <CardTitle>關鍵字追蹤設定</CardTitle>
+                  <CardDescription>設定您要追蹤的品牌、產業關鍵字和競爭對手</CardDescription>
+                </CardHeader>
               <CardContent className="space-y-6">
                 {/* 品牌關鍵字 */}
                 <div className="space-y-3">
@@ -409,11 +436,37 @@ const AISearch = () => {
                 </Button>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
-            {/* 總覽指標 */}
-            <div className="grid gap-4 md:grid-cols-3">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看可見度報告</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看品牌提及率、引用位置和情感分析報告</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* 總覽指標 */}
+                <div className="grid gap-4 md:grid-cols-3">
               <Card className="bg-gradient-card border-border">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">品牌提及率</CardTitle>
@@ -520,14 +573,40 @@ const AISearch = () => {
                 </div>
               </CardContent>
             </Card>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="analysis" className="space-y-6">
-            <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle>競爭分析</CardTitle>
-                <CardDescription>您與競爭對手在 AI 平台上的表現比較</CardDescription>
-              </CardHeader>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看競爭分析</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可分析您與競爭對手的表現比較和市場洞察</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card className="bg-gradient-card border-border">
+                <CardHeader>
+                  <CardTitle>競爭分析</CardTitle>
+                  <CardDescription>您與競爭對手在 AI 平台上的表現比較</CardDescription>
+                </CardHeader>
               <CardContent>
                 <div className="space-y-6">
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -576,6 +655,7 @@ const AISearch = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

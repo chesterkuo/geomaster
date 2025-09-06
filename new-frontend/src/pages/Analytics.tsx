@@ -15,10 +15,20 @@ import {
   Monitor,
   Globe,
   Download,
-  Calendar
+  Calendar,
+  Lock,
+  User,
+  Loader2
 } from "lucide-react";
+import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 const Analytics = () => {
+  const { isAuthenticated } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const trafficSources = [
     { source: "自然搜尋", percentage: 45.2, visitors: "12,847", color: "bg-blue-500" },
     { source: "直接流量", percentage: 28.7, visitors: "8,162", color: "bg-green-500" },
@@ -71,7 +81,32 @@ const Analytics = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看數據總覽</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看詳細的網站分析數據和關鍵指標</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card className="bg-gradient-card border-border">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">總訪客數</CardTitle>
@@ -210,10 +245,36 @@ const Analytics = () => {
                 </div>
               </CardContent>
             </Card>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="traffic">
-            <Card className="bg-gradient-card border-border">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <TrendingUp className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看流量分析</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看詳細的流量趨勢和來源分析</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle>流量趨勢分析</CardTitle>
                 <CardDescription>詳細的網站流量數據和趨勢</CardDescription>
@@ -225,10 +286,35 @@ const Analytics = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="behavior">
-            <Card className="bg-gradient-card border-border">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <MousePointer className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看用戶行為</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可分析用戶在網站上的互動模式</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle>用戶行為分析</CardTitle>
                 <CardDescription>分析用戶在網站上的互動模式</CardDescription>
@@ -240,10 +326,35 @@ const Analytics = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="conversion">
-            <Card className="bg-gradient-card border-border">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <Eye className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看轉換分析</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可追蹤和分析關鍵轉換指標</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle>轉換率分析</CardTitle>
                 <CardDescription>追蹤和分析關鍵轉換指標</CardDescription>
@@ -265,10 +376,35 @@ const Analytics = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="reports">
-            <Card className="bg-gradient-card border-border">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用報告中心</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可設定和管理分析報告</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle>自動化報告</CardTitle>
                 <CardDescription>設定和管理您的分析報告</CardDescription>
@@ -294,9 +430,19 @@ const Analytics = () => {
                 </div>
               </CardContent>
             </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>
+      
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          setLoading(false); // Reload complete after login
+        }}
+      />
     </DashboardLayout>
   );
 };

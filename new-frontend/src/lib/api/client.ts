@@ -1,8 +1,15 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 
 // API 配置
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api-geo.blitzgame.site';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.74.100.10:8000';
 const API_VERSION = '/api/v1';
+
+// Debug log to verify environment variable
+console.log('🔧 API Client Configuration:', {
+  VITE_API_URL: import.meta.env.VITE_API_URL,
+  API_BASE_URL,
+  FULL_API_URL: `${API_BASE_URL}${API_VERSION}`
+});
 
 // 創建 axios 實例
 const apiClient: AxiosInstance = axios.create({

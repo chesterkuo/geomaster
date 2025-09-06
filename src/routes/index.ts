@@ -8,6 +8,8 @@ import trackingConfigRoutes from './trackingConfig.routes';
 import competitionRoutes from './competition.routes';
 import keywordRoutes from './keyword.routes';
 import dashboardRoutes from './dashboard.routes';
+import teamRoutes from './team.routes';
+import settingsRoutes from './settings.routes';
 
 const router = Router();
 
@@ -23,6 +25,8 @@ router.use('/keywords', keywordRoutes);
 router.use('/tracking/keywords', keywordRoutes);
 router.use('/tracking/keyword-types', keywordRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/team', teamRoutes);
+router.use('/settings', settingsRoutes);
 
 // API health check
 router.get('/health', (req, res) => {
@@ -48,6 +52,8 @@ router.get('/', (req, res) => {
       content: '/api/v1/content',
       tracking: '/api/v1/tracking',
       keywords: '/api/v1/keywords',
+      team: '/api/v1/team',
+      settings: '/api/v1/settings',
       reports: '/api/v1/reports'
     }
   });

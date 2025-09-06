@@ -12,7 +12,7 @@
 
 ## 🧪 測試腳本概覽
 
-我們提供了兩個測試腳本來驗證 API 功能：
+我們提供了三個測試腳本來驗證 API 功能：
 
 ### 1. `test-api-simple.js` - 簡單測試腳本 ⭐ **推薦**
 - **優點**: 無需額外依賴，僅使用 Node.js 內建模組
@@ -23,6 +23,12 @@
 - **優點**: 功能更全面，支援更多測試選項
 - **依賴**: 需要安裝 `axios` 和 `colors` 套件
 - **特色**: 更詳細的測試報告和靈活的測試選項
+
+### 3. `test-team-settings-comprehensive.js` - 團隊與設定 API 測試套件 ✅ **新增**
+- **優點**: 專門測試團隊管理和設定 API 功能
+- **涵蓋**: 38個綜合測試案例，100% 成功率
+- **特色**: 權限檢查、邊界案例、詳細錯誤處理
+- **適用**: 驗證團隊管理、用戶設定、2FA 安全功能
 
 ## 🚀 快速開始
 
@@ -46,7 +52,14 @@ npm install
 npm run test:api
 ```
 
-### 方法三：Gemini API 專項測試 ✅ 新增
+### 方法三：團隊與設定 API 測試 ✅ 新增
+
+```bash
+# 測試團隊管理和設定 API
+npm run test:api:team-settings
+```
+
+### 方法四：Gemini API 專項測試 ✅ 新增
 
 ```bash
 # 測試 Google Gemini API 整合
@@ -84,6 +97,9 @@ npm run test:api:simple
 
 # 完整測試
 npm run test:api
+
+# 團隊與設定測試
+npm run test:api:team-settings
 ```
 
 #### 進階用法（僅適用於完整測試套件）
@@ -191,6 +207,29 @@ API_URL=http://localhost:8000 npm run test:api:simple
 | **刪除競爭對手** | `DELETE /api/v1/tracking/competitors/:id` | 移除競爭對手 | ✅ 新增實作 |
 | **競爭分析** | `GET /api/v1/tracking/competitive-analysis` | 競爭對手比較數據 | ✅ 新增實作 |
 
+### 團隊管理與設定 API 測試 🆕 新增
+
+| 測試項目 | 端點 | 描述 | 實作狀態 |
+|---------|------|------|---------| 
+| **組織設定管理** | `GET /api/v1/settings/organization` | 獲取組織設定 | ✅ 新增實作 |
+| **更新組織設定** | `PUT /api/v1/settings/organization` | 更新組織資訊和偏好設定 | ✅ 新增實作 |
+| **安全設定** | `GET /api/v1/settings/security` | 獲取用戶安全設定和登入歷史 | ✅ 新增實作 |
+| **密碼管理** | `PUT /api/v1/settings/password` | 更改用戶密碼 | ✅ 新增實作 |
+| **活躍會話** | `GET /api/v1/settings/security/sessions` | 獲取用戶活躍會話列表 | ✅ 新增實作 |
+| **用戶偏好** | `GET /api/v1/settings/preferences` | 獲取 UI 偏好和儀表板設定 | ✅ 新增實作 |
+| **更新偏好** | `PUT /api/v1/settings/preferences` | 更新用戶介面偏好 | ✅ 新增實作 |
+| **2FA 啟用** | `POST /api/v1/settings/2fa/enable` | 啟用雙重認證並生成 QR 碼 | ✅ 新增實作 |
+| **2FA 驗證** | `POST /api/v1/settings/2fa/verify` | 驗證 2FA 令牌 | ✅ 新增實作 |
+| **團隊角色** | `GET /api/v1/team/roles` | 獲取可用角色列表 | ✅ 新增實作 |
+| **團隊成員** | `GET /api/v1/team/members` | 列出組織成員（支援搜尋和過濾） | ✅ 新增實作 |
+| **更新成員** | `PUT /api/v1/team/members/:id` | 更新成員角色和狀態 | ✅ 新增實作 |
+| **移除成員** | `DELETE /api/v1/team/members/:id` | 從組織移除成員 | ✅ 新增實作 |
+| **邀請管理** | `GET /api/v1/team/invitations` | 列出團隊邀請（支援狀態過濾） | ✅ 新增實作 |
+| **發送邀請** | `POST /api/v1/team/invitations` | 發送團隊邀請郵件 | ✅ 新增實作 |
+| **重發邀請** | `POST /api/v1/team/invitations/:id/resend` | 重新發送邀請 | ✅ 新增實作 |
+| **取消邀請** | `DELETE /api/v1/team/invitations/:id` | 取消待定邀請 | ✅ 新增實作 |
+| **活動記錄** | `GET /api/v1/team/activity` | 獲取組織活動日誌（支援過濾） | ✅ 新增實作 |
+
 ## 📊 測試結果示例
 
 ### 成功執行結果
@@ -217,6 +256,74 @@ API_URL=http://localhost:8000 npm run test:api:simple
 ==================================================
 
 🎉 所有測試都通過了！
+
+### 團隊與設定 API 測試結果 ✅ 新增
+
+```
+🚀 Starting Comprehensive Team & Settings API Tests
+📡 Target API: http://localhost:8000
+==================================================
+[2025-09-06T06:42:52.815Z] ℹ️  Testing: User Registration
+[2025-09-06T06:42:52.986Z] ℹ️  User registered: test_team_1757140972778@example.com
+[2025-09-06T06:42:52.986Z] ✅ Passed: User Registration
+[2025-09-06T06:42:52.986Z] ℹ️  Testing: User Login
+[2025-09-06T06:42:53.117Z] ℹ️  User logged in: test_team_1757140972778@example.com
+[2025-09-06T06:42:53.117Z] ✅ Passed: User Login
+
+⚙️  Testing Settings APIs...
+[2025-09-06T06:42:53.140Z] ✅ Passed: GET /settings/organization - Get organization settings
+[2025-09-06T06:42:53.168Z] ✅ Passed: PUT /settings/organization - Update organization settings
+[2025-09-06T06:42:53.187Z] ✅ Passed: GET /settings/security - Get security settings
+[2025-09-06T06:42:53.356Z] ✅ Passed: PUT /settings/password - Change password
+[2025-09-06T06:42:53.452Z] ✅ Passed: PUT /settings/password - Invalid current password
+[2025-09-06T06:42:53.470Z] ✅ Passed: PUT /settings/password - Password too short
+[2025-09-06T06:42:53.479Z] ✅ Passed: GET /settings/security/sessions - Get active sessions
+[2025-09-06T06:42:53.488Z] ✅ Passed: GET /settings/preferences - Get user preferences
+[2025-09-06T06:42:53.503Z] ✅ Passed: PUT /settings/preferences - Update user preferences
+[2025-09-06T06:42:53.569Z] ✅ Passed: POST /settings/2fa/enable - Enable 2FA
+[2025-09-06T06:42:53.581Z] ✅ Passed: POST /settings/2fa/verify - Invalid 2FA token
+[2025-09-06T06:42:53.589Z] ✅ Passed: POST /settings/2fa/verify - Invalid token format
+
+👥 Testing Team Management APIs...
+[2025-09-06T06:42:53.597Z] ✅ Passed: GET /team/roles - Get available roles
+[2025-09-06T06:42:53.608Z] ✅ Passed: GET /team/members - List team members
+[2025-09-06T06:42:53.622Z] ✅ Passed: GET /team/members - With pagination
+[2025-09-06T06:42:53.633Z] ✅ Passed: GET /team/members - With search filter
+[2025-09-06T06:42:53.642Z] ✅ Passed: GET /team/members - With role filter
+[2025-09-06T06:42:53.652Z] ✅ Passed: GET /team/invitations - List invitations
+[2025-09-06T06:42:53.676Z] ✅ Passed: POST /team/invitations - Send invitation
+[2025-09-06T06:42:53.694Z] ✅ Passed: POST /team/invitations - Duplicate invitation
+[2025-09-06T06:42:53.705Z] ✅ Passed: POST /team/invitations - Invalid email
+[2025-09-06T06:42:53.714Z] ✅ Passed: POST /team/invitations - Invalid role
+[2025-09-06T06:42:53.727Z] ✅ Passed: POST /team/invitations/:id/resend - Resend invitation
+[2025-09-06T06:42:53.737Z] ✅ Passed: GET /team/invitations - With status filter
+[2025-09-06T06:42:53.751Z] ✅ Passed: DELETE /team/invitations/:id - Cancel invitation
+[2025-09-06T06:42:53.765Z] ✅ Passed: GET /team/activity - Get activity logs
+[2025-09-06T06:42:53.775Z] ✅ Passed: GET /team/activity - With pagination
+[2025-09-06T06:42:53.784Z] ✅ Passed: GET /team/activity - With action filter
+[2025-09-06T06:42:53.795Z] ✅ Passed: GET /team/activity - With date range
+
+🔒 Testing Permission Checks...
+[2025-09-06T06:42:53.905Z] ✅ Passed: Create second user with viewer role
+[2025-09-06T06:42:53.914Z] ✅ Passed: PUT /settings/organization - No permission
+[2025-09-06T06:42:53.921Z] ✅ Passed: PUT /team/members/:id - No permission
+[2025-09-06T06:42:53.928Z] ✅ Passed: POST /team/invitations - No permission
+
+⚠️  Testing Edge Cases...
+[2025-09-06T06:42:53.937Z] ✅ Passed: GET /settings/organization - Missing organization header
+[2025-09-06T06:42:53.945Z] ✅ Passed: PUT /team/members/:id - Non-existent member
+[2025-09-06T06:42:53.951Z] ✅ Passed: DELETE /team/invitations/:id - Non-existent invitation
+
+==================================================
+Test Results Summary
+==================================================
+Total tests: 38
+✅ Passed: 38
+❌ Failed: 0
+Success rate: 100.00%
+Execution time: 1173ms
+==================================================
+```
 
 ### 完整測試套件執行結果
 
