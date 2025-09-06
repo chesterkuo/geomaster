@@ -14,6 +14,12 @@ import PlatformSettings from './PlatformSettings';
 import AlertConfiguration from './AlertConfiguration';
 import AlertHistory from './AlertHistory';
 import MetricsSnapshot from './MetricsSnapshot';
+import AnalyticsSnapshot from './AnalyticsSnapshot';
+import CompetitorBenchmark from './CompetitorBenchmark';
+import KeywordResearch from './KeywordResearch';
+import KeywordRanking from './KeywordRanking';
+import ReportTemplate from './ReportTemplate';
+import GeneratedReport from './GeneratedReport';
 
 // Define associations
 // User-Organization many-to-many relationship
@@ -228,6 +234,160 @@ MetricsSnapshot.belongsTo(Website, {
   as: 'website'
 });
 
+// Organization-AnalyticsSnapshot one-to-many relationship
+Organization.hasMany(AnalyticsSnapshot, {
+  foreignKey: 'organizationId',
+  as: 'analyticsSnapshots'
+});
+
+AnalyticsSnapshot.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// Website-AnalyticsSnapshot one-to-many relationship
+Website.hasMany(AnalyticsSnapshot, {
+  foreignKey: 'websiteId',
+  as: 'analyticsSnapshots'
+});
+
+AnalyticsSnapshot.belongsTo(Website, {
+  foreignKey: 'websiteId',
+  as: 'website'
+});
+
+// Organization-CompetitorBenchmark one-to-many relationship
+Organization.hasMany(CompetitorBenchmark, {
+  foreignKey: 'organizationId',
+  as: 'competitorBenchmarks'
+});
+
+CompetitorBenchmark.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// Website-CompetitorBenchmark one-to-many relationship
+Website.hasMany(CompetitorBenchmark, {
+  foreignKey: 'websiteId',
+  as: 'competitorBenchmarks'
+});
+
+CompetitorBenchmark.belongsTo(Website, {
+  foreignKey: 'websiteId',
+  as: 'website'
+});
+
+// Competitor-CompetitorBenchmark one-to-many relationship
+Competitor.hasMany(CompetitorBenchmark, {
+  foreignKey: 'competitorId',
+  as: 'benchmarks'
+});
+
+CompetitorBenchmark.belongsTo(Competitor, {
+  foreignKey: 'competitorId',
+  as: 'competitor'
+});
+
+// Organization-KeywordResearch one-to-many relationship
+Organization.hasMany(KeywordResearch, {
+  foreignKey: 'organizationId',
+  as: 'keywordResearch'
+});
+
+KeywordResearch.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// KeywordResearch-KeywordRanking one-to-many relationship
+KeywordResearch.hasMany(KeywordRanking, {
+  foreignKey: 'keywordId',
+  as: 'rankings'
+});
+
+KeywordRanking.belongsTo(KeywordResearch, {
+  foreignKey: 'keywordId',
+  as: 'keyword'
+});
+
+// Organization-KeywordRanking one-to-many relationship
+Organization.hasMany(KeywordRanking, {
+  foreignKey: 'organizationId',
+  as: 'keywordRankings'
+});
+
+KeywordRanking.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// Website-KeywordRanking one-to-many relationship
+Website.hasMany(KeywordRanking, {
+  foreignKey: 'websiteId',
+  as: 'keywordRankings'
+});
+
+KeywordRanking.belongsTo(Website, {
+  foreignKey: 'websiteId',
+  as: 'website'
+});
+
+// Organization-ReportTemplate one-to-many relationship
+Organization.hasMany(ReportTemplate, {
+  foreignKey: 'organizationId',
+  as: 'reportTemplates'
+});
+
+ReportTemplate.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// User-ReportTemplate one-to-many relationship (creator)
+User.hasMany(ReportTemplate, {
+  foreignKey: 'createdBy',
+  as: 'createdTemplates'
+});
+
+ReportTemplate.belongsTo(User, {
+  foreignKey: 'createdBy',
+  as: 'creator'
+});
+
+// Organization-GeneratedReport one-to-many relationship
+Organization.hasMany(GeneratedReport, {
+  foreignKey: 'organizationId',
+  as: 'generatedReports'
+});
+
+GeneratedReport.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// ReportTemplate-GeneratedReport one-to-many relationship
+ReportTemplate.hasMany(GeneratedReport, {
+  foreignKey: 'templateId',
+  as: 'generatedReports'
+});
+
+GeneratedReport.belongsTo(ReportTemplate, {
+  foreignKey: 'templateId',
+  as: 'template'
+});
+
+// User-GeneratedReport one-to-many relationship (generator)
+User.hasMany(GeneratedReport, {
+  foreignKey: 'generatedBy',
+  as: 'generatedReports'
+});
+
+GeneratedReport.belongsTo(User, {
+  foreignKey: 'generatedBy',
+  as: 'generator'
+});
+
 // Initialize database
 export const initializeDatabase = async (): Promise<void> => {
   try {
@@ -261,5 +421,11 @@ export {
   PlatformSettings,
   AlertConfiguration,
   AlertHistory,
-  MetricsSnapshot
+  MetricsSnapshot,
+  AnalyticsSnapshot,
+  CompetitorBenchmark,
+  KeywordResearch,
+  KeywordRanking,
+  ReportTemplate,
+  GeneratedReport
 };

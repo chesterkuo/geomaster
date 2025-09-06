@@ -59,11 +59,11 @@ export class AlertService {
     const { websiteId, alertType, isActive, page = 1, limit = 20 } = options;
     const offset = (page - 1) * limit;
 
-    const where: any = { organizationId: this.organizationId };
+    const where: any = { organization_id: this.organizationId };
     
-    if (websiteId) where.websiteId = websiteId;
-    if (alertType) where.alertType = alertType;
-    if (isActive !== undefined) where.isActive = isActive;
+    if (websiteId) where.website_id = websiteId;
+    if (alertType) where.alert_type = alertType;
+    if (isActive !== undefined) where.is_active = isActive;
 
     const { rows: alerts, count: total } = await AlertConfiguration.findAndCountAll({
       where,
@@ -94,8 +94,8 @@ export class AlertService {
     cooldownMinutes: number;
   }>): Promise<AlertConfiguration | null> {
     const alert = await AlertConfiguration.findOne({
-      where: { id: alertId, organizationId: this.organizationId }
-    });
+      where: { id: alertId, organization_id: this.organizationId }
+    } as any);
 
     if (!alert) {
       throw new Error('Alert configuration not found');
@@ -112,8 +112,8 @@ export class AlertService {
    */
   async deleteAlert(alertId: string): Promise<boolean> {
     const deleted = await AlertConfiguration.destroy({
-      where: { id: alertId, organizationId: this.organizationId }
-    });
+      where: { id: alertId, organization_id: this.organizationId }
+    } as any);
 
     if (deleted > 0) {
       logger.info(`Alert configuration deleted: ${alertId}`);
@@ -142,12 +142,12 @@ export class AlertService {
     const { alertConfigId, websiteId, alertType, notificationStatus, page = 1, limit = 20 } = options;
     const offset = (page - 1) * limit;
 
-    const where: any = { organizationId: this.organizationId };
+    const where: any = { organization_id: this.organizationId };
     
-    if (alertConfigId) where.alertConfigId = alertConfigId;
-    if (websiteId) where.websiteId = websiteId;
-    if (alertType) where.alertType = alertType;
-    if (notificationStatus) where.notificationStatus = notificationStatus;
+    if (alertConfigId) where.alert_config_id = alertConfigId;
+    if (websiteId) where.website_id = websiteId;
+    if (alertType) where.alert_type = alertType;
+    if (notificationStatus) where.notification_status = notificationStatus;
 
     const { rows: history, count: total } = await AlertHistory.findAndCountAll({
       where,
@@ -181,23 +181,17 @@ export class AlertService {
     const [websiteAlerts, orgAlerts] = await Promise.all([
       AlertConfiguration.findAll({
         where: {
-          organizationId: this.organizationId,
-          websiteId: websiteId,
-          isActive: true
-        }
+          organization_id: this.organizationId,
+          website_id: websiteId,
+          is_active: true
+        } as any
       }),
       AlertConfiguration.findAll({
         where: {
-          organizationId: this.organizationId,
-          isActive: true,
-          [Op.and]: [
-            sequelize.where(
-              sequelize.col('websiteId'),
-              'IS',
-              null
-            )
-          ]
-        }
+          organization_id: this.organizationId,
+          website_id: { [Op.is]: null },
+          is_active: true
+        } as any
       })
     ]);
 
@@ -218,9 +212,9 @@ export class AlertService {
           organizationId: this.organizationId,
           websiteId: websiteId,
           alertType: alert.alertType,
-          triggerData,
+          triggerData: triggerData,
           notificationChannels: alert.getNotificationChannels()
-        });
+        } as any);
 
         await alert.markTriggered();
         triggeredAlerts.push(alertHistory);
@@ -308,19 +302,19 @@ export class AlertService {
 
     const triggerData: TriggerData = {
       metric: condition.metric,
-      currentValue: latestSnapshot?.metricValue || 0,
-      previousValue: latestSnapshot?.previousValue,
-      threshold: condition.value,
-      changePercentage: latestSnapshot?.changePercentage
+      currentValue: Number(latestSnapshot?.metricValue || 0),
+      previousValue: latestSnapshot?.previousValue !== undefined ? Number(latestSnapshot.previousValue) : undefined,
+      threshold: Number(condition.value),
+      changePercentage: latestSnapshot?.changePercentage !== undefined ? Number(latestSnapshot.changePercentage) : undefined
     };
 
     // Add specific data based on alert type
     if (alert.alertType === ALERT_TYPES.NEW_MENTION) {
       // Get latest AI tracking result for context
       const latestResult = await AITrackingResult.findOne({
-        where: { websiteId },
-        order: [['trackedAt', 'DESC']]
-      });
+        where: { website_id: websiteId },
+        order: [['tracked_at', 'DESC']]
+      } as any);
 
       if (latestResult) {
         triggerData.platform = latestResult.platform;
@@ -358,16 +352,16 @@ export class AlertService {
     recentTriggers: number;
     failedNotifications: number;
   }> {
-    const whereClause: any = { organizationId: this.organizationId };
-    if (websiteId) whereClause.websiteId = websiteId;
+    const whereClause: any = { organization_id: this.organizationId };
+    if (websiteId) whereClause.website_id = websiteId;
 
     const [totalAlerts, activeAlerts, recentTriggers, failedNotifications] = await Promise.all([
       AlertConfiguration.count({ where: whereClause }),
-      AlertConfiguration.count({ where: { ...whereClause, isActive: true } }),
+      AlertConfiguration.count({ where: { ...whereClause, is_active: true } }),
       AlertHistory.count({
         where: {
           ...whereClause,
-          triggeredAt: {
+          triggered_at: {
             [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
           }
         }
@@ -375,7 +369,7 @@ export class AlertService {
       AlertHistory.count({
         where: {
           ...whereClause,
-          notificationStatus: NOTIFICATION_STATUS.FAILED
+          notification_status: NOTIFICATION_STATUS.FAILED
         }
       })
     ]);
@@ -402,8 +396,8 @@ export class AlertService {
     }>;
   }> {
     const alert = await AlertConfiguration.findOne({
-      where: { id: alertId, organizationId: this.organizationId }
-    });
+      where: { id: alertId, organization_id: this.organizationId }
+    } as any);
 
     if (!alert) {
       throw new Error('Alert configuration not found');

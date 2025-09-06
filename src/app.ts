@@ -11,10 +11,12 @@ import { initializeDatabase } from './models';
 import { logger } from './utils/logger';
 import { initializeWebSocketService } from './services/websocketService';
 import { setupAlertScheduler } from './services/alertQueue';
+import { RealTimeMetricsService } from './services/realTimeMetrics.service';
 
 class App {
   public app: Application;
   public server: HttpServer;
+  public realTimeMetrics!: RealTimeMetricsService;
 
   constructor() {
     this.app = express();
@@ -173,8 +175,16 @@ class App {
 
   private initializeWebSocket(): void {
     try {
+      // Initialize the existing WebSocket service
       initializeWebSocketService(this.server);
-      logger.info('WebSocket service initialized successfully');
+      
+      // Initialize the new real-time metrics service
+      this.realTimeMetrics = new RealTimeMetricsService(this.server);
+      
+      // Make it globally accessible for services that need to broadcast updates
+      (global as any).realTimeMetrics = this.realTimeMetrics;
+      
+      logger.info('WebSocket and real-time metrics services initialized successfully');
     } catch (error) {
       logger.error('WebSocket initialization failed:', error);
       // Don't exit - WebSocket is not critical for basic functionality

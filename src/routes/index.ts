@@ -11,6 +11,9 @@ import dashboardRoutes from './dashboard.routes';
 import teamRoutes from './team.routes';
 import settingsRoutes from './settings.routes';
 import alertRoutes from './alert.routes';
+import alertsRoutes from './alerts.routes';
+import analyticsRoutes from './analytics.routes';
+import reportsRoutes from './reports.routes';
 
 const router = Router();
 
@@ -29,6 +32,9 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/team', teamRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/alerts', alertRoutes);
+router.use('/alerts', alertsRoutes);
+router.use('/analytics', analyticsRoutes);
+router.use('/reports', reportsRoutes);
 
 // API health check
 router.get('/health', (req, res) => {
@@ -57,6 +63,7 @@ router.get('/', (req, res) => {
       team: '/api/v1/team',
       settings: '/api/v1/settings',
       alerts: '/api/v1/alerts',
+      analytics: '/api/v1/analytics',
       reports: '/api/v1/reports'
     }
   });

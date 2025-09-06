@@ -71,6 +71,52 @@ export const requireRole = (roles: string[]) => {
   };
 };
 
+export const authenticateSocketToken = async (socket: any, next: any): Promise<void> => {
+  try {
+    const token = socket.handshake.auth.token || socket.handshake.query.token;
+    
+    if (!token) {
+      return next(new Error('Authentication token required'));
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+    
+    // Find user with organizations
+    const user = await User.findByPk(decoded.userId, {
+      include: [{
+        model: Organization,
+        as: 'organizations',
+        through: { attributes: ['role', 'joinedAt'] }
+      }]
+    });
+
+    if (!user || !user.isActive) {
+      return next(new Error('User not found or inactive'));
+    }
+
+    // Get organization from socket handshake
+    const organizationId = socket.handshake.query.organizationId;
+    
+    if (!organizationId) {
+      return next(new Error('Organization ID required'));
+    }
+
+    const userOrganizations = (user as any).organizations || [];
+    const organization = userOrganizations.find((org: any) => org.id === organizationId);
+
+    if (!organization) {
+      return next(new Error('User not authorized for this organization'));
+    }
+
+    socket.data.user = user;
+    socket.data.organization = organization;
+    
+    next();
+  } catch (error) {
+    next(new Error('Invalid or expired token'));
+  }
+};
+
 export const requireOrganization = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   if (!req.user) {
     res.status(401).json({
