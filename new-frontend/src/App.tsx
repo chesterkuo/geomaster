@@ -12,6 +12,7 @@ import Research from "./pages/Research";
 import Reporting from "./pages/Reporting";
 import Team from "./pages/Team";
 import Settings from "./pages/Settings";
+import Alerts from "./pages/Alerts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/reporting" element={<Reporting />} />
             <Route path="/team" element={<Team />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/alerts" element={<Alerts />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

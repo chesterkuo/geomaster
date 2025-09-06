@@ -11,6 +11,9 @@ import Keyword from './Keyword';
 import Competitor from './Competitor';
 import TrackingSettings from './TrackingSettings';
 import PlatformSettings from './PlatformSettings';
+import AlertConfiguration from './AlertConfiguration';
+import AlertHistory from './AlertHistory';
+import MetricsSnapshot from './MetricsSnapshot';
 
 // Define associations
 // User-Organization many-to-many relationship
@@ -148,6 +151,83 @@ PlatformSettings.belongsTo(Organization, {
   as: 'organization'
 });
 
+// Organization-AlertConfiguration one-to-many relationship
+Organization.hasMany(AlertConfiguration, {
+  foreignKey: 'organizationId',
+  as: 'alertConfigurations'
+});
+
+AlertConfiguration.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// Website-AlertConfiguration one-to-many relationship (optional)
+Website.hasMany(AlertConfiguration, {
+  foreignKey: 'websiteId',
+  as: 'alertConfigurations'
+});
+
+AlertConfiguration.belongsTo(Website, {
+  foreignKey: 'websiteId',
+  as: 'website'
+});
+
+// AlertConfiguration-AlertHistory one-to-many relationship
+AlertConfiguration.hasMany(AlertHistory, {
+  foreignKey: 'alertConfigId',
+  as: 'alertHistory'
+});
+
+AlertHistory.belongsTo(AlertConfiguration, {
+  foreignKey: 'alertConfigId',
+  as: 'alertConfiguration'
+});
+
+// Organization-AlertHistory one-to-many relationship
+Organization.hasMany(AlertHistory, {
+  foreignKey: 'organizationId',
+  as: 'alertHistory'
+});
+
+AlertHistory.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// Website-AlertHistory one-to-many relationship (optional)
+Website.hasMany(AlertHistory, {
+  foreignKey: 'websiteId',
+  as: 'alertHistory'
+});
+
+AlertHistory.belongsTo(Website, {
+  foreignKey: 'websiteId',
+  as: 'website'
+});
+
+// Organization-MetricsSnapshot one-to-many relationship
+Organization.hasMany(MetricsSnapshot, {
+  foreignKey: 'organizationId',
+  as: 'metricsSnapshots'
+});
+
+MetricsSnapshot.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// Website-MetricsSnapshot one-to-many relationship
+Website.hasMany(MetricsSnapshot, {
+  foreignKey: 'websiteId',
+  as: 'metricsSnapshots'
+});
+
+MetricsSnapshot.belongsTo(Website, {
+  foreignKey: 'websiteId',
+  as: 'website'
+});
+
 // Initialize database
 export const initializeDatabase = async (): Promise<void> => {
   try {
@@ -178,5 +258,8 @@ export {
   Keyword,
   Competitor,
   TrackingSettings,
-  PlatformSettings
+  PlatformSettings,
+  AlertConfiguration,
+  AlertHistory,
+  MetricsSnapshot
 };

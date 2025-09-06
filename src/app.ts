@@ -4,20 +4,27 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import { createServer, Server as HttpServer } from 'http';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
 import routes from './routes';
 import { initializeDatabase } from './models';
 import { logger } from './utils/logger';
+import { initializeWebSocketService } from './services/websocketService';
+import { setupAlertScheduler } from './services/alertQueue';
 
 class App {
   public app: Application;
+  public server: HttpServer;
 
   constructor() {
     this.app = express();
+    this.server = createServer(this.app);
     this.initializeMiddlewares();
     this.initializeRoutes();
     this.initializeErrorHandling();
     this.initializeDatabase();
+    this.initializeWebSocket();
+    this.initializeBackgroundJobs();
   }
 
   private initializeMiddlewares(): void {
@@ -164,8 +171,28 @@ class App {
     }
   }
 
+  private initializeWebSocket(): void {
+    try {
+      initializeWebSocketService(this.server);
+      logger.info('WebSocket service initialized successfully');
+    } catch (error) {
+      logger.error('WebSocket initialization failed:', error);
+      // Don't exit - WebSocket is not critical for basic functionality
+    }
+  }
+
+  private initializeBackgroundJobs(): void {
+    try {
+      setupAlertScheduler();
+      logger.info('Alert scheduler initialized successfully');
+    } catch (error) {
+      logger.error('Alert scheduler initialization failed:', error);
+      // Don't exit - background jobs can be set up later
+    }
+  }
+
   public listen(port: number): void {
-    const server = this.app.listen(port, '0.0.0.0', () => {
+    this.server.listen(port, '0.0.0.0', () => {
       logger.info(`🚀 GEO Platform API server is running on port ${port}`);
       logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       logger.info(`🔗 Health check: http://localhost:${port}/health`);
@@ -175,7 +202,7 @@ class App {
     // Graceful shutdown
     process.on('SIGTERM', () => {
       logger.info('SIGTERM received, shutting down gracefully');
-      server.close(() => {
+      this.server.close(() => {
         logger.info('Process terminated');
         process.exit(0);
       });
@@ -183,7 +210,7 @@ class App {
 
     process.on('SIGINT', () => {
       logger.info('SIGINT received, shutting down gracefully');
-      server.close(() => {
+      this.server.close(() => {
         logger.info('Process terminated');
         process.exit(0);
       });

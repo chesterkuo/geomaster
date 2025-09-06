@@ -14,6 +14,7 @@
     "test:api:simple": "node test-api-simple.js",
     "test:api:team-settings": "node test-team-settings-comprehensive.js",
     "test:api:gemini": "node test-gemini-integration.js",
+    "test:api:alerts": "node test-alerts-dashboard-only.js",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "migrate": "sequelize-cli db:migrate",
