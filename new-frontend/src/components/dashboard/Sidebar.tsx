@@ -31,8 +31,8 @@ const menuSections = [
   {
     title: "主要功能",
     items: [
-      { id: "dashboard", label: "儀表板", icon: LayoutDashboard, path: "/" },
-      { id: "tracking", label: "網站掃描", icon: Globe, path: "/tracking" },
+      { id: "tracking", label: "網站掃描", icon: Globe, path: "/" },
+      { id: "dashboard", label: "儀表板", icon: LayoutDashboard, path: "/dashboard" },
       { id: "optimization", label: "內容優化", icon: BarChart3, path: "/optimization" },
       { id: "ai-search", label: "AI 可見度追蹤", icon: Brain, path: "/ai-search" },
     ]
@@ -63,7 +63,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   
   const getActiveItem = () => {
     const currentItem = allNavItems.find(item => item.path === location.pathname);
-    return currentItem?.id || "dashboard";
+    return currentItem?.id || "tracking";
   };
 
   return (

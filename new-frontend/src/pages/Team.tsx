@@ -48,8 +48,10 @@ const Team = () => {
 
   // Load data
   useEffect(() => {
-    loadRoles();
-  }, []);
+    if (isAuthenticated) {
+      loadRoles();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (activeTab === "members") loadMembers();
@@ -59,14 +61,22 @@ const Team = () => {
 
   const loadRoles = async () => {
     try {
+      if (!isAuthenticated) {
+        setRoles([]);
+        return;
+      }
+      
       const response = await teamApi.getRoles();
       if (response.success) {
         setRoles(response.data);
       }
     } catch (error: any) {
-      toast.error('獲取角色失敗', {
-        description: error.response?.data?.message || error.message
-      });
+      // Don't show error toast for 401 (unauthorized) errors to avoid console spam
+      if (error.response?.status !== 401) {
+        toast.error('獲取角色失敗', {
+          description: error.response?.data?.message || error.message
+        });
+      }
     }
   };
 
@@ -89,9 +99,12 @@ const Team = () => {
         setMembers(response.data.members);
       }
     } catch (error: any) {
-      toast.error('獲取團隊成員失敗', {
-        description: error.response?.data?.message || error.message
-      });
+      // Don't show error toast for 401 (unauthorized) errors to avoid console spam
+      if (error.response?.status !== 401) {
+        toast.error('獲取團隊成員失敗', {
+          description: error.response?.data?.message || error.message
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -115,9 +128,12 @@ const Team = () => {
         setInvitations(response.data.invitations);
       }
     } catch (error: any) {
-      toast.error('獲取邀請列表失敗', {
-        description: error.response?.data?.message || error.message
-      });
+      // Don't show error toast for 401 (unauthorized) errors to avoid console spam
+      if (error.response?.status !== 401) {
+        toast.error('獲取邀請列表失敗', {
+          description: error.response?.data?.message || error.message
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -141,9 +157,12 @@ const Team = () => {
         setActivities(response.data.activities);
       }
     } catch (error: any) {
-      toast.error('獲取活動記錄失敗', {
-        description: error.response?.data?.message || error.message
-      });
+      // Don't show error toast for 401 (unauthorized) errors to avoid console spam
+      if (error.response?.status !== 401) {
+        toast.error('獲取活動記錄失敗', {
+          description: error.response?.data?.message || error.message
+        });
+      }
     } finally {
       setLoading(false);
     }

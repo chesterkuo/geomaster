@@ -43,36 +43,40 @@ const MetricCard = ({ title, value, change, trend, icon: Icon, color }: MetricCa
   );
 };
 
-export const MetricsGrid = () => {
+interface MetricsGridProps {
+  isAuthenticated?: boolean;
+}
+
+export const MetricsGrid = ({ isAuthenticated = false }: MetricsGridProps) => {
   const metrics = [
     {
       title: "AI 可見度分數",
-      value: "78",
-      change: "↑ 12% 本週提升",
+      value: isAuthenticated ? "78" : "---",
+      change: isAuthenticated ? "↑ 12% 本週提升" : "需要登入查看",
       trend: "up" as const,
       icon: BarChart3,
       color: "bg-geo-purple"
     },
     {
       title: "品牌曝及次數",
-      value: "1,284",
-      change: "↑ 8.3% 較上月",
+      value: isAuthenticated ? "1,284" : "---",
+      change: isAuthenticated ? "↑ 8.3% 較上月" : "需要登入查看",
       trend: "up" as const,
       icon: Globe,
       color: "bg-geo-blue"
     },
     {
       title: "引用排名",
-      value: "#3",
-      change: "↑ 上升 2 位",
+      value: isAuthenticated ? "#3" : "---",
+      change: isAuthenticated ? "↑ 上升 2 位" : "需要登入查看",
       trend: "up" as const,
       icon: Hash,
       color: "bg-geo-green"
     },
     {
       title: "優化提醒",
-      value: "156",
-      change: "↓ 24 項減少",
+      value: isAuthenticated ? "156" : "---",
+      change: isAuthenticated ? "↓ 24 項減少" : "需要登入查看",
       trend: "down" as const,
       icon: Users,
       color: "bg-geo-orange"

@@ -1,25 +1,3 @@
--- MySQL dump 10.13  Distrib 8.0.43, for Linux (x86_64)
---
--- Host: 10.74.100.30    Database: exchange_geo
--- ------------------------------------------------------
--- Server version	8.0.43-0ubuntu0.22.04.1
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `activity_logs`
---
-
-DROP TABLE IF EXISTS `activity_logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `activity_logs` (
@@ -41,12 +19,6 @@ CREATE TABLE `activity_logs` (
   CONSTRAINT `activity_logs_ibfk_2` FOREIGN KEY (`organizationId`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `ai_tracking_results`
---
-
-DROP TABLE IF EXISTS `ai_tracking_results`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ai_tracking_results` (
@@ -72,12 +44,6 @@ CREATE TABLE `ai_tracking_results` (
   CONSTRAINT `ai_tracking_results_ibfk_2` FOREIGN KEY (`keyword_id`) REFERENCES `keywords` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `ai_tracking_results_archive`
---
-
-DROP TABLE IF EXISTS `ai_tracking_results_archive`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ai_tracking_results_archive` (
@@ -113,12 +79,6 @@ CREATE TABLE `ai_tracking_results_archive` (
  PARTITION p2026 VALUES LESS THAN ('2027-01-01') ENGINE = InnoDB,
  PARTITION pmax VALUES LESS THAN (MAXVALUE) ENGINE = InnoDB) */;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `alert_configurations`
---
-
-DROP TABLE IF EXISTS `alert_configurations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `alert_configurations` (
@@ -139,12 +99,6 @@ CREATE TABLE `alert_configurations` (
   KEY `idx_organization` (`organization_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `alert_history`
---
-
-DROP TABLE IF EXISTS `alert_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `alert_history` (
@@ -162,12 +116,6 @@ CREATE TABLE `alert_history` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `analytics_snapshots`
---
-
-DROP TABLE IF EXISTS `analytics_snapshots`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `analytics_snapshots` (
@@ -186,12 +134,6 @@ CREATE TABLE `analytics_snapshots` (
   CONSTRAINT `analytics_snapshots_ibfk_2` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `api_keys`
---
-
-DROP TABLE IF EXISTS `api_keys`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `api_keys` (
@@ -210,12 +152,6 @@ CREATE TABLE `api_keys` (
   CONSTRAINT `api_keys_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `audit_logs`
---
-
-DROP TABLE IF EXISTS `audit_logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `audit_logs` (
@@ -239,12 +175,6 @@ CREATE TABLE `audit_logs` (
   CONSTRAINT `audit_logs_ibfk_2` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `competitor_benchmarks`
---
-
-DROP TABLE IF EXISTS `competitor_benchmarks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `competitor_benchmarks` (
@@ -273,12 +203,6 @@ CREATE TABLE `competitor_benchmarks` (
   CONSTRAINT `competitor_benchmarks_ibfk_3` FOREIGN KEY (`competitor_id`) REFERENCES `competitors` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `competitors`
---
-
-DROP TABLE IF EXISTS `competitors`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `competitors` (
@@ -298,12 +222,6 @@ CREATE TABLE `competitors` (
   CONSTRAINT `competitors_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `content`
---
-
-DROP TABLE IF EXISTS `content`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `content` (
@@ -333,12 +251,6 @@ CREATE TABLE `content` (
   CONSTRAINT `content_ibfk_1` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `generated_reports`
---
-
-DROP TABLE IF EXISTS `generated_reports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `generated_reports` (
@@ -368,12 +280,6 @@ CREATE TABLE `generated_reports` (
   CONSTRAINT `generated_reports_ibfk_3` FOREIGN KEY (`generated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `integration_settings`
---
-
-DROP TABLE IF EXISTS `integration_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `integration_settings` (
@@ -396,12 +302,6 @@ CREATE TABLE `integration_settings` (
   CONSTRAINT `integration_settings_ibfk_2` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `integrations`
---
-
-DROP TABLE IF EXISTS `integrations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `integrations` (
@@ -422,12 +322,6 @@ CREATE TABLE `integrations` (
   CONSTRAINT `integrations_ibfk_1` FOREIGN KEY (`organizationId`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `invitations`
---
-
-DROP TABLE IF EXISTS `invitations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `invitations` (
@@ -453,12 +347,6 @@ CREATE TABLE `invitations` (
   CONSTRAINT `invitations_ibfk_2` FOREIGN KEY (`invitedBy`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `keyword_rankings`
---
-
-DROP TABLE IF EXISTS `keyword_rankings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `keyword_rankings` (
@@ -483,12 +371,6 @@ CREATE TABLE `keyword_rankings` (
   CONSTRAINT `keyword_rankings_ibfk_3` FOREIGN KEY (`keyword_id`) REFERENCES `keyword_research` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `keyword_research`
---
-
-DROP TABLE IF EXISTS `keyword_research`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `keyword_research` (
@@ -512,12 +394,6 @@ CREATE TABLE `keyword_research` (
   CONSTRAINT `keyword_research_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `keywords`
---
-
-DROP TABLE IF EXISTS `keywords`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `keywords` (
@@ -537,12 +413,6 @@ CREATE TABLE `keywords` (
   CONSTRAINT `keywords_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `metrics_snapshots`
---
-
-DROP TABLE IF EXISTS `metrics_snapshots`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `metrics_snapshots` (
@@ -559,12 +429,6 @@ CREATE TABLE `metrics_snapshots` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `notifications`
---
-
-DROP TABLE IF EXISTS `notifications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `notifications` (
@@ -583,12 +447,6 @@ CREATE TABLE `notifications` (
   CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `optimization_tasks`
---
-
-DROP TABLE IF EXISTS `optimization_tasks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `optimization_tasks` (
@@ -611,12 +469,6 @@ CREATE TABLE `optimization_tasks` (
   CONSTRAINT `optimization_tasks_ibfk_1` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `organization_settings`
---
-
-DROP TABLE IF EXISTS `organization_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `organization_settings` (
@@ -629,12 +481,6 @@ CREATE TABLE `organization_settings` (
   CONSTRAINT `organization_settings_ibfk_1` FOREIGN KEY (`organizationId`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `organizations`
---
-
-DROP TABLE IF EXISTS `organizations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `organizations` (
@@ -658,12 +504,6 @@ CREATE TABLE `organizations` (
   KEY `idx_plan` (`plan`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `pages`
---
-
-DROP TABLE IF EXISTS `pages`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `pages` (
@@ -689,12 +529,6 @@ CREATE TABLE `pages` (
   CONSTRAINT `fk_pages_organization` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `platform_settings`
---
-
-DROP TABLE IF EXISTS `platform_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `platform_settings` (
@@ -714,12 +548,6 @@ CREATE TABLE `platform_settings` (
   CONSTRAINT `platform_settings_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `report_templates`
---
-
-DROP TABLE IF EXISTS `report_templates`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `report_templates` (
@@ -743,12 +571,6 @@ CREATE TABLE `report_templates` (
   CONSTRAINT `report_templates_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `reports`
---
-
-DROP TABLE IF EXISTS `reports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reports` (
@@ -769,12 +591,6 @@ CREATE TABLE `reports` (
   CONSTRAINT `reports_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `scan_metrics`
---
-
-DROP TABLE IF EXISTS `scan_metrics`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `scan_metrics` (
@@ -790,12 +606,6 @@ CREATE TABLE `scan_metrics` (
   CONSTRAINT `scan_metrics_ibfk_1` FOREIGN KEY (`scan_id`) REFERENCES `scans` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `scans`
---
-
-DROP TABLE IF EXISTS `scans`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `scans` (
@@ -817,12 +627,6 @@ CREATE TABLE `scans` (
   CONSTRAINT `scans_ibfk_1` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `tracking_settings`
---
-
-DROP TABLE IF EXISTS `tracking_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `tracking_settings` (
@@ -843,12 +647,6 @@ CREATE TABLE `tracking_settings` (
   CONSTRAINT `tracking_settings_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `user_organizations`
---
-
-DROP TABLE IF EXISTS `user_organizations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_organizations` (
@@ -867,12 +665,6 @@ CREATE TABLE `user_organizations` (
   CONSTRAINT `user_organizations_ibfk_2` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `user_settings`
---
-
-DROP TABLE IF EXISTS `user_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_settings` (
@@ -886,12 +678,6 @@ CREATE TABLE `user_settings` (
   CONSTRAINT `user_settings_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `users`
---
-
-DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users` (
@@ -916,13 +702,6 @@ CREATE TABLE `users` (
   KEY `idx_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Temporary view structure for view `website_overview`
---
-
-DROP TABLE IF EXISTS `website_overview`;
-/*!50001 DROP VIEW IF EXISTS `website_overview`*/;
 SET @saved_cs_client     = @@character_set_client;
 /*!50503 SET character_set_client = utf8mb4 */;
 /*!50001 CREATE VIEW `website_overview` AS SELECT 
@@ -935,12 +714,6 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `avg_geo_score`,
  1 AS `last_scan_date`*/;
 SET character_set_client = @saved_cs_client;
-
---
--- Table structure for table `websites`
---
-
-DROP TABLE IF EXISTS `websites`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `websites` (
@@ -965,11 +738,16 @@ CREATE TABLE `websites` (
   CONSTRAINT `websites_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping routines for database 'exchange_geo'
---
-
--- insufficient privileges to SHOW CREATE PROCEDURE `GetAIVisibilityMetrics`
--- does exchange_geo have permissions on mysql.proc?
-
+/*!50001 DROP VIEW IF EXISTS `website_overview`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `website_overview` AS select `w`.`id` AS `id`,`w`.`name` AS `name`,`w`.`url` AS `url`,`w`.`domain` AS `domain`,`o`.`name` AS `organization_name`,count(distinct `c`.`id`) AS `content_count`,avg(`c`.`geo_score`) AS `avg_geo_score`,max(`s`.`completed_at`) AS `last_scan_date` from (((`websites` `w` join `organizations` `o` on((`w`.`organization_id` = `o`.`id`))) left join `content` `c` on((`w`.`id` = `c`.`website_id`))) left join `scans` `s` on(((`w`.`id` = `s`.`website_id`) and (`s`.`status` = 'completed')))) group by `w`.`id`,`w`.`name`,`w`.`url`,`w`.`domain`,`o`.`name` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;

@@ -3,23 +3,31 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-const trendData = [
-  { name: '週一', value: 45 },
-  { name: '週二', value: 52 },
-  { name: '週三', value: 48 },
-  { name: '週四', value: 61 },
-  { name: '週五', value: 55 },
-  { name: '週六', value: 67 },
-  { name: '週日', value: 58 },
+const getTrendData = (isAuthenticated: boolean) => [
+  { name: '週一', value: isAuthenticated ? 45 : 0 },
+  { name: '週二', value: isAuthenticated ? 52 : 0 },
+  { name: '週三', value: isAuthenticated ? 48 : 0 },
+  { name: '週四', value: isAuthenticated ? 61 : 0 },
+  { name: '週五', value: isAuthenticated ? 55 : 0 },
+  { name: '週六', value: isAuthenticated ? 67 : 0 },
+  { name: '週日', value: isAuthenticated ? 58 : 0 },
 ];
 
-const pieData = [
-  { name: 'ChatGPT', value: 82, color: '#8b5cf6' },
-  { name: 'Gemini', value: 75, color: '#3b82f6' },
-  { name: 'Perplexity', value: 77, color: '#10b981' },
+const getPieData = (isAuthenticated: boolean) => [
+  { name: 'ChatGPT', value: isAuthenticated ? 82 : 0, color: '#8b5cf6' },
+  { name: 'Gemini', value: isAuthenticated ? 75 : 0, color: '#3b82f6' },
+  { name: 'Perplexity', value: isAuthenticated ? 77 : 0, color: '#10b981' },
 ];
 
-export const ChartSection = () => {
+interface ChartSectionProps {
+  isAuthenticated?: boolean;
+}
+
+export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => {
+  const trendData = getTrendData(isAuthenticated);
+  const pieData = getPieData(isAuthenticated);
+  const overallScore = isAuthenticated ? 78 : 0;
+  
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* AI Platform Visibility Trend */}
@@ -69,7 +77,7 @@ export const ChartSection = () => {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={[{ value: 78 }, { value: 22 }]}
+                data={[{ value: overallScore }, { value: isAuthenticated ? 22 : 100 }]}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -85,7 +93,7 @@ export const ChartSection = () => {
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
-              <div className="text-3xl font-bold text-foreground">78</div>
+              <div className="text-3xl font-bold text-foreground">{isAuthenticated ? '78' : '---'}</div>
               <div className="text-sm text-muted-foreground">綜合評分</div>
             </div>
           </div>
@@ -101,7 +109,7 @@ export const ChartSection = () => {
                 />
                 <span className="text-sm text-muted-foreground">{item.name}</span>
               </div>
-              <span className="text-sm font-medium text-foreground">{item.value}</span>
+              <span className="text-sm font-medium text-foreground">{isAuthenticated ? item.value : '---'}</span>
             </div>
           ))}
         </div>
