@@ -42,6 +42,85 @@ export const AI_PLATFORMS = {
   CLAUDE: 'claude'
 } as const;
 
+// Platform configurations for tracking features
+export const PLATFORM_CONFIGS = {
+  [AI_PLATFORMS.CHATGPT]: {
+    id: AI_PLATFORMS.CHATGPT,
+    name: 'ChatGPT',
+    description: 'OpenAI ChatGPT platform tracking with comprehensive content analysis',
+    icon: 'openai',
+    supported: true,
+    requiresApiKey: false,
+    features: ['content_tracking', 'mention_analysis', 'sentiment_analysis'],
+    maxRequestsPerDay: 1000,
+    pricing: { free: true, paidOnly: false }
+  },
+  [AI_PLATFORMS.GEMINI]: {
+    id: AI_PLATFORMS.GEMINI,
+    name: 'Google Gemini',
+    description: 'Google Gemini AI platform tracking with advanced search capabilities',
+    icon: 'google',
+    supported: true,
+    requiresApiKey: true,
+    features: ['content_tracking', 'real_time_monitoring', 'advanced_analytics'],
+    maxRequestsPerDay: 500,
+    pricing: { free: false, paidOnly: true }
+  },
+  [AI_PLATFORMS.PERPLEXITY]: {
+    id: AI_PLATFORMS.PERPLEXITY,
+    name: 'Perplexity AI',
+    description: 'Perplexity AI search platform tracking with citation analysis',
+    icon: 'perplexity',
+    supported: true,
+    requiresApiKey: true,
+    features: ['search_tracking', 'citation_analysis', 'source_verification'],
+    maxRequestsPerDay: 200,
+    pricing: { free: false, paidOnly: true }
+  },
+  [AI_PLATFORMS.CLAUDE]: {
+    id: AI_PLATFORMS.CLAUDE,
+    name: 'Claude AI',
+    description: 'Anthropic Claude AI platform tracking with conversation analysis',
+    icon: 'anthropic',
+    supported: true,
+    requiresApiKey: true,
+    features: ['conversation_tracking', 'content_analysis', 'ethical_monitoring'],
+    maxRequestsPerDay: 300,
+    pricing: { free: true, paidOnly: false }
+  }
+} as const;
+
+export const PLAN_LIMITATIONS = {
+  [ORGANIZATION_PLANS.FREE]: {
+    maxPlatforms: 2,
+    maxAlertEmails: 1,
+    defaultFrequency: 'weekly' as const,
+    alertsEnabled: false,
+    requestMultiplier: 0.1
+  },
+  [ORGANIZATION_PLANS.STARTER]: {
+    maxPlatforms: -1,
+    maxAlertEmails: 3,
+    defaultFrequency: 'daily' as const,
+    alertsEnabled: true,
+    requestMultiplier: 0.5
+  },
+  [ORGANIZATION_PLANS.PROFESSIONAL]: {
+    maxPlatforms: -1,
+    maxAlertEmails: -1,
+    defaultFrequency: 'daily' as const,
+    alertsEnabled: true,
+    requestMultiplier: 1.0
+  },
+  [ORGANIZATION_PLANS.ENTERPRISE]: {
+    maxPlatforms: -1,
+    maxAlertEmails: -1,
+    defaultFrequency: 'daily' as const,
+    alertsEnabled: true,
+    requestMultiplier: 2.0
+  }
+} as const;
+
 export const OPTIMIZATION_TYPES = {
   SCHEMA_INJECTION: 'schema_injection',
   CONTENT_OPTIMIZATION: 'content_optimization',

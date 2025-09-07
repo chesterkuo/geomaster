@@ -1,3 +1,261 @@
+-- ========================================================================
+-- GEO Platform Database Schema
+-- ========================================================================
+-- 
+-- This file contains the complete database schema for GEO Platform
+-- including all Phase 1, Phase 2, and Phase 3 features.
+--
+-- Generated: 2025-09-07 15:02:37
+-- Database: exchange_geo
+-- Total Tables: 56
+-- Phase 3 Tables: 18 (ML, Integrations, A/B Testing, Webhooks)
+--
+-- Features Included:
+-- ✅ Phase 1: Core Platform (Users, Organizations, Websites, Content)
+-- ✅ Phase 2: Advanced Analytics & Competitor Analysis  
+-- ✅ Phase 2.1: Real-time Alerts & Notifications
+-- ✅ Phase 2.2: Advanced Analytics & Competitor Benchmarking
+-- ✅ Phase 2.3: Enhanced Real-time Analytics & Alert System
+-- ✅ Phase 3: ML Optimization, Third-party Integrations, A/B Testing
+--
+-- Essential Data Included:
+-- ✅ 4 ML Models (ContentOptimizer, CompetitorAnalyzer, KeywordPredictor, TrendForecaster)
+-- ✅ 4 Optimization Strategy Templates (Meta Description, H1 Title, Schema Markup, AI-Optimized Content)
+--
+-- Usage:
+-- mysql -u username -p database_name < database/schema.sql
+--
+-- ========================================================================
+-- MySQL dump 10.13  Distrib 8.0.43, for Linux (x86_64)
+--
+-- Host: 10.74.100.30    Database: exchange_geo
+-- ------------------------------------------------------
+-- Server version	8.0.43-0ubuntu0.22.04.1
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+-- Create database if not exists
+CREATE DATABASE IF NOT EXISTS `exchange_geo` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+USE `exchange_geo`;
+
+--
+-- Table structure for table `ab_events`
+--
+
+DROP TABLE IF EXISTS `ab_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ab_events` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `experiment_id` char(36) NOT NULL,
+  `variant_id` char(36) NOT NULL,
+  `user_identifier` varchar(255) NOT NULL,
+  `event_type` varchar(100) NOT NULL,
+  `event_data` json DEFAULT NULL,
+  `metric_value` decimal(15,6) DEFAULT NULL,
+  `occurred_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_experiment_variant` (`experiment_id`,`variant_id`),
+  KEY `idx_user_event` (`user_identifier`,`event_type`),
+  KEY `idx_occurred_at` (`occurred_at`),
+  KEY `ab_events_ibfk_2` (`variant_id`),
+  CONSTRAINT `ab_events_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `ab_experiments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ab_events_ibfk_2` FOREIGN KEY (`variant_id`) REFERENCES `ab_variants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ab_experiments`
+--
+
+DROP TABLE IF EXISTS `ab_experiments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ab_experiments` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `organization_id` char(36) NOT NULL,
+  `website_id` char(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `experiment_type` enum('content_optimization','seo_strategy','ui_design','keyword_targeting') NOT NULL,
+  `hypothesis` text NOT NULL,
+  `success_metric` varchar(100) NOT NULL,
+  `target_metric_value` decimal(10,4) DEFAULT NULL,
+  `significance_level` decimal(4,3) DEFAULT '0.050',
+  `minimum_sample_size` int DEFAULT '1000',
+  `traffic_allocation` decimal(4,3) DEFAULT '0.500',
+  `status` enum('draft','running','paused','completed','cancelled') DEFAULT 'draft',
+  `start_date` timestamp NULL DEFAULT NULL,
+  `end_date` timestamp NULL DEFAULT NULL,
+  `expected_duration_days` int DEFAULT NULL,
+  `created_by` char(36) NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_organization_website` (`organization_id`,`website_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_type` (`experiment_type`),
+  KEY `idx_dates` (`start_date`,`end_date`),
+  KEY `idx_created_by` (`created_by`),
+  KEY `ab_experiments_ibfk_2` (`website_id`),
+  CONSTRAINT `ab_experiments_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ab_experiments_ibfk_2` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ab_experiments_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ab_results`
+--
+
+DROP TABLE IF EXISTS `ab_results`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ab_results` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `experiment_id` char(36) NOT NULL,
+  `variant_id` char(36) NOT NULL,
+  `metric_name` varchar(100) NOT NULL,
+  `metric_value` decimal(15,6) NOT NULL,
+  `sample_size` int NOT NULL,
+  `recorded_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `date` date NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_experiment_variant_metric_date` (`experiment_id`,`variant_id`,`metric_name`,`date`),
+  KEY `idx_experiment_variant` (`experiment_id`,`variant_id`),
+  KEY `idx_metric_date` (`metric_name`,`date`),
+  KEY `ab_results_ibfk_2` (`variant_id`),
+  CONSTRAINT `ab_results_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `ab_experiments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ab_results_ibfk_2` FOREIGN KEY (`variant_id`) REFERENCES `ab_variants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ab_statistical_analysis`
+--
+
+DROP TABLE IF EXISTS `ab_statistical_analysis`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ab_statistical_analysis` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `experiment_id` char(36) NOT NULL,
+  `analysis_type` enum('t_test','chi_square','bayesian') NOT NULL,
+  `control_variant_id` char(36) NOT NULL,
+  `treatment_variant_id` char(36) NOT NULL,
+  `metric_name` varchar(100) NOT NULL,
+  `control_mean` decimal(15,6) DEFAULT NULL,
+  `treatment_mean` decimal(15,6) DEFAULT NULL,
+  `control_std_dev` decimal(15,6) DEFAULT NULL,
+  `treatment_std_dev` decimal(15,6) DEFAULT NULL,
+  `effect_size` decimal(10,6) DEFAULT NULL,
+  `p_value` decimal(10,8) DEFAULT NULL,
+  `confidence_interval_lower` decimal(15,6) DEFAULT NULL,
+  `confidence_interval_upper` decimal(15,6) DEFAULT NULL,
+  `is_statistically_significant` tinyint(1) DEFAULT '0',
+  `probability_to_be_best` decimal(5,4) DEFAULT NULL,
+  `calculated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_experiment_metric` (`experiment_id`,`metric_name`),
+  KEY `idx_variants` (`control_variant_id`,`treatment_variant_id`),
+  KEY `idx_significance` (`is_statistically_significant`),
+  KEY `ab_statistical_analysis_ibfk_3` (`treatment_variant_id`),
+  CONSTRAINT `ab_statistical_analysis_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `ab_experiments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ab_statistical_analysis_ibfk_2` FOREIGN KEY (`control_variant_id`) REFERENCES `ab_variants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ab_statistical_analysis_ibfk_3` FOREIGN KEY (`treatment_variant_id`) REFERENCES `ab_variants` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ab_user_assignments`
+--
+
+DROP TABLE IF EXISTS `ab_user_assignments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ab_user_assignments` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `experiment_id` char(36) NOT NULL,
+  `variant_id` char(36) NOT NULL,
+  `user_identifier` varchar(255) NOT NULL,
+  `user_segment_id` char(36) DEFAULT NULL,
+  `assigned_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `first_exposure_at` timestamp NULL DEFAULT NULL,
+  `conversion_events` json DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_experiment_user` (`experiment_id`,`user_identifier`),
+  KEY `idx_variant_user` (`variant_id`,`user_identifier`),
+  KEY `idx_segment` (`user_segment_id`),
+  KEY `idx_assigned_at` (`assigned_at`),
+  CONSTRAINT `ab_user_assignments_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `ab_experiments` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ab_user_assignments_ibfk_2` FOREIGN KEY (`variant_id`) REFERENCES `ab_variants` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ab_user_assignments_ibfk_3` FOREIGN KEY (`user_segment_id`) REFERENCES `ab_user_segments` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ab_user_segments`
+--
+
+DROP TABLE IF EXISTS `ab_user_segments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ab_user_segments` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `organization_id` char(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `segment_criteria` json NOT NULL,
+  `estimated_size` int DEFAULT '0',
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_organization` (`organization_id`),
+  KEY `idx_active` (`is_active`),
+  CONSTRAINT `ab_user_segments_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ab_variants`
+--
+
+DROP TABLE IF EXISTS `ab_variants`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ab_variants` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `experiment_id` char(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `variant_type` enum('control','treatment') NOT NULL,
+  `traffic_percentage` decimal(5,2) DEFAULT '50.00',
+  `configuration` json NOT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_experiment` (`experiment_id`),
+  KEY `idx_type` (`variant_type`),
+  CONSTRAINT `ab_variants_ibfk_1` FOREIGN KEY (`experiment_id`) REFERENCES `ab_experiments` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `activity_logs`
+--
+
+DROP TABLE IF EXISTS `activity_logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `activity_logs` (
@@ -19,6 +277,12 @@ CREATE TABLE `activity_logs` (
   CONSTRAINT `activity_logs_ibfk_2` FOREIGN KEY (`organizationId`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=68 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ai_tracking_results`
+--
+
+DROP TABLE IF EXISTS `ai_tracking_results`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ai_tracking_results` (
@@ -44,6 +308,12 @@ CREATE TABLE `ai_tracking_results` (
   CONSTRAINT `ai_tracking_results_ibfk_2` FOREIGN KEY (`keyword_id`) REFERENCES `keywords` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ai_tracking_results_archive`
+--
+
+DROP TABLE IF EXISTS `ai_tracking_results_archive`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ai_tracking_results_archive` (
@@ -79,6 +349,12 @@ CREATE TABLE `ai_tracking_results_archive` (
  PARTITION p2026 VALUES LESS THAN ('2027-01-01') ENGINE = InnoDB,
  PARTITION pmax VALUES LESS THAN (MAXVALUE) ENGINE = InnoDB) */;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `alert_configurations`
+--
+
+DROP TABLE IF EXISTS `alert_configurations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `alert_configurations` (
@@ -99,6 +375,12 @@ CREATE TABLE `alert_configurations` (
   KEY `idx_organization` (`organization_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `alert_history`
+--
+
+DROP TABLE IF EXISTS `alert_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `alert_history` (
@@ -116,6 +398,12 @@ CREATE TABLE `alert_history` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `analytics_snapshots`
+--
+
+DROP TABLE IF EXISTS `analytics_snapshots`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `analytics_snapshots` (
@@ -134,6 +422,12 @@ CREATE TABLE `analytics_snapshots` (
   CONSTRAINT `analytics_snapshots_ibfk_2` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `api_keys`
+--
+
+DROP TABLE IF EXISTS `api_keys`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `api_keys` (
@@ -152,6 +446,12 @@ CREATE TABLE `api_keys` (
   CONSTRAINT `api_keys_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `audit_logs`
+--
+
+DROP TABLE IF EXISTS `audit_logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `audit_logs` (
@@ -175,6 +475,41 @@ CREATE TABLE `audit_logs` (
   CONSTRAINT `audit_logs_ibfk_2` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `automation_workflows`
+--
+
+DROP TABLE IF EXISTS `automation_workflows`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `automation_workflows` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `organization_id` char(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text,
+  `trigger_event` varchar(100) NOT NULL,
+  `trigger_conditions` json DEFAULT NULL,
+  `actions` json NOT NULL DEFAULT (_utf8mb4'[]'),
+  `is_active` tinyint(1) DEFAULT '1',
+  `execution_count` int DEFAULT '0',
+  `last_executed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_organization` (`organization_id`),
+  KEY `idx_trigger` (`trigger_event`),
+  KEY `idx_active` (`is_active`),
+  KEY `idx_workflows_trigger_active` (`trigger_event`,`is_active`),
+  CONSTRAINT `automation_workflows_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `competitor_benchmarks`
+--
+
+DROP TABLE IF EXISTS `competitor_benchmarks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `competitor_benchmarks` (
@@ -203,6 +538,12 @@ CREATE TABLE `competitor_benchmarks` (
   CONSTRAINT `competitor_benchmarks_ibfk_3` FOREIGN KEY (`competitor_id`) REFERENCES `competitors` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `competitors`
+--
+
+DROP TABLE IF EXISTS `competitors`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `competitors` (
@@ -222,6 +563,12 @@ CREATE TABLE `competitors` (
   CONSTRAINT `competitors_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `content`
+--
+
+DROP TABLE IF EXISTS `content`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `content` (
@@ -251,6 +598,37 @@ CREATE TABLE `content` (
   CONSTRAINT `content_ibfk_1` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `content_performance_patterns`
+--
+
+DROP TABLE IF EXISTS `content_performance_patterns`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `content_performance_patterns` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `website_id` char(36) NOT NULL,
+  `content_id` char(36) DEFAULT NULL,
+  `pattern_type` enum('high_performer','low_performer','trending','declining') NOT NULL,
+  `features` json NOT NULL,
+  `performance_metrics` json NOT NULL,
+  `time_period_days` int NOT NULL,
+  `identified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_website_pattern` (`website_id`,`pattern_type`),
+  KEY `idx_content` (`content_id`),
+  KEY `idx_identified_at` (`identified_at`),
+  CONSTRAINT `content_performance_patterns_ibfk_1` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `content_performance_patterns_ibfk_2` FOREIGN KEY (`content_id`) REFERENCES `content` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `generated_reports`
+--
+
+DROP TABLE IF EXISTS `generated_reports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `generated_reports` (
@@ -280,6 +658,12 @@ CREATE TABLE `generated_reports` (
   CONSTRAINT `generated_reports_ibfk_3` FOREIGN KEY (`generated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `integration_settings`
+--
+
+DROP TABLE IF EXISTS `integration_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `integration_settings` (
@@ -302,6 +686,39 @@ CREATE TABLE `integration_settings` (
   CONSTRAINT `integration_settings_ibfk_2` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `integration_usage_stats`
+--
+
+DROP TABLE IF EXISTS `integration_usage_stats`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `integration_usage_stats` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `organization_id` char(36) NOT NULL,
+  `integration_id` char(36) NOT NULL,
+  `date` date NOT NULL,
+  `api_calls` int DEFAULT '0',
+  `successful_calls` int DEFAULT '0',
+  `failed_calls` int DEFAULT '0',
+  `data_transferred_mb` decimal(10,2) DEFAULT '0.00',
+  `average_response_time_ms` int DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_org_integration_date` (`organization_id`,`integration_id`,`date`),
+  KEY `idx_organization_date` (`organization_id`,`date`),
+  KEY `idx_integration_date` (`integration_id`,`date`),
+  CONSTRAINT `integration_usage_stats_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `integration_usage_stats_ibfk_2` FOREIGN KEY (`integration_id`) REFERENCES `third_party_integrations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `integrations`
+--
+
+DROP TABLE IF EXISTS `integrations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `integrations` (
@@ -322,6 +739,12 @@ CREATE TABLE `integrations` (
   CONSTRAINT `integrations_ibfk_1` FOREIGN KEY (`organizationId`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `invitations`
+--
+
+DROP TABLE IF EXISTS `invitations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `invitations` (
@@ -347,6 +770,12 @@ CREATE TABLE `invitations` (
   CONSTRAINT `invitations_ibfk_2` FOREIGN KEY (`invitedBy`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `keyword_rankings`
+--
+
+DROP TABLE IF EXISTS `keyword_rankings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `keyword_rankings` (
@@ -371,6 +800,12 @@ CREATE TABLE `keyword_rankings` (
   CONSTRAINT `keyword_rankings_ibfk_3` FOREIGN KEY (`keyword_id`) REFERENCES `keyword_research` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `keyword_research`
+--
+
+DROP TABLE IF EXISTS `keyword_research`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `keyword_research` (
@@ -394,6 +829,12 @@ CREATE TABLE `keyword_research` (
   CONSTRAINT `keyword_research_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `keywords`
+--
+
+DROP TABLE IF EXISTS `keywords`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `keywords` (
@@ -413,6 +854,12 @@ CREATE TABLE `keywords` (
   CONSTRAINT `keywords_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `metrics_snapshots`
+--
+
+DROP TABLE IF EXISTS `metrics_snapshots`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `metrics_snapshots` (
@@ -429,6 +876,157 @@ CREATE TABLE `metrics_snapshots` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ml_models`
+--
+
+DROP TABLE IF EXISTS `ml_models`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ml_models` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `name` varchar(255) NOT NULL,
+  `model_type` enum('content_optimization','competitor_analysis','keyword_prediction','trend_forecast') NOT NULL,
+  `version` varchar(50) NOT NULL,
+  `algorithm` varchar(100) NOT NULL,
+  `training_data_size` int DEFAULT '0',
+  `accuracy_score` decimal(5,4) DEFAULT NULL,
+  `precision_score` decimal(5,4) DEFAULT NULL,
+  `recall_score` decimal(5,4) DEFAULT NULL,
+  `f1_score` decimal(5,4) DEFAULT NULL,
+  `model_file_path` varchar(500) DEFAULT NULL,
+  `hyperparameters` json DEFAULT NULL,
+  `feature_weights` json DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '0',
+  `trained_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_model_version` (`name`,`version`),
+  KEY `idx_type_active` (`model_type`,`is_active`),
+  KEY `idx_accuracy` (`accuracy_score` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ml_optimization_suggestions`
+--
+
+DROP TABLE IF EXISTS `ml_optimization_suggestions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ml_optimization_suggestions` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `organization_id` char(36) NOT NULL,
+  `website_id` char(36) NOT NULL,
+  `model_id` char(36) NOT NULL,
+  `suggestion_type` enum('content','technical','ai_visibility','keyword_strategy','competitor_gap') NOT NULL,
+  `confidence_score` decimal(5,4) NOT NULL,
+  `priority_score` decimal(5,4) NOT NULL,
+  `estimated_impact` json NOT NULL,
+  `suggestion_data` json NOT NULL,
+  `implementation_difficulty` enum('easy','medium','hard') NOT NULL,
+  `estimated_time_hours` int DEFAULT NULL,
+  `status` enum('new','reviewing','accepted','implemented','rejected') DEFAULT 'new',
+  `feedback` text,
+  `implemented_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_organization_website` (`organization_id`,`website_id`),
+  KEY `idx_model_type` (`model_id`,`suggestion_type`),
+  KEY `idx_confidence_priority` (`confidence_score` DESC,`priority_score` DESC),
+  KEY `idx_status` (`status`),
+  KEY `ml_optimization_suggestions_ibfk_2` (`website_id`),
+  CONSTRAINT `ml_optimization_suggestions_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ml_optimization_suggestions_ibfk_2` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ml_optimization_suggestions_ibfk_3` FOREIGN KEY (`model_id`) REFERENCES `ml_models` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ml_suggestion_feedback`
+--
+
+DROP TABLE IF EXISTS `ml_suggestion_feedback`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ml_suggestion_feedback` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `suggestion_id` char(36) NOT NULL,
+  `user_id` char(36) NOT NULL,
+  `feedback_type` enum('helpful','not_helpful','implemented','rejected') NOT NULL,
+  `rating` int DEFAULT NULL,
+  `comment` text,
+  `implementation_result` json DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_suggestion` (`suggestion_id`),
+  KEY `idx_user` (`user_id`),
+  KEY `idx_feedback_type` (`feedback_type`),
+  CONSTRAINT `ml_suggestion_feedback_ibfk_1` FOREIGN KEY (`suggestion_id`) REFERENCES `ml_optimization_suggestions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ml_suggestion_feedback_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `ml_suggestion_feedback_chk_1` CHECK (((`rating` >= 1) and (`rating` <= 5)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ml_training_data`
+--
+
+DROP TABLE IF EXISTS `ml_training_data`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ml_training_data` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `model_id` char(36) NOT NULL,
+  `data_type` enum('feature_vector','label','metadata') NOT NULL,
+  `source_entity_type` varchar(50) NOT NULL,
+  `source_entity_id` char(36) NOT NULL,
+  `feature_data` json NOT NULL,
+  `label_value` decimal(10,6) DEFAULT NULL,
+  `weight` decimal(8,6) DEFAULT '1.000000',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_model_type` (`model_id`,`data_type`),
+  KEY `idx_source_entity` (`source_entity_type`,`source_entity_id`),
+  CONSTRAINT `ml_training_data_ibfk_1` FOREIGN KEY (`model_id`) REFERENCES `ml_models` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `ml_training_jobs`
+--
+
+DROP TABLE IF EXISTS `ml_training_jobs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ml_training_jobs` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `model_id` char(36) NOT NULL,
+  `job_type` enum('initial_training','retraining','incremental_update') NOT NULL,
+  `training_config` json NOT NULL,
+  `status` enum('queued','running','completed','failed') DEFAULT 'queued',
+  `progress_percentage` decimal(5,2) DEFAULT '0.00',
+  `training_metrics` json DEFAULT NULL,
+  `error_message` text,
+  `started_at` timestamp NULL DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_model_status` (`model_id`,`status`),
+  KEY `idx_job_type` (`job_type`),
+  KEY `idx_created_at` (`created_at`),
+  CONSTRAINT `ml_training_jobs_ibfk_1` FOREIGN KEY (`model_id`) REFERENCES `ml_models` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `notifications`
+--
+
+DROP TABLE IF EXISTS `notifications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `notifications` (
@@ -447,6 +1045,41 @@ CREATE TABLE `notifications` (
   CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `optimization_strategy_templates`
+--
+
+DROP TABLE IF EXISTS `optimization_strategy_templates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `optimization_strategy_templates` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `name` varchar(255) NOT NULL,
+  `category` enum('content','technical','seo','ai_visibility') NOT NULL,
+  `description` text,
+  `template_config` json NOT NULL,
+  `success_metrics` json NOT NULL,
+  `estimated_impact` json DEFAULT NULL,
+  `difficulty_level` enum('easy','medium','hard') NOT NULL,
+  `is_public` tinyint(1) DEFAULT '1',
+  `usage_count` int DEFAULT '0',
+  `average_success_rate` decimal(5,2) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_category` (`category`),
+  KEY `idx_difficulty` (`difficulty_level`),
+  KEY `idx_public` (`is_public`),
+  KEY `idx_success_rate` (`average_success_rate` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `optimization_tasks`
+--
+
+DROP TABLE IF EXISTS `optimization_tasks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `optimization_tasks` (
@@ -469,6 +1102,12 @@ CREATE TABLE `optimization_tasks` (
   CONSTRAINT `optimization_tasks_ibfk_1` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `organization_settings`
+--
+
+DROP TABLE IF EXISTS `organization_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `organization_settings` (
@@ -481,6 +1120,12 @@ CREATE TABLE `organization_settings` (
   CONSTRAINT `organization_settings_ibfk_1` FOREIGN KEY (`organizationId`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `organizations`
+--
+
+DROP TABLE IF EXISTS `organizations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `organizations` (
@@ -504,6 +1149,12 @@ CREATE TABLE `organizations` (
   KEY `idx_plan` (`plan`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `pages`
+--
+
+DROP TABLE IF EXISTS `pages`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `pages` (
@@ -529,6 +1180,12 @@ CREATE TABLE `pages` (
   CONSTRAINT `fk_pages_organization` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `platform_settings`
+--
+
+DROP TABLE IF EXISTS `platform_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `platform_settings` (
@@ -548,6 +1205,12 @@ CREATE TABLE `platform_settings` (
   CONSTRAINT `platform_settings_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `report_templates`
+--
+
+DROP TABLE IF EXISTS `report_templates`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `report_templates` (
@@ -571,6 +1234,12 @@ CREATE TABLE `report_templates` (
   CONSTRAINT `report_templates_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `reports`
+--
+
+DROP TABLE IF EXISTS `reports`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `reports` (
@@ -591,6 +1260,12 @@ CREATE TABLE `reports` (
   CONSTRAINT `reports_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `scan_metrics`
+--
+
+DROP TABLE IF EXISTS `scan_metrics`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `scan_metrics` (
@@ -606,6 +1281,12 @@ CREATE TABLE `scan_metrics` (
   CONSTRAINT `scan_metrics_ibfk_1` FOREIGN KEY (`scan_id`) REFERENCES `scans` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `scans`
+--
+
+DROP TABLE IF EXISTS `scans`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `scans` (
@@ -627,6 +1308,40 @@ CREATE TABLE `scans` (
   CONSTRAINT `scans_ibfk_1` FOREIGN KEY (`website_id`) REFERENCES `websites` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `third_party_integrations`
+--
+
+DROP TABLE IF EXISTS `third_party_integrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `third_party_integrations` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `organization_id` char(36) NOT NULL,
+  `integration_type` enum('zapier','make','slack','teams','discord','telegram','email') NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `config` json NOT NULL DEFAULT (_utf8mb4'{}'),
+  `credentials` json DEFAULT NULL,
+  `webhook_url` varchar(1000) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `last_sync_at` timestamp NULL DEFAULT NULL,
+  `sync_status` enum('success','error','pending') DEFAULT 'pending',
+  `error_message` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_organization_type` (`organization_id`,`integration_type`),
+  KEY `idx_active` (`is_active`),
+  CONSTRAINT `third_party_integrations_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `tracking_settings`
+--
+
+DROP TABLE IF EXISTS `tracking_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `tracking_settings` (
@@ -647,6 +1362,12 @@ CREATE TABLE `tracking_settings` (
   CONSTRAINT `tracking_settings_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `user_organizations`
+--
+
+DROP TABLE IF EXISTS `user_organizations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_organizations` (
@@ -665,6 +1386,12 @@ CREATE TABLE `user_organizations` (
   CONSTRAINT `user_organizations_ibfk_2` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `user_settings`
+--
+
+DROP TABLE IF EXISTS `user_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_settings` (
@@ -678,6 +1405,12 @@ CREATE TABLE `user_settings` (
   CONSTRAINT `user_settings_ibfk_1` FOREIGN KEY (`userId`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `users` (
@@ -702,6 +1435,74 @@ CREATE TABLE `users` (
   KEY `idx_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `webhook_deliveries`
+--
+
+DROP TABLE IF EXISTS `webhook_deliveries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `webhook_deliveries` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `webhook_id` char(36) NOT NULL,
+  `event_type` varchar(100) NOT NULL,
+  `payload` json NOT NULL,
+  `response_status` int DEFAULT NULL,
+  `response_body` text,
+  `response_headers` json DEFAULT NULL,
+  `delivery_time_ms` int DEFAULT NULL,
+  `attempts` int DEFAULT '1',
+  `delivered_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `next_retry_at` timestamp NULL DEFAULT NULL,
+  `status` enum('pending','delivered','failed','retry') DEFAULT 'pending',
+  PRIMARY KEY (`id`),
+  KEY `idx_webhook` (`webhook_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_event_type` (`event_type`),
+  KEY `idx_delivered_at` (`delivered_at`),
+  KEY `idx_webhook_deliveries_retry` (`status`,`next_retry_at`),
+  CONSTRAINT `webhook_deliveries_ibfk_1` FOREIGN KEY (`webhook_id`) REFERENCES `webhooks` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `webhooks`
+--
+
+DROP TABLE IF EXISTS `webhooks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `webhooks` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `organization_id` char(36) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `url` varchar(1000) NOT NULL,
+  `secret` varchar(255) DEFAULT NULL,
+  `events` json NOT NULL DEFAULT (_utf8mb4'[]'),
+  `is_active` tinyint(1) DEFAULT '1',
+  `headers` json DEFAULT NULL,
+  `retry_attempts` int DEFAULT '3',
+  `timeout_seconds` int DEFAULT '30',
+  `last_triggered_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `total_deliveries` int DEFAULT '0',
+  `successful_deliveries` int DEFAULT '0',
+  `failed_deliveries` int DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `idx_organization` (`organization_id`),
+  KEY `idx_active` (`is_active`),
+  CONSTRAINT `webhooks_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary view structure for view `website_overview`
+--
+
+DROP TABLE IF EXISTS `website_overview`;
+/*!50001 DROP VIEW IF EXISTS `website_overview`*/;
 SET @saved_cs_client     = @@character_set_client;
 /*!50503 SET character_set_client = utf8mb4 */;
 /*!50001 CREATE VIEW `website_overview` AS SELECT 
@@ -714,6 +1515,12 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `avg_geo_score`,
  1 AS `last_scan_date`*/;
 SET character_set_client = @saved_cs_client;
+
+--
+-- Table structure for table `websites`
+--
+
+DROP TABLE IF EXISTS `websites`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `websites` (
@@ -738,6 +1545,36 @@ CREATE TABLE `websites` (
   CONSTRAINT `websites_ibfk_1` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `workflow_executions`
+--
+
+DROP TABLE IF EXISTS `workflow_executions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `workflow_executions` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `workflow_id` char(36) NOT NULL,
+  `trigger_data` json NOT NULL,
+  `execution_status` enum('success','failed','partial') NOT NULL,
+  `actions_executed` json DEFAULT NULL,
+  `error_details` json DEFAULT NULL,
+  `execution_time_ms` int DEFAULT NULL,
+  `executed_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_workflow` (`workflow_id`),
+  KEY `idx_status` (`execution_status`),
+  KEY `idx_executed_at` (`executed_at`),
+  KEY `idx_executions_workflow_date` (`workflow_id`,`executed_at`),
+  CONSTRAINT `workflow_executions_ibfk_1` FOREIGN KEY (`workflow_id`) REFERENCES `automation_workflows` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Final view structure for view `website_overview`
+--
+
 /*!50001 DROP VIEW IF EXISTS `website_overview`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
@@ -751,3 +1588,118 @@ CREATE TABLE `websites` (
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2025-09-07 15:02:37
+-- MySQL dump 10.13  Distrib 8.0.43, for Linux (x86_64)
+--
+-- Host: 10.74.100.30    Database: exchange_geo
+-- ------------------------------------------------------
+-- Server version	8.0.43-0ubuntu0.22.04.1
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `ml_models`
+--
+
+DROP TABLE IF EXISTS `ml_models`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ml_models` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `name` varchar(255) NOT NULL,
+  `model_type` enum('content_optimization','competitor_analysis','keyword_prediction','trend_forecast') NOT NULL,
+  `version` varchar(50) NOT NULL,
+  `algorithm` varchar(100) NOT NULL,
+  `training_data_size` int DEFAULT '0',
+  `accuracy_score` decimal(5,4) DEFAULT NULL,
+  `precision_score` decimal(5,4) DEFAULT NULL,
+  `recall_score` decimal(5,4) DEFAULT NULL,
+  `f1_score` decimal(5,4) DEFAULT NULL,
+  `model_file_path` varchar(500) DEFAULT NULL,
+  `hyperparameters` json DEFAULT NULL,
+  `feature_weights` json DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '0',
+  `trained_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_model_version` (`name`,`version`),
+  KEY `idx_type_active` (`model_type`,`is_active`),
+  KEY `idx_accuracy` (`accuracy_score` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ml_models`
+--
+
+/*!40000 ALTER TABLE `ml_models` DISABLE KEYS */;
+INSERT INTO `ml_models` VALUES ('843c3e91-8b50-11f0-b652-000c292a4471','ContentOptimizer','content_optimization','1.0','Random Forest',0,NULL,NULL,NULL,NULL,NULL,'{\"max_depth\": 10, \"n_estimators\": 100, \"random_state\": 42}',NULL,1,NULL,'2025-09-06 18:37:18','2025-09-06 18:37:18'),('843c4246-8b50-11f0-b652-000c292a4471','CompetitorAnalyzer','competitor_analysis','1.0','Gradient Boosting',0,NULL,NULL,NULL,NULL,NULL,'{\"max_depth\": 8, \"n_estimators\": 200, \"learning_rate\": 0.1}',NULL,1,NULL,'2025-09-06 18:37:18','2025-09-06 18:37:18'),('843c445d-8b50-11f0-b652-000c292a4471','KeywordPredictor','keyword_prediction','1.0','Neural Network',0,NULL,NULL,NULL,NULL,NULL,'{\"activation\": \"relu\", \"dropout_rate\": 0.3, \"hidden_layers\": [128, 64, 32]}',NULL,1,NULL,'2025-09-06 18:37:18','2025-09-06 18:37:18'),('843c45e6-8b50-11f0-b652-000c292a4471','TrendForecaster','trend_forecast','1.0','LSTM',0,NULL,NULL,NULL,NULL,NULL,'{\"epochs\": 100, \"lstm_units\": 50, \"sequence_length\": 30}',NULL,1,NULL,'2025-09-06 18:37:18','2025-09-06 18:37:18');
+/*!40000 ALTER TABLE `ml_models` ENABLE KEYS */;
+
+--
+-- Table structure for table `optimization_strategy_templates`
+--
+
+DROP TABLE IF EXISTS `optimization_strategy_templates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `optimization_strategy_templates` (
+  `id` char(36) NOT NULL DEFAULT (uuid()),
+  `name` varchar(255) NOT NULL,
+  `category` enum('content','technical','seo','ai_visibility') NOT NULL,
+  `description` text,
+  `template_config` json NOT NULL,
+  `success_metrics` json NOT NULL,
+  `estimated_impact` json DEFAULT NULL,
+  `difficulty_level` enum('easy','medium','hard') NOT NULL,
+  `is_public` tinyint(1) DEFAULT '1',
+  `usage_count` int DEFAULT '0',
+  `average_success_rate` decimal(5,2) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_category` (`category`),
+  KEY `idx_difficulty` (`difficulty_level`),
+  KEY `idx_public` (`is_public`),
+  KEY `idx_success_rate` (`average_success_rate` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `optimization_strategy_templates`
+--
+
+/*!40000 ALTER TABLE `optimization_strategy_templates` DISABLE KEYS */;
+INSERT INTO `optimization_strategy_templates` VALUES ('845b269a-8b50-11f0-b652-000c292a4471','Meta Description Optimization','seo','A/B test different meta descriptions to improve click-through rates','{\"metrics\": [\"ctr\", \"impressions\"], \"variations\": [\"original\", \"benefit_focused\", \"question_based\"]}','[\"click_through_rate\", \"organic_impressions\"]',NULL,'easy',1,0,NULL,'2025-09-06 18:37:18','2025-09-06 18:37:18'),('845b2b47-8b50-11f0-b652-000c292a4471','H1 Title Optimization','content','Test different H1 titles for improved engagement and SEO performance','{\"metrics\": [\"engagement\", \"bounce_rate\"], \"variations\": [\"keyword_focused\", \"benefit_focused\", \"emotional\"]}','[\"time_on_page\", \"bounce_rate\", \"geo_score\"]',NULL,'easy',1,0,NULL,'2025-09-06 18:37:18','2025-09-06 18:37:18'),('845b2f03-8b50-11f0-b652-000c292a4471','Schema Markup Implementation','technical','Compare pages with and without structured data implementation','{\"metrics\": [\"visibility\", \"ctr\"], \"variations\": [\"no_schema\", \"basic_schema\", \"rich_schema\"]}','[\"ai_visibility_score\", \"featured_snippets\", \"click_through_rate\"]',NULL,'medium',1,0,NULL,'2025-09-06 18:37:18','2025-09-06 18:37:18'),('845b309b-8b50-11f0-b652-000c292a4471','AI-Optimized Content Structure','ai_visibility','Test different content structures optimized for AI search engines','{\"metrics\": [\"ai_mentions\", \"visibility\"], \"variations\": [\"traditional\", \"faq_enhanced\", \"ai_optimized\"]}','[\"ai_mention_frequency\", \"visibility_score\", \"citation_rate\"]',NULL,'hard',1,0,NULL,'2025-09-06 18:37:18','2025-09-06 18:37:18');
+/*!40000 ALTER TABLE `optimization_strategy_templates` ENABLE KEYS */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2025-09-07 15:03:00

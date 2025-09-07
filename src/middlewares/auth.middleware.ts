@@ -126,20 +126,22 @@ export const requireOrganization = async (req: AuthRequest, res: Response, next:
     return;
   }
 
-  const organizationId = req.headers['x-organization-id'] as string;
-  
-  if (!organizationId) {
-    res.status(400).json({
-      success: false,
-      message: 'Organization ID required in X-Organization-ID header'
-    });
-    return;
-  }
-
   try {
-    // Check if user belongs to the organization
     const userOrganizations = req.user.organizations || [];
-    const organization = userOrganizations.find((org: any) => org.id === organizationId);
+    
+    // Use user's first organization automatically (no header required)
+    // This provides better compatibility and security - user can only access their own org data
+    const organization = userOrganizations.find((org: any) => 
+      org.UserOrganization?.status === 'active' || !org.UserOrganization?.status
+    ) || userOrganizations[0];
+
+    if (!organization) {
+      res.status(400).json({
+        success: false,
+        message: 'User has no organizations'
+      });
+      return;
+    }
 
     // Debug logging for organization access issues
     if (process.env.NODE_ENV === 'development') {
@@ -147,27 +149,20 @@ export const requireOrganization = async (req: AuthRequest, res: Response, next:
         url: req.url,
         method: req.method,
         userId: req.user.id,
-        requestedOrgId: organizationId,
+        autoSelectedOrg: true,
         userOrganizations: userOrganizations.map((org: any) => ({
           id: org.id,
           name: org.name,
-          role: org.UserOrganization?.role
+          role: org.UserOrganization?.role,
+          status: org.UserOrganization?.status
         })),
-        foundOrganization: !!organization,
-        organizationDetails: organization ? {
+        selectedOrganization: {
           id: organization.id,
           name: organization.name,
-          role: organization.UserOrganization?.role
-        } : null
+          role: organization.UserOrganization?.role,
+          status: organization.UserOrganization?.status
+        }
       });
-    }
-
-    if (!organization) {
-      res.status(403).json({
-        success: false,
-        message: 'User not authorized for this organization'
-      });
-      return;
     }
 
     req.organization = organization;

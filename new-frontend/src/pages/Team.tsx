@@ -67,10 +67,13 @@ const Team = () => {
       }
       
       const response = await teamApi.getRoles();
-      if (response.success) {
+      if (response.success && response.data && Array.isArray(response.data)) {
         setRoles(response.data);
+      } else {
+        setRoles([]);
       }
     } catch (error: any) {
+      setRoles([]); // Ensure roles is always an array even on error
       // Don't show error toast for 401 (unauthorized) errors to avoid console spam
       if (error.response?.status !== 401) {
         toast.error('獲取角色失敗', {
@@ -246,6 +249,7 @@ const Team = () => {
   };
 
   const getRoleDisplayName = (roleName: string) => {
+    if (!roles || !Array.isArray(roles)) return roleName;
     const role = roles.find(r => r.name === roleName);
     return role?.displayName || roleName;
   };
@@ -311,7 +315,7 @@ const Team = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">全部角色</SelectItem>
-                      {roles.map((role) => (
+                      {roles && roles.length > 0 && roles.map((role) => (
                         <SelectItem key={role.name} value={role.name}>
                           {role.displayName}
                         </SelectItem>
@@ -351,7 +355,7 @@ const Team = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {roles.map((role) => (
+                            {roles && roles.length > 0 && roles.map((role) => (
                               <SelectItem key={role.name} value={role.name}>
                                 {role.displayName}
                               </SelectItem>
@@ -439,7 +443,7 @@ const Team = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              {roles.map((role) => (
+                              {roles && roles.length > 0 && roles.map((role) => (
                                 <SelectItem key={role.name} value={role.name}>
                                   {role.displayName}
                                 </SelectItem>
@@ -507,7 +511,7 @@ const Team = () => {
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {roles.map((role) => (
+                  {roles && roles.length > 0 ? roles.map((role) => (
                     <Card key={role.name}>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -520,16 +524,26 @@ const Team = () => {
                         <div>
                           <h4 className="text-sm font-medium mb-2">權限包含:</h4>
                           <div className="space-y-1">
-                            {role.permissions.map((permission, idx) => (
+                            {role.permissions && Array.isArray(role.permissions) ? role.permissions.map((permission, idx) => (
                               <div key={idx} className="text-sm text-muted-foreground">
                                 • {permission}
                               </div>
-                            ))}
+                            )) : (
+                              <div className="text-sm text-muted-foreground">
+                                • 沒有權限資訊
+                              </div>
+                            )}
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  )) : (
+                    <div className="col-span-full text-center py-8 text-muted-foreground">
+                      <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>沒有可用的角色</p>
+                      {!isAuthenticated && <p className="text-sm">請先登入查看角色</p>}
+                    </div>
+                  )}
                 </div>
               </>
             )}

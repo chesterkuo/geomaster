@@ -16,6 +16,7 @@
     "test:api:gemini": "node test-gemini-integration.js",
     "test:api:alerts": "node test-alerts-dashboard-only.js",
     "test:api:phase23": "node test-phase-2.3.js",
+    "test:api:phase3": "node test-phase3-complete.js",
     "test:wordpress-plugin": "node test-wordpress-plugin.js",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",

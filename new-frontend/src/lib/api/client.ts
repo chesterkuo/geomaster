@@ -11,6 +11,28 @@ console.log('🔧 API Client Configuration:', {
   FULL_API_URL: `${API_BASE_URL}${API_VERSION}`
 });
 
+// 存儲 token 的鍵名
+const TOKEN_KEY = 'geo_access_token';
+const REFRESH_TOKEN_KEY = 'geo_refresh_token';
+const ORGANIZATION_KEY = 'geo_organization_id';
+
+// Clear any stale localStorage data on startup to prevent CORS issues
+// This ensures fresh start without old organization ID data
+const existingToken = localStorage.getItem(TOKEN_KEY);
+const existingOrgId = localStorage.getItem(ORGANIZATION_KEY);
+
+console.log('🧹 Checking existing localStorage:', {
+  hasToken: !!existingToken,
+  hasOrgId: !!existingOrgId,
+  orgId: existingOrgId
+});
+
+// If we have org ID but no token, clear the org ID to prevent CORS issues
+if (existingOrgId && !existingToken) {
+  console.log('⚠️ Found orphaned organization ID without token, clearing...');
+  localStorage.removeItem(ORGANIZATION_KEY);
+}
+
 // 創建 axios 實例
 const apiClient: AxiosInstance = axios.create({
   baseURL: `${API_BASE_URL}${API_VERSION}`,
@@ -19,11 +41,6 @@ const apiClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-// 存儲 token 的鍵名
-const TOKEN_KEY = 'geo_access_token';
-const REFRESH_TOKEN_KEY = 'geo_refresh_token';
-const ORGANIZATION_KEY = 'geo_organization_id';
 
 // Token 管理
 export const tokenManager = {
@@ -48,25 +65,34 @@ apiClient.interceptors.request.use(
     const token = tokenManager.getAccessToken();
     const orgId = tokenManager.getOrganizationId();
     
+    // Debug logging for CORS issues  
+    console.log('🔍 API Request Debug:', {
+      url: config.url,
+      method: config.method,
+      hasToken: !!token,
+      hasOrgId: !!orgId,
+      tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
+      orgId: orgId || 'none',
+      willAddOrgHeader: !!(token && orgId)
+    });
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    if (orgId) {
-      config.headers['X-Organization-ID'] = orgId;
-    }
-    
-    // Debug logging for authentication issues  
-    if (config.url?.includes('/content/') || config.url?.includes('optimization')) {
-      console.log('🔍 API Request Debug:', {
-        url: config.url,
-        method: config.method,
-        hasToken: !!token,
-        hasOrgId: !!orgId,
-        tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
-        orgId: orgId || 'none',
-        headers: config.headers
-      });
+      
+      // Only add organization ID header for local development API
+      // Production API (api-geo.blitzgame.site) doesn't support this header in CORS
+      const isProductionAPI = API_BASE_URL.includes('api-geo.blitzgame.site');
+      
+      if (orgId && !isProductionAPI) {
+        config.headers['X-Organization-ID'] = orgId;
+        console.log('✅ Added X-Organization-ID header for local development API');
+      } else if (isProductionAPI) {
+        console.log('🚫 Production API detected, skipping X-Organization-ID header');
+      }
+    } else {
+      // Explicitly ensure no org header is sent for unauthenticated requests
+      delete config.headers['X-Organization-ID'];
+      console.log('🚫 No token found, ensuring no X-Organization-ID header is sent');
     }
     
     return config;

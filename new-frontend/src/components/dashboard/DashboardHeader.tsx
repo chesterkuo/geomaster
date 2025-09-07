@@ -8,7 +8,11 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { authService } from "@/lib/api/auth";
 
-export const DashboardHeader = () => {
+interface DashboardHeaderProps {
+  onShowAuth?: () => void;
+}
+
+export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
 
@@ -128,7 +132,7 @@ export const DashboardHeader = () => {
               variant="ghost"
               size="sm"
               className="flex items-center space-x-2 px-3 h-9"
-              onClick={() => navigate('/')}
+              onClick={onShowAuth}
             >
               <div className="w-6 h-6 bg-gradient-primary rounded-full flex items-center justify-center">
                 <User className="h-3 w-3 text-white" />

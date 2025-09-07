@@ -1,10 +1,49 @@
 import { Request, Response } from 'express';
 import { AlertService } from '../services/alertService';
 import { AppError, asyncHandler } from '../middlewares/error.middleware';
+import { ALERT_TYPES, NOTIFICATION_CHANNELS } from '../models/AlertConfiguration';
+import { METRIC_TYPES, PLATFORMS, TIME_WINDOWS } from '../models/MetricsSnapshot';
 
 interface AuthRequest extends Request {
   user?: any;
   organization?: any;
+}
+
+// Type definitions for dynamic alert configuration response
+interface AlertTypeConfig {
+  type: string;
+  name: string;
+  description: string;
+}
+
+interface MetricTypeConfig {
+  metric: string;
+  name: string;
+  description: string;
+}
+
+interface TimeWindowConfig {
+  value: string;
+  name: string;
+  description?: string;
+}
+
+interface OperatorConfig {
+  value: string;
+  name: string;
+  description?: string;
+}
+
+interface NotificationChannelConfig {
+  channel: string;
+  name: string;
+  description: string;
+}
+
+interface PlatformConfig {
+  platform: string;
+  name: string;
+  description: string;
 }
 
 export class AlertsController {
@@ -216,72 +255,250 @@ export class AlertsController {
   });
 
   /**
-   * GET /api/v1/alerts/types - Get available alert types and metrics
+   * GET /api/v1/alerts/types - Get available alert types and metrics (dynamic configuration)
    */
   public getAlertTypes = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
-    const alertTypes = [
-      {
-        type: 'mention_spike',
-        name: 'Mention Spike',
-        description: 'Triggered when AI platform mentions increase significantly'
-      },
-      {
-        type: 'visibility_drop',
-        name: 'Visibility Drop',
-        description: 'Triggered when AI visibility decreases below threshold'
-      },
-      {
-        type: 'score_change',
-        name: 'Score Change',
-        description: 'Triggered when GEO score changes significantly'
-      }
-    ];
+    try {
+      // Get organization ID for potential future filtering
+      const organizationId = req.organization?.id;
 
-    const metricTypes = [
-      {
-        metric: 'mention_count',
-        name: 'Mention Count',
-        description: 'Number of AI platform mentions'
-      },
-      {
-        metric: 'sentiment_score',
-        name: 'Sentiment Score',
-        description: 'Average sentiment score of mentions'
-      },
-      {
-        metric: 'visibility_percentage',
-        name: 'Visibility Percentage',
-        description: 'Percentage visibility across AI platforms'
-      },
-      {
-        metric: 'geo_score',
-        name: 'GEO Score',
-        description: 'Overall Generative Engine Optimization score'
-      }
-    ];
+      // Generate dynamic alert types from model enum
+      const alertTypes: AlertTypeConfig[] = this.generateAlertTypeConfigurations();
 
-    const timeWindows = [
-      { value: '1h', name: '1 Hour' },
-      { value: '1d', name: '1 Day' },
-      { value: '7d', name: '7 Days' },
-      { value: '30d', name: '30 Days' }
-    ];
+      // Generate dynamic metric types from model enum
+      const metricTypes: MetricTypeConfig[] = this.generateMetricTypeConfigurations();
 
-    const operators = [
-      { value: 'greater_than', name: 'Greater Than' },
-      { value: 'less_than', name: 'Less Than' },
-      { value: 'equals', name: 'Equals' },
-      { value: 'percentage_change', name: 'Percentage Change' }
-    ];
+      // Generate dynamic time windows from model enum
+      const timeWindows: TimeWindowConfig[] = this.generateTimeWindowConfigurations();
 
-    res.json({
-      success: true,
-      data: {
-        alertTypes,
-        metricTypes,
-        timeWindows,
-        operators
-      }
-    });
+      // Generate dynamic operators (based on AlertCondition interface)
+      const operators: OperatorConfig[] = this.generateOperatorConfigurations();
+
+      // Generate notification channels from model enum
+      const notificationChannels: NotificationChannelConfig[] = this.generateNotificationChannelConfigurations();
+
+      // Generate platform configurations from model enum
+      const platforms: PlatformConfig[] = this.generatePlatformConfigurations();
+
+      res.json({
+        success: true,
+        data: {
+          alertTypes,
+          metricTypes,
+          timeWindows,
+          operators,
+          notificationChannels,
+          platforms
+        }
+      });
+    } catch (error) {
+      throw new AppError('Failed to retrieve alert configuration types', 500);
+    }
   });
+
+  /**
+   * Generate alert type configurations from ALERT_TYPES enum
+   */
+  private generateAlertTypeConfigurations(): AlertTypeConfig[] {
+    const alertTypeDescriptions: Record<string, { name: string; description: string }> = {
+      [ALERT_TYPES.MENTION_SPIKE]: {
+        name: 'Mention Spike',
+        description: 'Triggered when AI platform mentions increase significantly above normal levels'
+      },
+      [ALERT_TYPES.VISIBILITY_DROP]: {
+        name: 'Visibility Drop',
+        description: 'Triggered when visibility across AI platforms decreases below specified threshold'
+      },
+      [ALERT_TYPES.COMPETITOR_OUTRANK]: {
+        name: 'Competitor Outrank',
+        description: 'Triggered when competitors achieve higher ranking or visibility than your content'
+      },
+      [ALERT_TYPES.SCORE_CHANGE]: {
+        name: 'Score Change',
+        description: 'Triggered when GEO score changes significantly from previous measurements'
+      },
+      [ALERT_TYPES.NEW_MENTION]: {
+        name: 'New Mention',
+        description: 'Triggered when your brand/website receives new mentions on AI platforms'
+      },
+      [ALERT_TYPES.SENTIMENT_CHANGE]: {
+        name: 'Sentiment Change',
+        description: 'Triggered when sentiment score of mentions changes beyond specified thresholds'
+      }
+    };
+
+    return Object.values(ALERT_TYPES).map((type) => ({
+      type,
+      name: alertTypeDescriptions[type]?.name || this.formatEnumValueToTitle(type),
+      description: alertTypeDescriptions[type]?.description || `Alert triggered for ${this.formatEnumValueToTitle(type)} events`
+    }));
+  }
+
+  /**
+   * Generate metric type configurations from METRIC_TYPES enum
+   */
+  private generateMetricTypeConfigurations(): MetricTypeConfig[] {
+    const metricTypeDescriptions: Record<string, { name: string; description: string }> = {
+      [METRIC_TYPES.MENTION_COUNT]: {
+        name: 'Mention Count',
+        description: 'Total number of mentions across AI platforms within the specified time window'
+      },
+      [METRIC_TYPES.SENTIMENT_SCORE]: {
+        name: 'Sentiment Score',
+        description: 'Average sentiment score of mentions, ranging from negative to positive values'
+      },
+      [METRIC_TYPES.VISIBILITY_PERCENTAGE]: {
+        name: 'Visibility Percentage',
+        description: 'Percentage of queries where your content appears in AI platform responses'
+      },
+      [METRIC_TYPES.GEO_SCORE]: {
+        name: 'GEO Score',
+        description: 'Overall Generative Engine Optimization score based on multiple visibility factors'
+      },
+      [METRIC_TYPES.COMPETITOR_RANK]: {
+        name: 'Competitor Rank',
+        description: 'Your ranking position relative to competitors in AI platform responses'
+      }
+    };
+
+    return Object.values(METRIC_TYPES).map((metric) => ({
+      metric,
+      name: metricTypeDescriptions[metric]?.name || this.formatEnumValueToTitle(metric),
+      description: metricTypeDescriptions[metric]?.description || `Metric tracking ${this.formatEnumValueToTitle(metric)}`
+    }));
+  }
+
+  /**
+   * Generate time window configurations from TIME_WINDOWS enum
+   */
+  private generateTimeWindowConfigurations(): TimeWindowConfig[] {
+    const timeWindowDescriptions: Record<string, { name: string; description: string }> = {
+      [TIME_WINDOWS.ONE_HOUR]: {
+        name: '1 Hour',
+        description: 'Metrics calculated over the last 1 hour period'
+      },
+      [TIME_WINDOWS.ONE_DAY]: {
+        name: '1 Day',
+        description: 'Metrics calculated over the last 24 hour period'
+      },
+      [TIME_WINDOWS.SEVEN_DAYS]: {
+        name: '7 Days',
+        description: 'Metrics calculated over the last 7 day period'
+      },
+      [TIME_WINDOWS.THIRTY_DAYS]: {
+        name: '30 Days',
+        description: 'Metrics calculated over the last 30 day period'
+      }
+    };
+
+    return Object.values(TIME_WINDOWS).map((value) => ({
+      value,
+      name: timeWindowDescriptions[value]?.name || value.toUpperCase(),
+      description: timeWindowDescriptions[value]?.description || `Time window of ${value}`
+    }));
+  }
+
+  /**
+   * Generate operator configurations (based on AlertCondition interface)
+   */
+  private generateOperatorConfigurations(): OperatorConfig[] {
+    const operators = [
+      {
+        value: 'greater_than',
+        name: 'Greater Than',
+        description: 'Trigger when metric value is greater than the specified threshold'
+      },
+      {
+        value: 'less_than',
+        name: 'Less Than',
+        description: 'Trigger when metric value is less than the specified threshold'
+      },
+      {
+        value: 'equals',
+        name: 'Equals',
+        description: 'Trigger when metric value equals the specified value (with small tolerance)'
+      },
+      {
+        value: 'percentage_change',
+        name: 'Percentage Change',
+        description: 'Trigger when metric changes by the specified percentage from previous value'
+      }
+    ];
+
+    return operators;
+  }
+
+  /**
+   * Generate notification channel configurations from NOTIFICATION_CHANNELS enum
+   */
+  private generateNotificationChannelConfigurations(): NotificationChannelConfig[] {
+    const channelDescriptions: Record<string, { name: string; description: string }> = {
+      [NOTIFICATION_CHANNELS.EMAIL]: {
+        name: 'Email',
+        description: 'Send alert notifications via email to configured recipients'
+      },
+      [NOTIFICATION_CHANNELS.SLACK]: {
+        name: 'Slack',
+        description: 'Send alert notifications to specified Slack channels or users'
+      },
+      [NOTIFICATION_CHANNELS.WEBHOOK]: {
+        name: 'Webhook',
+        description: 'Send alert data to external webhook URLs for custom integrations'
+      },
+      [NOTIFICATION_CHANNELS.IN_APP]: {
+        name: 'In-App',
+        description: 'Display alert notifications within the application interface'
+      }
+    };
+
+    return Object.values(NOTIFICATION_CHANNELS).map((channel) => ({
+      channel,
+      name: channelDescriptions[channel]?.name || this.formatEnumValueToTitle(channel),
+      description: channelDescriptions[channel]?.description || `Notification via ${this.formatEnumValueToTitle(channel)}`
+    }));
+  }
+
+  /**
+   * Generate platform configurations from PLATFORMS enum
+   */
+  private generatePlatformConfigurations(): PlatformConfig[] {
+    const platformDescriptions: Record<string, { name: string; description: string }> = {
+      [PLATFORMS.CHATGPT]: {
+        name: 'ChatGPT',
+        description: 'OpenAI ChatGPT platform monitoring and tracking'
+      },
+      [PLATFORMS.GEMINI]: {
+        name: 'Gemini',
+        description: 'Google Gemini (formerly Bard) platform monitoring and tracking'
+      },
+      [PLATFORMS.PERPLEXITY]: {
+        name: 'Perplexity',
+        description: 'Perplexity AI platform monitoring and tracking'
+      },
+      [PLATFORMS.CLAUDE]: {
+        name: 'Claude',
+        description: 'Anthropic Claude platform monitoring and tracking'
+      },
+      [PLATFORMS.ALL]: {
+        name: 'All Platforms',
+        description: 'Aggregate metrics across all monitored AI platforms'
+      }
+    };
+
+    return Object.values(PLATFORMS).map((platform) => ({
+      platform,
+      name: platformDescriptions[platform]?.name || this.formatEnumValueToTitle(platform),
+      description: platformDescriptions[platform]?.description || `${this.formatEnumValueToTitle(platform)} platform`
+    }));
+  }
+
+  /**
+   * Utility method to format enum values into human-readable titles
+   */
+  private formatEnumValueToTitle(enumValue: string): string {
+    return enumValue
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
 }

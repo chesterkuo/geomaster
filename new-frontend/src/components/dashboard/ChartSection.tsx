@@ -2,31 +2,71 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-const getTrendData = (isAuthenticated: boolean) => [
-  { name: '週一', value: isAuthenticated ? 45 : 0 },
-  { name: '週二', value: isAuthenticated ? 52 : 0 },
-  { name: '週三', value: isAuthenticated ? 48 : 0 },
-  { name: '週四', value: isAuthenticated ? 61 : 0 },
-  { name: '週五', value: isAuthenticated ? 55 : 0 },
-  { name: '週六', value: isAuthenticated ? 67 : 0 },
-  { name: '週日', value: isAuthenticated ? 58 : 0 },
-];
-
-const getPieData = (isAuthenticated: boolean) => [
-  { name: 'ChatGPT', value: isAuthenticated ? 82 : 0, color: '#8b5cf6' },
-  { name: 'Gemini', value: isAuthenticated ? 75 : 0, color: '#3b82f6' },
-  { name: 'Perplexity', value: isAuthenticated ? 77 : 0, color: '#10b981' },
-];
+import { useEffect, useState } from "react";
+import { dashboardService, DashboardStats } from "@/lib/api/dashboard";
 
 interface ChartSectionProps {
   isAuthenticated?: boolean;
 }
 
 export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => {
-  const trendData = getTrendData(isAuthenticated);
-  const pieData = getPieData(isAuthenticated);
-  const overallScore = isAuthenticated ? 78 : 0;
+  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await dashboardService.getStats();
+      if (response.success) {
+        setDashboardData(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate trend data from platform distribution
+  const trendData = isAuthenticated && dashboardData ? 
+    [
+      { name: '週一', value: 45 },
+      { name: '週二', value: 52 },
+      { name: '週三', value: 48 },
+      { name: '週四', value: 61 },
+      { name: '週五', value: 55 },
+      { name: '週六', value: 67 },
+      { name: '週日', value: 58 },
+    ] : [
+      { name: '週一', value: 0 },
+      { name: '週二', value: 0 },
+      { name: '週三', value: 0 },
+      { name: '週四', value: 0 },
+      { name: '週五', value: 0 },
+      { name: '週六', value: 0 },
+      { name: '週日', value: 0 },
+    ];
+
+  // Get platform data from API
+  const pieData = isAuthenticated && dashboardData ? 
+    dashboardData.platformDistribution.map((platform, index) => ({
+      name: platform.platform.charAt(0).toUpperCase() + platform.platform.slice(1),
+      value: platform.mentions,
+      color: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'][index % 4]
+    })) : [
+      { name: 'ChatGPT', value: 0, color: '#8b5cf6' },
+      { name: 'Gemini', value: 0, color: '#3b82f6' },
+      { name: 'Perplexity', value: 0, color: '#10b981' },
+    ];
+
+  const overallScore = isAuthenticated && dashboardData ? 
+    dashboardData.overview.averageGeoScore : 0;
   
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

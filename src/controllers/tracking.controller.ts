@@ -1,9 +1,66 @@
 import { Request, Response } from 'express';
+import { Op } from 'sequelize';
 import { asyncHandler } from '../middlewares/error.middleware';
+import AITrackingResult from '../models/AITrackingResult';
+import Website from '../models/Website';
+import KeywordRanking, { PlatformType } from '../models/KeywordRanking';
+import sequelize from '../config/database';
+import { AI_PLATFORMS } from '../config/constants';
 
 interface AuthRequest extends Request {
   user?: any;
   organization?: any;
+}
+
+// TypeScript interfaces for API responses
+interface MentionData {
+  id: string;
+  platform: string;
+  query: string;
+  mention: string;
+  url: string;
+  websiteName: string;
+  timestamp: string;
+  sentiment: 'positive' | 'neutral' | 'negative';
+  isCited: boolean;
+  citationPosition: number | null;
+}
+
+interface MentionsResponse {
+  mentions: MentionData[];
+  summary: {
+    total: number;
+    byPlatform: Record<string, number>;
+    bySentiment: {
+      positive: number;
+      neutral: number;
+      negative: number;
+    };
+  };
+  pagination: {
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+interface TrendData {
+  date: string;
+  chatgpt: number;
+  perplexity: number;
+  gemini: number;
+  claude: number;
+}
+
+interface VisibilityTrendsResponse {
+  trends: TrendData[];
+  summary: {
+    averageVisibility: number;
+    growth: number;
+    topPerformingPlatform: string;
+    totalMentions: number;
+    totalQueries: number;
+  };
 }
 
 export class TrackingController {
@@ -12,59 +69,136 @@ export class TrackingController {
     const { websiteId, platform, dateRange, page = 1, limit = 10 } = req.query;
     const organizationId = req.organization?.id;
     
+    if (!organizationId) {
+      res.status(401).json({
+        success: false,
+        message: 'Organization ID is required'
+      });
+      return;
+    }
+
     try {
-      // Return structured tracking data for the frontend
-      const basicTrackingData = {
-        mentions: [
-          {
-            id: '1',
-            platform: 'chatgpt',
-            query: 'AI optimization tools',
-            mention: 'Leading AI optimization platforms include various tools...',
-            url: 'https://example.com',
-            websiteName: 'Example Site',
-            timestamp: new Date().toISOString(),
-            sentiment: 'positive',
-            isCited: true,
-            citationPosition: 2
-          },
-          {
-            id: '2',
-            platform: 'perplexity',
-            query: 'SEO analysis software',
-            mention: 'Modern SEO analysis tools help optimize website content...',
-            url: 'https://demo.com',
-            websiteName: 'Demo Site',
-            timestamp: new Date(Date.now() - 86400000).toISOString(),
-            sentiment: 'neutral',
-            isCited: false,
-            citationPosition: null
-          }
-        ],
+      const pageNum = Number(page);
+      const limitNum = Number(limit);
+      const offset = (pageNum - 1) * limitNum;
+
+      // Build the where clause for filtering
+      const whereClause: any = {};
+      
+      // Always filter by organization through website relationship
+      const websiteWhere: any = {
+        organizationId
+      };
+      
+      if (websiteId && typeof websiteId === 'string') {
+        websiteWhere.id = websiteId;
+        whereClause.websiteId = websiteId;
+      }
+      
+      if (platform && typeof platform === 'string') {
+        whereClause.platform = platform;
+      }
+      
+      // Add date range filtering if provided
+      if (dateRange && typeof dateRange === 'string') {
+        const days = parseInt(dateRange.replace('d', ''));
+        if (!isNaN(days)) {
+          const startDate = new Date();
+          startDate.setDate(startDate.getDate() - days);
+          whereClause.trackedAt = {
+            [Op.gte]: startDate
+          };
+        }
+      }
+      
+      // Only include mentions that were actually found
+      whereClause.isMentioned = true;
+
+      // Execute parallel queries for better performance
+      const [trackingResults, totalCount] = await Promise.all([
+        AITrackingResult.findAll({
+          where: whereClause,
+          include: [{
+            model: Website,
+            as: 'website',
+            where: websiteWhere,
+            attributes: ['name', 'url', 'domain']
+          }],
+          order: [['trackedAt', 'DESC']],
+          limit: limitNum,
+          offset
+        }),
+        AITrackingResult.count({
+          where: whereClause,
+          include: [{
+            model: Website,
+            as: 'website',
+            where: websiteWhere
+          }]
+        })
+      ]);
+
+      // Transform the data to match the expected API format
+      const mentions: MentionData[] = trackingResults.map(result => {
+        // Determine sentiment based on citation and mention status
+        let sentiment: 'positive' | 'neutral' | 'negative' = 'neutral';
+        if (result.isCited && result.citationPosition && result.citationPosition <= 3) {
+          sentiment = 'positive';
+        } else if (result.isCited) {
+          sentiment = 'neutral';
+        } else if (result.isMentioned) {
+          sentiment = 'neutral';
+        }
+
+        const website = (result as any).website;
+        
+        return {
+          id: result.id,
+          platform: result.platform,
+          query: result.query,
+          mention: result.snippet || result.fullResponse?.substring(0, 200) + '...' || 'No snippet available',
+          url: website?.url || '',
+          websiteName: website?.name || website?.domain || 'Unknown',
+          timestamp: result.trackedAt.toISOString(),
+          sentiment,
+          isCited: result.isCited,
+          citationPosition: result.citationPosition || null
+        };
+      });
+
+      // Calculate summary statistics
+      const platformCounts: Record<string, number> = {};
+      const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
+      
+      // Initialize platform counts
+      Object.values(AI_PLATFORMS).forEach(platform => {
+        platformCounts[platform] = 0;
+      });
+      
+      mentions.forEach(mention => {
+        platformCounts[mention.platform] = (platformCounts[mention.platform] || 0) + 1;
+        sentimentCounts[mention.sentiment]++;
+      });
+
+      const totalPages = Math.ceil(totalCount / limitNum);
+
+      const response: MentionsResponse = {
+        mentions,
         summary: {
-          total: 2,
-          byPlatform: {
-            'chatgpt': 1,
-            'perplexity': 1,
-            'gemini': 0,
-            'claude': 0
-          },
-          bySentiment: {
-            positive: 1,
-            neutral: 1,
-            negative: 0
-          }
+          total: totalCount,
+          byPlatform: platformCounts,
+          bySentiment: sentimentCounts
         },
         pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          totalPages: 1
+          page: pageNum,
+          limit: limitNum,
+          totalPages
         }
       };
 
       res.json({
         success: true,
-        data: basicTrackingData
+        data: response
       });
 
     } catch (error) {
@@ -80,28 +214,188 @@ export class TrackingController {
     const { websiteId, period = '30d' } = req.query;
     const organizationId = req.organization?.id;
     
+    if (!organizationId) {
+      res.status(401).json({
+        success: false,
+        message: 'Organization ID is required'
+      });
+      return;
+    }
+
     try {
-      // Return structured trend data for the frontend
-      const basicTrendsData = {
-        trends: [
-          { date: '2024-09-01', chatgpt: 45, perplexity: 32, gemini: 28, claude: 20 },
-          { date: '2024-09-02', chatgpt: 48, perplexity: 35, gemini: 30, claude: 22 },
-          { date: '2024-09-03', chatgpt: 52, perplexity: 38, gemini: 33, claude: 25 },
-          { date: '2024-09-04', chatgpt: 47, perplexity: 40, gemini: 35, claude: 28 },
-          { date: '2024-09-05', chatgpt: 55, perplexity: 42, gemini: 37, claude: 30 }
-        ],
+      // Parse period (e.g., '30d' -> 30 days)
+      const days = parseInt((period as string).replace('d', '')) || 30;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      // Build where clause for organization filtering
+      const websiteWhere: any = {
+        organizationId
+      };
+      
+      if (websiteId && typeof websiteId === 'string') {
+        websiteWhere.id = websiteId;
+      }
+
+      // Build where clause for KeywordRanking
+      const keywordRankingWhere: any = {
+        organizationId,
+        trackedAt: {
+          [Op.gte]: startDate
+        }
+      };
+      
+      if (websiteId && typeof websiteId === 'string') {
+        keywordRankingWhere.websiteId = websiteId;
+      }
+
+      // Execute parallel queries for trends and summary data
+      const [keywordRankings, trackingResults, websiteInfo] = await Promise.all([
+        // Get keyword rankings for visibility trends
+        KeywordRanking.findAll({
+          attributes: [
+            [sequelize.fn('DATE', sequelize.col('tracked_at')), 'date'],
+            'platform',
+            [sequelize.fn('AVG', sequelize.col('visibility_score')), 'avgVisibility']
+          ],
+          where: keywordRankingWhere,
+          group: [
+            sequelize.fn('DATE', sequelize.col('tracked_at')),
+            'platform'
+          ],
+          order: [
+            [sequelize.fn('DATE', sequelize.col('tracked_at')), 'ASC']
+          ]
+        }),
+        // Get AI tracking results for mention counts
+        AITrackingResult.findAll({
+          where: {
+            trackedAt: {
+              [Op.gte]: startDate
+            },
+            isMentioned: true
+          },
+          include: [{
+            model: Website,
+            as: 'website',
+            where: websiteWhere,
+            attributes: []
+          }]
+        }),
+        // Get website info if specific websiteId is provided
+        websiteId && typeof websiteId === 'string' ? Website.findOne({
+          where: { id: websiteId as string, organizationId }
+        }) : null
+      ]);
+
+      // Process keyword rankings data into trends format
+      const trendsByDate: Record<string, Record<string, number>> = {};
+      
+      (keywordRankings as any[]).forEach(ranking => {
+        const date = ranking.getDataValue('date');
+        const platform = ranking.platform;
+        const visibility = parseFloat(ranking.getDataValue('avgVisibility'));
+        
+        if (!trendsByDate[date]) {
+          trendsByDate[date] = {
+            chatgpt: 0,
+            perplexity: 0,
+            gemini: 0,
+            claude: 0
+          };
+        }
+        
+        trendsByDate[date][platform] = Math.round(visibility);
+      });
+
+      // Convert to array format and fill missing dates
+      const trends: TrendData[] = [];
+      const dateRange = Array.from({ length: Math.min(days, 30) }, (_, i) => {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        return date.toISOString().split('T')[0];
+      });
+
+      dateRange.forEach(date => {
+        const dayData = trendsByDate[date] || {
+          chatgpt: 0,
+          perplexity: 0,
+          gemini: 0,
+          claude: 0
+        };
+        
+        trends.push({
+          date,
+          chatgpt: dayData.chatgpt,
+          perplexity: dayData.perplexity,
+          gemini: dayData.gemini,
+          claude: dayData.claude
+        });
+      });
+
+      // Calculate summary statistics
+      const platformSums = { chatgpt: 0, perplexity: 0, gemini: 0, claude: 0 };
+      let totalDataPoints = 0;
+      
+      trends.forEach(trend => {
+        Object.keys(platformSums).forEach(platform => {
+          const value = trend[platform as keyof typeof platformSums];
+          platformSums[platform as keyof typeof platformSums] += value;
+          if (value > 0) totalDataPoints++;
+        });
+      });
+
+      const averageVisibility = totalDataPoints > 0 
+        ? Object.values(platformSums).reduce((sum, val) => sum + val, 0) / totalDataPoints 
+        : 0;
+
+      // Calculate growth (comparing first week vs last week)
+      const firstWeekAvg = trends.slice(0, 7).reduce((sum, trend) => {
+        return sum + (trend.chatgpt + trend.perplexity + trend.gemini + trend.claude) / 4;
+      }, 0) / 7;
+      
+      const lastWeekAvg = trends.slice(-7).reduce((sum, trend) => {
+        return sum + (trend.chatgpt + trend.perplexity + trend.gemini + trend.claude) / 4;
+      }, 0) / 7;
+      
+      const growth = firstWeekAvg > 0 ? ((lastWeekAvg - firstWeekAvg) / firstWeekAvg) * 100 : 0;
+
+      // Find top performing platform
+      const topPerformingPlatform = Object.entries(platformSums)
+        .sort(([,a], [,b]) => b - a)[0][0];
+
+      // Count total mentions and queries
+      const totalMentions = trackingResults.length;
+      const totalQueries = await AITrackingResult.count({
+        where: {
+          trackedAt: {
+            [Op.gte]: startDate
+          }
+        },
+        include: [{
+          model: Website,
+          as: 'website',
+          where: websiteWhere,
+          attributes: []
+        }],
+        distinct: true,
+        col: 'query'
+      });
+
+      const response: VisibilityTrendsResponse = {
+        trends,
         summary: {
-          averageVisibility: 42.5,
-          growth: 15.2,
-          topPerformingPlatform: 'ChatGPT',
-          totalMentions: 25,
-          totalQueries: 100
+          averageVisibility: Math.round(averageVisibility * 100) / 100,
+          growth: Math.round(growth * 100) / 100,
+          topPerformingPlatform: topPerformingPlatform.charAt(0).toUpperCase() + topPerformingPlatform.slice(1),
+          totalMentions,
+          totalQueries
         }
       };
 
       res.json({
         success: true,
-        data: basicTrendsData
+        data: response
       });
 
     } catch (error) {

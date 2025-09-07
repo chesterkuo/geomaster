@@ -14,6 +14,9 @@ import alertRoutes from './alert.routes';
 import alertsRoutes from './alerts.routes';
 import analyticsRoutes from './analytics.routes';
 import reportsRoutes from './reports.routes';
+import mlOptimizationRoutes from './mlOptimization.routes';
+import integrationsRoutes from './integrations.routes';
+import abTestingRoutes from './abTesting.routes';
 
 const router = Router();
 
@@ -35,6 +38,11 @@ router.use('/alerts', alertRoutes);
 router.use('/alerts', alertsRoutes);
 router.use('/analytics', analyticsRoutes);
 router.use('/reports', reportsRoutes);
+
+// Phase 3 Routes - Advanced Features
+router.use('/ml-optimization', mlOptimizationRoutes);
+router.use('/integrations', integrationsRoutes);
+router.use('/ab-testing', abTestingRoutes);
 
 // API health check
 router.get('/health', (req, res) => {
@@ -64,7 +72,10 @@ router.get('/', (req, res) => {
       settings: '/api/v1/settings',
       alerts: '/api/v1/alerts',
       analytics: '/api/v1/analytics',
-      reports: '/api/v1/reports'
+      reports: '/api/v1/reports',
+      'ml-optimization': '/api/v1/ml-optimization',
+      integrations: '/api/v1/integrations',
+      'ab-testing': '/api/v1/ab-testing'
     }
   });
 });

@@ -370,20 +370,17 @@ async function runTests() {
     }
   });
 
-  await runner.test('Analytics without organization header', async () => {
-    // 暫時移除組織 ID
-    const originalOrg = testData.organization;
-    testData.organization = null;
-    
-    try {
-      const response = await makeRequest('GET', `/api/v1/analytics/dashboard/${testData.website.id}`);
-      runner.assert(
-        response.status >= 400,
-        'Request without organization should return error'
-      );
-    } finally {
-      testData.organization = originalOrg;
-    }
+  await runner.test('Analytics with automatic organization assignment', async () => {
+    // 測試自動組織分配功能 - 系統應該自動從 JWT token 中取得組織
+    const response = await makeRequest('GET', `/api/v1/analytics/dashboard/${testData.website.id}`);
+    runner.assert(
+      response.status === 200,
+      'Request should succeed with automatic organization assignment from JWT token'
+    );
+    runner.assert(
+      response.data && response.data.success === true,
+      'Response should contain success flag'
+    );
   });
 
   // 測試批量操作（如果有權限）

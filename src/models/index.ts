@@ -20,6 +20,34 @@ import KeywordResearch from './KeywordResearch';
 import KeywordRanking from './KeywordRanking';
 import ReportTemplate from './ReportTemplate';
 import GeneratedReport from './GeneratedReport';
+import { MLModel } from './MLModel';
+import { MLOptimizationSuggestion } from './MLOptimizationSuggestion';
+import { ThirdPartyIntegration } from './ThirdPartyIntegration';
+import { Webhook } from './Webhook';
+import { AutomationWorkflow } from './AutomationWorkflow';
+import { ABExperiment } from './ABExperiment';
+import { ABVariant } from './ABVariant';
+import { ABUserSegment } from './ABUserSegment';
+
+// Initialize Phase 3 models
+import { initMLModel } from './MLModel';
+import { initMLOptimizationSuggestion } from './MLOptimizationSuggestion';
+import { initThirdPartyIntegration } from './ThirdPartyIntegration';
+import { initWebhook } from './Webhook';
+import { initAutomationWorkflow } from './AutomationWorkflow';
+import { initABExperiment } from './ABExperiment';
+import { initABVariant } from './ABVariant';
+import { initABUserSegment } from './ABUserSegment';
+
+// Initialize all Phase 3 models
+initMLModel(sequelize);
+initMLOptimizationSuggestion(sequelize);
+initThirdPartyIntegration(sequelize);
+initWebhook(sequelize);
+initAutomationWorkflow(sequelize);
+initABExperiment(sequelize);
+initABVariant(sequelize);
+initABUserSegment(sequelize);
 
 // Define associations
 // User-Organization many-to-many relationship
@@ -388,6 +416,98 @@ GeneratedReport.belongsTo(User, {
   as: 'generator'
 });
 
+// Phase 3 Model Associations
+
+// ML Model Associations
+MLOptimizationSuggestion.belongsTo(MLModel, {
+  foreignKey: 'modelId',
+  as: 'model'
+});
+
+MLModel.hasMany(MLOptimizationSuggestion, {
+  foreignKey: 'modelId',
+  as: 'suggestions'
+});
+
+MLOptimizationSuggestion.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+MLOptimizationSuggestion.belongsTo(Website, {
+  foreignKey: 'websiteId',
+  as: 'website'
+});
+
+// Integration Associations
+ThirdPartyIntegration.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+Organization.hasMany(ThirdPartyIntegration, {
+  foreignKey: 'organizationId',
+  as: 'integrations'
+});
+
+// Webhook Associations
+Webhook.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+Organization.hasMany(Webhook, {
+  foreignKey: 'organizationId',
+  as: 'webhooks'
+});
+
+// Workflow Associations
+AutomationWorkflow.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+Organization.hasMany(AutomationWorkflow, {
+  foreignKey: 'organizationId',
+  as: 'workflows'
+});
+
+// A/B Testing Associations
+ABExperiment.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+ABExperiment.belongsTo(Website, {
+  foreignKey: 'websiteId',
+  as: 'website'
+});
+
+ABExperiment.belongsTo(User, {
+  foreignKey: 'createdBy',
+  as: 'creator'
+});
+
+ABExperiment.hasMany(ABVariant, {
+  foreignKey: 'experimentId',
+  as: 'variants'
+});
+
+ABVariant.belongsTo(ABExperiment, {
+  foreignKey: 'experimentId',
+  as: 'experiment'
+});
+
+ABUserSegment.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+Organization.hasMany(ABUserSegment, {
+  foreignKey: 'organizationId',
+  as: 'userSegments'
+});
+
 // Initialize database
 export const initializeDatabase = async (): Promise<void> => {
   try {
@@ -427,5 +547,14 @@ export {
   KeywordResearch,
   KeywordRanking,
   ReportTemplate,
-  GeneratedReport
+  GeneratedReport,
+  // Phase 3 Models
+  MLModel,
+  MLOptimizationSuggestion,
+  ThirdPartyIntegration,
+  Webhook,
+  AutomationWorkflow,
+  ABExperiment,
+  ABVariant,
+  ABUserSegment
 };

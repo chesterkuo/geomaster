@@ -1,6 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Globe, Users, Hash, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { dashboardService, DashboardStats } from "@/lib/api/dashboard";
 
 interface MetricCardProps {
   title: string;
@@ -48,36 +50,59 @@ interface MetricsGridProps {
 }
 
 export const MetricsGrid = ({ isAuthenticated = false }: MetricsGridProps) => {
+  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await dashboardService.getStats();
+      if (response.success) {
+        setDashboardData(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const metrics = [
     {
       title: "AI 可見度分數",
-      value: isAuthenticated ? "78" : "---",
-      change: isAuthenticated ? "↑ 12% 本週提升" : "需要登入查看",
+      value: isAuthenticated ? (loading ? "..." : dashboardData?.overview.averageGeoScore?.toString() || "---") : "---",
+      change: isAuthenticated ? (loading ? "載入中..." : "↑ 12% 本週提升") : "需要登入查看",
       trend: "up" as const,
       icon: BarChart3,
       color: "bg-geo-purple"
     },
     {
       title: "品牌曝及次數",
-      value: isAuthenticated ? "1,284" : "---",
-      change: isAuthenticated ? "↑ 8.3% 較上月" : "需要登入查看",
+      value: isAuthenticated ? (loading ? "..." : dashboardData?.overview.totalMentions?.toLocaleString() || "---") : "---",
+      change: isAuthenticated ? (loading ? "載入中..." : "↑ 8.3% 較上月") : "需要登入查看",
       trend: "up" as const,
       icon: Globe,
       color: "bg-geo-blue"
     },
     {
-      title: "引用排名",
-      value: isAuthenticated ? "#3" : "---",
-      change: isAuthenticated ? "↑ 上升 2 位" : "需要登入查看",
+      title: "網站總數",
+      value: isAuthenticated ? (loading ? "..." : dashboardData?.overview.totalWebsites?.toString() || "---") : "---",
+      change: isAuthenticated ? (loading ? "載入中..." : "↑ 上升趨勢") : "需要登入查看",
       trend: "up" as const,
       icon: Hash,
       color: "bg-geo-green"
     },
     {
-      title: "優化提醒",
-      value: isAuthenticated ? "156" : "---",
-      change: isAuthenticated ? "↓ 24 項減少" : "需要登入查看",
-      trend: "down" as const,
+      title: "總掃描次數",
+      value: isAuthenticated ? (loading ? "..." : dashboardData?.overview.totalScans?.toString() || "---") : "---",
+      change: isAuthenticated ? (loading ? "載入中..." : "↓ 穩定成長") : "需要登入查看",
+      trend: "up" as const,
       icon: Users,
       color: "bg-geo-orange"
     }

@@ -1,4 +1,5 @@
 import apiClient, { ApiResponse, tokenManager } from './client';
+import axios from 'axios';
 
 // 用戶類型
 export interface User {
@@ -96,7 +97,28 @@ export const authService = {
 
   // 獲取用戶資料
   async getProfile(): Promise<ApiResponse<{ user: User; organizations: Organization[] }>> {
-    const response = await apiClient.get<ApiResponse<{ user: User; organizations: Organization[] }>>('/auth/profile');
+    // Create a clean axios instance for profile check to avoid CORS issues
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.74.100.10:8000';
+    const cleanClient = axios.create({
+      baseURL: `${API_BASE_URL}/api/v1`,
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    const token = tokenManager.getAccessToken();
+    const headers: Record<string, string> = {};
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    
+    console.log('🔍 Profile check with clean client:', { hasToken: !!token });
+    
+    const response = await cleanClient.get<ApiResponse<{ user: User; organizations: Organization[] }>>('/auth/profile', {
+      headers
+    });
     return response.data;
   },
 
