@@ -9,6 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { ReportTemplateBuilder } from "@/components/reports/ReportTemplateBuilder";
+import { ReportScheduler } from "@/components/reports/ReportScheduler";
+import { ReportLibrary } from "@/components/reports/ReportLibrary";
 import { 
   Calendar, 
   Download, 
@@ -84,19 +87,70 @@ const Reporting = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="regular" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="regular">定期報告</TabsTrigger>
-            <TabsTrigger value="custom">自訂報告</TabsTrigger>
+        <Tabs defaultValue="library" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="library">報告庫</TabsTrigger>
+            <TabsTrigger value="templates">模板管理</TabsTrigger>
+            <TabsTrigger value="scheduled">排程報告</TabsTrigger>
+            <TabsTrigger value="builder">模板建構器</TabsTrigger>
             <TabsTrigger value="white-label">白標報告</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="regular" className="space-y-6">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
+          <TabsContent value="library" className="space-y-6">
+            {!isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用報告庫</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可瀏覽和管理您的報告</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
               </div>
-            ) : !isAuthenticated ? (
+            ) : (
+              <ReportLibrary />
+            )}
+          </TabsContent>
+
+          <TabsContent value="templates" className="space-y-6">
+            {!isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理模板</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可建立和編輯報告模板</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h3 className="text-lg font-medium mb-4">報告模板管理</h3>
+                <p className="text-muted-foreground">此功能即將推出，敬請期待！</p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="scheduled" className="space-y-6">
+            {!isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="relative mb-6">
@@ -105,7 +159,7 @@ const Reporting = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用定期報告</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用排程報告</p>
                   <p className="text-sm text-muted-foreground mb-6">登入後即可設定自動化報告排程</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
@@ -116,81 +170,22 @@ const Reporting = () => {
                 </div>
               </div>
             ) : (
-              <>
-                <div className="grid gap-6">
-                  {regularReports.map((report, index) => (
-                    <Card key={index} className="bg-gradient-card border-border">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <CardTitle className="flex items-center">
-                              <Calendar className="mr-2 h-5 w-5 text-primary" />
-                              {report.title}
-                            </CardTitle>
-                            <CardDescription className="mt-1">
-                              {report.description}
-                            </CardDescription>
-                          </div>
-                          <Badge 
-                            variant={report.status === "active" ? "default" : "secondary"}
-                            className={report.status === "active" ? "bg-green-100 text-green-800" : ""}
-                          >
-                            {report.status === "active" ? "啟用中" : "已排程"}
-                          </Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <div className="text-muted-foreground">發送頻率</div>
-                            <div className="font-medium">{report.frequency}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">上次發送</div>
-                            <div className="font-medium">{report.lastSent}</div>
-                          </div>
-                          <div>
-                            <div className="text-muted-foreground">收件人</div>
-                            <div className="font-medium flex items-center">
-                              <Users className="mr-1 h-3 w-3" />
-                              {report.recipients}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Settings className="mr-1 h-3 w-3" />
-                              設定
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Send className="mr-1 h-3 w-3" />
-                              立即發送
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </>
+              <ReportScheduler />
             )}
           </TabsContent>
 
-          <TabsContent value="custom" className="space-y-6">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
+          <TabsContent value="builder" className="space-y-6">
+            {!isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="relative mb-6">
-                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <Plus className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用自訂報告</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可建立個人化報告</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用模板建構器</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可建立自訂報告模板</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
@@ -200,81 +195,10 @@ const Reporting = () => {
                 </div>
               </div>
             ) : (
-              <>
-                <Card className="bg-gradient-card border-border">
-                  <CardHeader>
-                    <CardTitle>建立自訂報告</CardTitle>
-                    <CardDescription>選擇日期範圍、指標和格式來生成客製化報告</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* 日期範圍 */}
-                      <div className="space-y-4">
-                        <Label className="text-base font-medium">日期範圍</Label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="start-date">開始日期</Label>
-                            <Input type="date" id="start-date" className="mt-1" />
-                          </div>
-                          <div>
-                            <Label htmlFor="end-date">結束日期</Label>
-                            <Input type="date" id="end-date" className="mt-1" />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 報告格式 */}
-                      <div className="space-y-4">
-                        <Label className="text-base font-medium">報告格式</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="選擇格式" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pdf">PDF 報告</SelectItem>
-                            <SelectItem value="excel">Excel 試算表</SelectItem>
-                            <SelectItem value="powerpoint">PowerPoint 簡報</SelectItem>
-                            <SelectItem value="dashboard">線上儀表板</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* 選擇指標 */}
-                    <div className="space-y-4">
-                      <Label className="text-base font-medium">選擇指標</Label>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {customReportMetrics.map((metric) => (
-                          <div key={metric.id} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={metric.id}
-                              className="rounded border-border"
-                              defaultChecked={["ai-visibility", "content-quality", "technical-health"].includes(metric.id)}
-                            />
-                            <Label htmlFor={metric.id} className="text-sm">
-                              <div>{metric.label}</div>
-                              <div className="text-xs text-muted-foreground">{metric.category}</div>
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <Button className="bg-primary text-primary-foreground">
-                        <FileText className="mr-2 h-4 w-4" />
-                        生成報告
-                      </Button>
-                      <Button variant="outline">
-                        預覽設定
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </>
+              <ReportTemplateBuilder />
             )}
           </TabsContent>
+
 
           <TabsContent value="white-label" className="space-y-6">
             {loading ? (

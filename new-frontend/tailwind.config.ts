@@ -14,6 +14,7 @@ export default {
 			center: true,
 			padding: '2rem',
 			screens: {
+				'xs': '475px',
 				'2xl': '1400px'
 			}
 		},
@@ -111,6 +112,16 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out'
+			},
+			spacing: {
+				'safe-area-inset-bottom': 'env(safe-area-inset-bottom)'
+			},
+			minHeight: {
+				'screen-safe': 'calc(100vh - env(safe-area-inset-bottom))',
+				'dvh': '100dvh'
+			},
+			maxWidth: {
+				'mobile': '100vw'
 			}
 		}
 	},

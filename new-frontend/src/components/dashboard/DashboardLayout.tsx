@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { MobileDashboardLayout, useBreakpoint } from "@/components/mobile";
 import { cn } from "@/lib/utils";
 
 interface DashboardLayoutProps {
@@ -11,6 +12,19 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { isMobile } = useBreakpoint();
+
+  // Use mobile layout for mobile devices
+  if (isMobile) {
+    return (
+      <MobileDashboardLayout 
+        title="GEO Platform"
+        onRefresh={() => window.location.reload()}
+      >
+        {children}
+      </MobileDashboardLayout>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-background">

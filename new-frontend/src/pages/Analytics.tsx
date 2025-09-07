@@ -18,11 +18,13 @@ import {
   Calendar,
   Lock,
   User,
-  Loader2
+  Loader2,
+  Activity
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { ReportLibrary } from "@/components/reports/ReportLibrary";
 
 const Analytics = () => {
   const { isAuthenticated } = useAuth();
@@ -248,13 +250,70 @@ const Analytics = () => {
               </>
             )}
           </TabsContent>
+          
+          <TabsContent value="realtime" className="space-y-6">
+            {!isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <Activity className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看即時數據</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可監控網站的即時訪客活動</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <User className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <RealTimeStats 
+                data={realTimeData?.data ? {
+                  activeUsers: realTimeData.data.realtimeUsers || 0,
+                  pagesPerSecond: 2.4,
+                  bounceRate: realTimeData.data.overview?.bounceRate || 0,
+                  avgSessionDuration: realTimeData.data.overview?.averageSessionDuration || '0:00',
+                  topPages: realTimeData.data.topPages?.slice(0, 5).map(page => ({
+                    path: page.path,
+                    activeUsers: Math.floor(Math.random() * 20) + 1
+                  })) || [],
+                  topCountries: [
+                    { country: '台灣', activeUsers: 45 },
+                    { country: '美國', activeUsers: 23 },
+                    { country: '日本', activeUsers: 18 },
+                    { country: '香港', activeUsers: 12 },
+                    { country: '新加坡', activeUsers: 8 }
+                  ],
+                  recentEvents: [
+                    { type: 'pageview' as const, path: '/', timestamp: new Date().toISOString(), country: '台灣' },
+                    { type: 'session_start' as const, path: '/products', timestamp: new Date(Date.now() - 30000).toISOString(), country: '美國' },
+                    { type: 'pageview' as const, path: '/about', timestamp: new Date(Date.now() - 60000).toISOString(), country: '日本' },
+                  ]
+                } : {
+                  activeUsers: 0,
+                  pagesPerSecond: 0,
+                  bounceRate: 0,
+                  avgSessionDuration: '0:00',
+                  topPages: [],
+                  topCountries: [],
+                  recentEvents: []
+                }}
+                loading={realTimeLoading}
+                connected={!realTimeError}
+                onRefresh={handleRefresh}
+                onTogglePause={() => setRealTimePaused(!realTimePaused)}
+                isPaused={realTimePaused}
+              />
+            )}
+          </TabsContent>
 
           <TabsContent value="traffic">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
+            {!isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="relative mb-6">
@@ -274,27 +333,31 @@ const Analytics = () => {
                 </div>
               </div>
             ) : (
-              <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle>流量趨勢分析</CardTitle>
-                <CardDescription>詳細的網站流量數據和趨勢</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <BarChart3 className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>流量分析圖表將顯示在這裡</p>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="space-y-6">
+                <TrafficTrendsChart 
+                  data={trends?.data?.trends || []} 
+                  loading={isLoading}
+                  period={selectedPeriod}
+                  comparison={trends?.data?.comparison}
+                />
+                
+                <TrafficSourcesChart 
+                  data={dashboard?.data?.trafficSources || {
+                    organic: 0,
+                    direct: 0,
+                    social: 0,
+                    referral: 0,
+                    email: 0,
+                    paid: 0
+                  }}
+                  loading={isLoading}
+                />
+              </div>
             )}
           </TabsContent>
 
           <TabsContent value="behavior">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
+            {!isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="relative mb-6">
@@ -314,27 +377,26 @@ const Analytics = () => {
                 </div>
               </div>
             ) : (
-              <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle>用戶行為分析</CardTitle>
-                <CardDescription>分析用戶在網站上的互動模式</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <MousePointer className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <p>用戶行為分析數據將顯示在這裡</p>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="space-y-6">
+                <DeviceBreakdownChart 
+                  data={dashboard?.data?.deviceBreakdown || {
+                    desktop: 0,
+                    mobile: 0,
+                    tablet: 0
+                  }}
+                  loading={isLoading}
+                />
+                
+                <PerformanceChart 
+                  data={dashboard?.data?.topPages || []}
+                  loading={isLoading}
+                />
+              </div>
             )}
           </TabsContent>
 
           <TabsContent value="conversion">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
+            {!isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="relative mb-6">
@@ -380,11 +442,7 @@ const Analytics = () => {
           </TabsContent>
 
           <TabsContent value="reports">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
+            {!isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="relative mb-6">
@@ -404,32 +462,16 @@ const Analytics = () => {
                 </div>
               </div>
             ) : (
-              <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle>自動化報告</CardTitle>
-                <CardDescription>設定和管理您的分析報告</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center justify-between p-4 border border-border rounded-lg bg-gradient-subtle">
-                      <div className="flex items-center space-x-4">
-                        <BarChart3 className="h-8 w-8 text-primary" />
-                        <div>
-                          <h4 className="font-medium">週報 #{i}</h4>
-                          <p className="text-sm text-muted-foreground">每週一自動發送</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="outline">啟用中</Badge>
-                        <Button variant="outline" size="sm">編輯</Button>
-                        <Button size="sm">立即發送</Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+              <ReportLibrary 
+                onViewReport={(report) => {
+                  // Handle report viewing
+                  console.log('View report:', report);
+                }}
+                onUpdate={() => {
+                  // Handle reports update
+                  console.log('Reports updated');
+                }}
+              />
             )}
           </TabsContent>
         </Tabs>

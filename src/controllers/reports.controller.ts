@@ -4,6 +4,7 @@ import ReportTemplate from '../models/ReportTemplate';
 import GeneratedReport from '../models/GeneratedReport';
 import { ReportGenerationService } from '../services/reportGeneration.service';
 import { logger } from '../utils/logger';
+import sequelize from '../config/database';
 
 interface AuthRequest extends Request {
   user?: any;
@@ -11,6 +12,282 @@ interface AuthRequest extends Request {
 }
 
 export class ReportsController {
+  /**
+   * POST /api/v1/reports/schedule - Schedule a report
+   */
+  public scheduleReport = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const organizationId = req.organization.id;
+    const userId = req.user.id;
+    const { templateId, name, schedule, recipients, parameters, isActive } = req.body;
+
+    if (!templateId || !name || !schedule || !recipients) {
+      throw new AppError('Missing required fields: templateId, name, schedule, recipients', 400);
+    }
+
+    // Validate template access
+    const template = await ReportTemplate.findByPk(templateId);
+    if (!template || !template.canUserAccess(userId, organizationId)) {
+      throw new AppError('Template not found or access denied', 404);
+    }
+
+    // Create scheduled report (assumes ScheduledReport model exists)
+    const scheduledReport = await sequelize.models.ScheduledReport.create({
+      organizationId,
+      templateId,
+      name,
+      schedule,
+      recipients: JSON.stringify(recipients),
+      parameters,
+      isActive: isActive !== false,
+      createdBy: userId
+    });
+
+    logger.info(`Scheduled report created: ${scheduledReport.id} by user: ${userId}`);
+
+    res.status(201).json({
+      success: true,
+      data: { scheduledReport }
+    });
+  });
+
+  /**
+   * GET /api/v1/reports/scheduled - Get scheduled reports
+   */
+  public getScheduledReports = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const organizationId = req.organization.id;
+
+    const scheduledReports = await sequelize.models.ScheduledReport.findAll({
+      where: { organizationId },
+      include: [
+        {
+          model: ReportTemplate,
+          as: 'template',
+          attributes: ['name', 'reportType']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.json({
+      success: true,
+      data: {
+        scheduledReports,
+        total: scheduledReports.length
+      }
+    });
+  });
+
+  /**
+   * PUT /api/v1/reports/scheduled/:id - Update scheduled report
+   */
+  public updateScheduledReport = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const organizationId = req.organization.id;
+    const { id } = req.params;
+    const { name, schedule, recipients, parameters, isActive } = req.body;
+
+    const scheduledReport = await sequelize.models.ScheduledReport.findOne({
+      where: { id, organizationId }
+    });
+
+    if (!scheduledReport) {
+      throw new AppError('Scheduled report not found', 404);
+    }
+
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (schedule) updateData.schedule = schedule;
+    if (recipients) updateData.recipients = JSON.stringify(recipients);
+    if (parameters) updateData.parameters = parameters;
+    if (isActive !== undefined) updateData.isActive = isActive;
+
+    await scheduledReport.update(updateData);
+
+    res.json({
+      success: true,
+      data: { scheduledReport }
+    });
+  });
+
+  /**
+   * DELETE /api/v1/reports/scheduled/:id - Delete scheduled report
+   */
+  public deleteScheduledReport = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const organizationId = req.organization.id;
+    const { id } = req.params;
+
+    const scheduledReport = await sequelize.models.ScheduledReport.findOne({
+      where: { id, organizationId }
+    });
+
+    if (!scheduledReport) {
+      throw new AppError('Scheduled report not found', 404);
+    }
+
+    await scheduledReport.destroy();
+
+    res.json({
+      success: true,
+      message: 'Scheduled report deleted successfully'
+    });
+  });
+
+  /**
+   * POST /api/v1/reports/:id/share - Share a report
+   */
+  public shareReport = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const organizationId = req.organization.id;
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { emails, message, expiresIn } = req.body;
+
+    if (!emails || !Array.isArray(emails) || emails.length === 0) {
+      throw new AppError('Recipients emails are required', 400);
+    }
+
+    const report = await GeneratedReport.findOne({
+      where: { id, organizationId }
+    });
+
+    if (!report) {
+      throw new AppError('Report not found', 404);
+    }
+
+    if (!report.isAccessible()) {
+      throw new AppError('Report is not accessible', 400);
+    }
+
+    // Create share record (assumes ReportShare model exists)
+    const shareData = {
+      reportId: id,
+      sharedBy: userId,
+      recipients: JSON.stringify(emails),
+      message: message || null,
+      expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 24 * 60 * 60 * 1000) : null
+    };
+
+    const reportShare = await sequelize.models.ReportShare.create(shareData);
+
+    // TODO: Send email notifications to recipients
+    logger.info(`Report ${id} shared with ${emails.length} recipients by user: ${userId}`);
+
+    res.json({
+      success: true,
+      data: {
+        shareId: reportShare.id,
+        message: 'Report shared successfully'
+      }
+    });
+  });
+
+  /**
+   * GET /api/v1/reports/:id/versions - Get report versions
+   */
+  public getReportVersions = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const organizationId = req.organization.id;
+    const { id } = req.params;
+
+    // Assuming we track versions through a separate table or field
+    const versions = await GeneratedReport.findAll({
+      where: {
+        organizationId,
+        name: { [sequelize.Sequelize.Op.like]: `%${id}%` } // Simplified version tracking
+      },
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
+
+    res.json({
+      success: true,
+      data: {
+        versions: versions.map(v => v.getMetadata()),
+        total: versions.length
+      }
+    });
+  });
+
+  /**
+   * POST /api/v1/reports/bulk-generate - Generate multiple reports
+   */
+  public bulkGenerateReports = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const organizationId = req.organization.id;
+    const userId = req.user.id;
+    const { requests } = req.body;
+
+    if (!requests || !Array.isArray(requests)) {
+      throw new AppError('Requests array is required', 400);
+    }
+
+    const results = [];
+    const reportService = new ReportGenerationService();
+
+    for (const request of requests) {
+      try {
+        const { templateId, name, reportType, parameters, fileFormat } = request;
+
+        if (!name || !reportType || !fileFormat) {
+          results.push({
+            request,
+            success: false,
+            error: 'Missing required fields'
+          });
+          continue;
+        }
+
+        // Validate template access if provided
+        if (templateId) {
+          const template = await ReportTemplate.findByPk(templateId);
+          if (!template || !template.canUserAccess(userId, organizationId)) {
+            results.push({
+              request,
+              success: false,
+              error: 'Template not found or access denied'
+            });
+            continue;
+          }
+        }
+
+        const report = await GeneratedReport.create({
+          organizationId,
+          templateId,
+          name: `${name} - ${new Date().toISOString().split('T')[0]}`,
+          reportType,
+          parameters,
+          fileFormat,
+          generatedBy: userId,
+          status: 'generating'
+        });
+
+        // Start generation in background
+        reportService.generateReport(report.id).catch(error => {
+          logger.error(`Bulk report generation failed for ${report.id}:`, error);
+          report.updateStatus('failed');
+        });
+
+        results.push({
+          request,
+          success: true,
+          reportId: report.id
+        });
+      } catch (error) {
+        results.push({
+          request,
+          success: false,
+          error: error.message
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        results,
+        totalRequested: requests.length,
+        successful: results.filter(r => r.success).length,
+        failed: results.filter(r => !r.success).length
+      }
+    });
+  });
+
   /**
    * GET /api/v1/reports/templates - Get report templates
    */

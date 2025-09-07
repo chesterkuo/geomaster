@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Globe, Users, Hash, BarChart3 } from "lucide-
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { dashboardService, DashboardStats } from "@/lib/api/dashboard";
+import { MobileMetricCard, MobileMetricsGrid, useBreakpoint } from "@/components/mobile";
 
 interface MetricCardProps {
   title: string;
@@ -52,6 +53,7 @@ interface MetricsGridProps {
 export const MetricsGrid = ({ isAuthenticated = false }: MetricsGridProps) => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const { isMobile } = useBreakpoint();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -107,6 +109,20 @@ export const MetricsGrid = ({ isAuthenticated = false }: MetricsGridProps) => {
       color: "bg-geo-orange"
     }
   ];
+
+  if (isMobile) {
+    return (
+      <MobileMetricsGrid>
+        {metrics.map((metric, index) => (
+          <MobileMetricCard 
+            key={index} 
+            {...metric}
+            onTap={() => console.log(`Tapped ${metric.title}`)}
+          />
+        ))}
+      </MobileMetricsGrid>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
