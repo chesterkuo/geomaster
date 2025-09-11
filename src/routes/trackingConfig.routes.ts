@@ -15,7 +15,7 @@ router.use(requireOrganization);
 
 // GET /api/v1/tracking/settings - Get tracking configuration
 router.get('/settings',
-  trackingConfigController.getTrackingSettings
+  trackingConfigController.getTrackingSettings.bind(trackingConfigController)
 );
 
 // PUT /api/v1/tracking/settings - Update tracking settings
@@ -33,7 +33,7 @@ router.put('/settings',
       settings: Joi.object().optional()
     })
   }),
-  trackingConfigController.updateTrackingSettings
+  trackingConfigController.updateTrackingSettings.bind(trackingConfigController)
 );
 
 // POST /api/v1/tracking/platforms - Configure platform monitoring
@@ -46,17 +46,17 @@ router.post('/platforms',
       apiKey: Joi.string().optional()
     })
   }),
-  trackingConfigController.configurePlatform
+  trackingConfigController.configurePlatform.bind(trackingConfigController)
 );
 
 // GET /api/v1/tracking/platforms - List monitored platforms
 router.get('/platforms',
-  trackingConfigController.getPlatforms
+  trackingConfigController.getPlatforms.bind(trackingConfigController)
 );
 
 // GET /api/v1/tracking/platforms/available - Get available platforms
 router.get('/platforms/available',
-  trackingConfigController.getAvailablePlatforms
+  trackingConfigController.getAvailablePlatforms.bind(trackingConfigController)
 );
 
 export default router;

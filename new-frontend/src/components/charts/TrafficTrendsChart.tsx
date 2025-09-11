@@ -147,6 +147,13 @@ const TrafficTrendsChart = ({ data, loading, period = "7d", comparison }: Traffi
               tick={{ fontSize: 12 }}
               tickFormatter={formatNumber}
             />
+            <YAxis 
+              yAxisId="right"
+              orientation="right"
+              className="text-muted-foreground text-xs"
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value) => `${value}%`}
+            />
             <Tooltip content={<CustomTooltip />} />
             <Legend 
               wrapperStyle={{ fontSize: '14px' }}

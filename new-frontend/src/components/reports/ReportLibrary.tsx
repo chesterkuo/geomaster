@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -439,7 +440,7 @@ export const ReportLibrary: React.FC<ReportLibraryProps> = ({
                 />
                 <span className="truncate">{report.name}</span>
               </CardTitle>
-              <CardDescription className="flex items-center space-x-2 mt-1">
+              <div className="flex items-center space-x-2 mt-1 text-sm text-muted-foreground">
                 <Badge variant="outline">
                   {reportHelpers.getReportTypeDisplayName(report.reportType)}
                 </Badge>
@@ -450,7 +451,7 @@ export const ReportLibrary: React.FC<ReportLibraryProps> = ({
                   <StatusIcon className={`h-3 w-3 ${report.status === 'generating' ? 'animate-spin' : ''}`} />
                   <span>{reportHelpers.getStatusDisplay(report.status).name}</span>
                 </Badge>
-              </CardDescription>
+              </div>
             </div>
           </div>
         </CardHeader>

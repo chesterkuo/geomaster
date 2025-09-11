@@ -9,7 +9,16 @@ export class TeamController {
   // GET /api/v1/team/members - List all team members in current organization
   getMembers = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
+
       const { page = 1, limit = 10, search = '', role = '' } = req.query;
 
       const result = await this.teamService.getMembers(organizationId, {
@@ -46,7 +55,15 @@ export class TeamController {
     try {
       const { id } = req.params;
       const { role, status } = req.body;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
 
       // Check if user has permission to manage members
       const hasPermission = await this.teamService.hasPermission(
@@ -97,7 +114,15 @@ export class TeamController {
   removeMember = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
 
       // Check if user has permission to manage members
       const hasPermission = await this.teamService.hasPermission(
@@ -146,7 +171,7 @@ export class TeamController {
 
       res.json({
         success: true,
-        data: { roles }
+        data: roles
       });
     } catch (error) {
       console.error('Error getting roles:', error);
@@ -160,7 +185,16 @@ export class TeamController {
   // GET /api/v1/team/invitations - List pending and sent invitations
   getInvitations = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
+
       const { page = 1, limit = 10, status = '' } = req.query;
 
       const result = await this.teamService.getInvitations(organizationId, {
@@ -186,7 +220,15 @@ export class TeamController {
   sendInvitation = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { email, role, message } = req.body;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
 
       // Check if user has permission to invite members
       const hasPermission = await this.teamService.hasPermission(
@@ -244,7 +286,15 @@ export class TeamController {
   resendInvitation = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
 
       const invitation = await this.teamService.resendInvitation(Number(id), organizationId);
 
@@ -275,7 +325,15 @@ export class TeamController {
   cancelInvitation = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
 
       const invitation = await this.teamService.cancelInvitation(Number(id), organizationId);
 
@@ -305,7 +363,16 @@ export class TeamController {
   // GET /api/v1/team/activity - Get team activity logs
   getActivity = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
+
       const { 
         page = 1, 
         limit = 20, 
@@ -333,6 +400,80 @@ export class TeamController {
       res.status(500).json({
         success: false,
         message: 'Failed to get activity logs'
+      });
+    }
+  };
+
+  // GET /api/v1/invitations/:token - Get invitation details by token (public endpoint)
+  getInvitationByToken = async (req: any, res: Response): Promise<void> => {
+    try {
+      const { token } = req.params;
+
+      const invitation = await this.teamService.getInvitationByToken(token);
+
+      res.json({
+        success: true,
+        data: {
+          email: invitation?.email,
+          role: invitation?.role,
+          organizationName: invitation?.organizationName,
+          message: invitation?.message,
+          expiresAt: invitation?.expiresAt,
+          invitedBy: invitation?.invitedBy
+        }
+      });
+    } catch (error: any) {
+      console.error('Error getting invitation by token:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to get invitation'
+      });
+    }
+  };
+
+  // POST /api/v1/invitations/:token/accept - Accept invitation and create user account (public endpoint)
+  acceptInvitation = async (req: any, res: Response): Promise<void> => {
+    try {
+      const { token } = req.params;
+      const { fullName, password } = req.body;
+
+      const result = await this.teamService.acceptInvitation(token, {
+        fullName,
+        password
+      });
+
+      await logActivity({
+        userId: result.user.id,
+        organizationId: result.organization.id,
+        action: 'team.invitation.accept',
+        description: `${result.user.fullName} accepted invitation and joined organization`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: { 
+          invitationToken: token,
+          email: result.user.email,
+          role: result.user.role
+        }
+      });
+
+      res.json({
+        success: true,
+        message: 'Invitation accepted successfully',
+        data: {
+          user: {
+            id: result.user.id,
+            email: result.user.email,
+            fullName: result.user.fullName
+          },
+          organization: result.organization,
+          role: result.user.role
+        }
+      });
+    } catch (error: any) {
+      console.error('Error accepting invitation:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to accept invitation'
       });
     }
   };

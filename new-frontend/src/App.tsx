@@ -13,6 +13,7 @@ import Reporting from "./pages/Reporting";
 import Team from "./pages/Team";
 import Settings from "./pages/Settings";
 import Alerts from "./pages/Alerts";
+import InviteAccept from "./pages/InviteAccept";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/team" element={<Team />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/alerts" element={<Alerts />} />
+            <Route path="/invite/:token" element={<InviteAccept />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

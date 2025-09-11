@@ -129,15 +129,13 @@ export class TrackingConfigController {
   // GET /api/v1/tracking/settings - Get tracking configuration
   async getTrackingSettings(req: AuthRequest, res: Response): Promise<Response<TrackingSettingsResponse>> {
     try {
-      const validation = this.validateOrganizationAccess(req);
-      if (!validation.isValid) {
+      const organizationId = req.organization?.id;
+      if (!organizationId) {
         return res.status(401).json({ 
           success: false, 
-          error: validation.error || 'Organization access denied' 
+          error: 'Organization not found' 
         });
       }
-
-      const organizationId = validation.organizationId!;
 
       // Use parallel queries to fetch related data efficiently
       const [settings, organization, websiteCount] = await Promise.all([
@@ -212,15 +210,13 @@ export class TrackingConfigController {
   // PUT /api/v1/tracking/settings - Update tracking settings
   async updateTrackingSettings(req: AuthRequest, res: Response): Promise<Response<TrackingSettingsResponse>> {
     try {
-      const validation = this.validateOrganizationAccess(req);
-      if (!validation.isValid) {
+      const organizationId = req.organization?.id;
+      if (!organizationId) {
         return res.status(401).json({ 
           success: false, 
-          error: validation.error || 'Organization access denied' 
+          error: 'Organization not found' 
         });
       }
-
-      const organizationId = validation.organizationId!;
       const updateData: UpdateTrackingSettingsRequest = req.body;
 
       // Parallel fetch of organization and existing settings
@@ -365,15 +361,13 @@ export class TrackingConfigController {
   // POST /api/v1/tracking/platforms - Configure platform monitoring
   async configurePlatform(req: AuthRequest, res: Response): Promise<Response> {
     try {
-      const validation = this.validateOrganizationAccess(req);
-      if (!validation.isValid) {
+      const organizationId = req.organization?.id;
+      if (!organizationId) {
         return res.status(401).json({ 
           success: false, 
-          error: validation.error || 'Organization access denied' 
+          error: 'Organization not found' 
         });
       }
-
-      const organizationId = validation.organizationId!;
       const { platform, enabled, settings, apiKey }: ConfigurePlatformRequest = req.body;
 
       // Validate platform exists in available platforms
@@ -485,15 +479,13 @@ export class TrackingConfigController {
   // GET /api/v1/tracking/platforms - List monitored platforms
   async getPlatforms(req: AuthRequest, res: Response): Promise<Response<PlatformSettingsResponse>> {
     try {
-      const validation = this.validateOrganizationAccess(req);
-      if (!validation.isValid) {
+      const organizationId = req.organization?.id;
+      if (!organizationId) {
         return res.status(401).json({ 
           success: false, 
-          error: validation.error || 'Organization access denied' 
+          error: 'Organization not found' 
         });
       }
-
-      const organizationId = validation.organizationId!;
 
       // Parallel fetch organization and platform settings
       const [organization, existingPlatformSettings, trackingSettings] = await Promise.all([
@@ -590,15 +582,13 @@ export class TrackingConfigController {
   // GET /api/v1/tracking/platforms/available - Get available platforms for monitoring
   async getAvailablePlatforms(req: AuthRequest, res: Response): Promise<Response<AvailablePlatformsResponse>> {
     try {
-      const validation = this.validateOrganizationAccess(req);
-      if (!validation.isValid) {
+      const organizationId = req.organization?.id;
+      if (!organizationId) {
         return res.status(401).json({ 
           success: false, 
-          error: validation.error || 'Organization access denied' 
+          error: 'Organization not found' 
         });
       }
-
-      const organizationId = validation.organizationId!;
 
       // Parallel fetch organization and current platform settings
       const [organization, currentPlatformSettings] = await Promise.all([

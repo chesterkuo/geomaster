@@ -101,17 +101,21 @@ export class KeywordController {
       const offset = (Number(page) - 1) * Number(limit);
 
       // Build parallel queries for basic keywords and enhanced data
+      const basicKeywordsPromise = this.getBasicKeywords(organizationId, {
+        type: type as string,
+        search: search as string,
+        limit: Number(limit),
+        offset,
+        sortBy: sortBy as string,
+        sortOrder: sortOrder as string
+      });
+      const researchPromise = includeResearch === 'true' ? this.getKeywordResearchData(organizationId) : Promise.resolve([]);
+      const analyticsPromise = this.getKeywordAnalytics(organizationId);
+      
       const [keywordResults, researchResults, analyticsData] = await Promise.all([
-        this.getBasicKeywords(organizationId, {
-          type: type as string,
-          search: search as string,
-          limit: Number(limit),
-          offset,
-          sortBy: sortBy as string,
-          sortOrder: sortOrder as string
-        }),
-        includeResearch === 'true' ? this.getKeywordResearchData(organizationId) : Promise.resolve([]),
-        this.getKeywordAnalytics(organizationId)
+        basicKeywordsPromise,
+        researchPromise,
+        analyticsPromise
       ]);
 
       // Merge research data with basic keywords if requested
@@ -233,51 +237,85 @@ export class KeywordController {
 
   // Helper method to get keyword analytics
   private async getKeywordAnalytics(organizationId: string): Promise<KeywordAnalytics> {
-    const [
-      totalKeywords,
-      researchCount,
-      rankedCount,
-      volumeStats,
-      difficultyStats,
-      opportunityCount,
-      topPerforming
-    ] = await Promise.all([
-      Keyword.count({ where: { organizationId } }),
-      KeywordResearch.count({ where: { organizationId } }),
-      KeywordRanking.count({ where: { organizationId } }),
-      KeywordResearch.findAll({
-        where: { organizationId },
-        attributes: [
-          [sequelize.fn('AVG', sequelize.col('search_volume')), 'avgVolume']
-        ],
-        raw: true
-      }),
-      KeywordResearch.findAll({
-        where: { organizationId },
-        attributes: [
-          [sequelize.fn('AVG', sequelize.col('difficulty_score')), 'avgDifficulty']
-        ],
-        raw: true
-      }),
-      KeywordResearch.count({
-        where: {
-          organizationId,
-          searchVolume: { [Op.gte]: 1000 },
-          difficultyScore: { [Op.lte]: 40 }
-        }
-      }),
-      this.getTopPerformingKeywords(organizationId, 5)
-    ]);
+    try {
+      const [
+        totalKeywords,
+        researchCount,
+        rankedCount,
+        volumeStats,
+        difficultyStats,
+        opportunityCount,
+        topPerforming
+      ] = await Promise.all([
+        Keyword.count({ where: { organizationId } }),
+        this.safeCount(KeywordResearch, { where: { organizationId } }),
+        this.safeCount(KeywordRanking, { where: { organizationId } }),
+        this.safeQuery(() => KeywordResearch.findAll({
+          where: { organizationId },
+          attributes: [
+            [sequelize.fn('AVG', sequelize.col('search_volume')), 'avgVolume']
+          ],
+          raw: true
+        }), []),
+        this.safeQuery(() => KeywordResearch.findAll({
+          where: { organizationId },
+          attributes: [
+            [sequelize.fn('AVG', sequelize.col('difficulty_score')), 'avgDifficulty']
+          ],
+          raw: true
+        }), []),
+        this.safeCount(KeywordResearch, {
+          where: {
+            organizationId,
+            searchVolume: { [Op.gte]: 1000 },
+            difficultyScore: { [Op.lte]: 40 }
+          }
+        }),
+        this.safeQuery(() => this.getTopPerformingKeywords(organizationId, 5), [])
+      ]);
 
-    return {
-      totalKeywords,
-      researchedKeywords: researchCount,
-      rankedKeywords: rankedCount,
-      averageSearchVolume: Math.round(Number((volumeStats[0] as any)?.avgVolume) || 0),
-      averageDifficulty: Math.round(Number((difficultyStats[0] as any)?.avgDifficulty) || 0),
-      opportunityKeywords: opportunityCount,
-      topPerformingKeywords: topPerforming
-    };
+      return {
+        totalKeywords,
+        researchedKeywords: researchCount,
+        rankedKeywords: rankedCount,
+        averageSearchVolume: Math.round(Number((volumeStats[0] as any)?.avgVolume) || 0),
+        averageDifficulty: Math.round(Number((difficultyStats[0] as any)?.avgDifficulty) || 0),
+        opportunityKeywords: opportunityCount,
+        topPerformingKeywords: topPerforming
+      };
+    } catch (error) {
+      console.error('Error in getKeywordAnalytics:', error);
+      // Return default analytics when there's an error (e.g., table doesn't exist)
+      return {
+        totalKeywords: await Keyword.count({ where: { organizationId } }),
+        researchedKeywords: 0,
+        rankedKeywords: 0,
+        averageSearchVolume: 0,
+        averageDifficulty: 0,
+        opportunityKeywords: 0,
+        topPerformingKeywords: []
+      };
+    }
+  }
+
+  // Helper method to safely execute queries that might fail due to missing tables
+  private async safeQuery<T>(queryFn: () => Promise<T>, defaultValue: T): Promise<T> {
+    try {
+      return await queryFn();
+    } catch (error) {
+      console.warn('Safe query failed, returning default:', (error as Error).message);
+      return defaultValue;
+    }
+  }
+
+  // Helper method to safely count records that might fail due to missing tables
+  private async safeCount(model: any, options: any): Promise<number> {
+    try {
+      return await model.count(options);
+    } catch (error) {
+      console.warn('Safe count failed, returning 0:', (error as Error).message);
+      return 0;
+    }
   }
 
   // Helper method to get top performing keywords
@@ -295,7 +333,7 @@ export class KeywordController {
         }]
       }],
       order: [
-        [sequelize.literal('(search_volume / (difficulty_score + 1))'), 'DESC']
+        [sequelize.literal('(`KeywordResearch`.`search_volume` / (`KeywordResearch`.`difficulty_score` + 1))'), 'DESC']
       ],
       limit
     });
@@ -387,7 +425,15 @@ export class KeywordController {
       return res.status(201).json({
         success: true,
         data: {
-          keyword: newKeyword,
+          id: newKeyword.id,
+          keyword: newKeyword.keyword,
+          searchVolume: newKeyword.searchVolume,
+          difficulty: newKeyword.difficulty,
+          cpc: newKeyword.cpc,
+          intent: newKeyword.intent,
+          organizationId: newKeyword.organizationId,
+          createdAt: newKeyword.createdAt,
+          updatedAt: newKeyword.updatedAt,
           research: researchResult || null,
           message: createResearch && researchResult 
             ? 'Keyword and research data created successfully'
@@ -578,7 +624,7 @@ export class KeywordController {
       const opportunities = await KeywordResearch.findAll({
         where: whereClause,
         order: [
-          [sequelize.literal('(search_volume / (difficulty_score + 1))'), 'DESC']
+          [sequelize.literal('(`KeywordResearch`.`search_volume` / (`KeywordResearch`.`difficulty_score` + 1))'), 'DESC']
         ],
         limit: Number(limit)
       });

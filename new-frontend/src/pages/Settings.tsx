@@ -72,6 +72,15 @@ const Settings = () => {
     else if (activeTab === "appearance") loadUserPreferences();
   }, [activeTab]);
 
+  // Load data on initial mount if user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (activeTab === "general") loadOrganizationSettings();
+      else if (activeTab === "security") loadSecuritySettings();
+      else if (activeTab === "appearance") loadUserPreferences();
+    }
+  }, [isAuthenticated]);
+
   const loadOrganizationSettings = async () => {
     setLoading(true);
     try {
@@ -125,7 +134,7 @@ const Settings = () => {
         setSecuritySettings(securityResponse.data);
       }
       if (sessionsResponse.success) {
-        setActiveSessions(sessionsResponse.data);
+        setActiveSessions(sessionsResponse.data.sessions || []);
       }
     } catch (error: any) {
       toast.error('獲取安全設定失敗', {

@@ -23,7 +23,7 @@ router.get('/',
       search: Joi.string().optional()
     })
   }),
-  keywordController.getKeywords
+  keywordController.getKeywords.bind(keywordController)
 );
 
 // POST /api/v1/keywords - Add new keyword
@@ -37,7 +37,7 @@ router.post('/',
       intent: Joi.string().valid('informational', 'commercial', 'transactional', 'navigational').optional()
     })
   }),
-  keywordController.createKeyword
+  keywordController.createKeyword.bind(keywordController)
 );
 
 // PUT /api/v1/keywords/:id - Update keyword
@@ -54,7 +54,7 @@ router.put('/:id',
       intent: Joi.string().valid('informational', 'commercial', 'transactional', 'navigational').optional()
     })
   }),
-  keywordController.updateKeyword
+  keywordController.updateKeyword.bind(keywordController)
 );
 
 // DELETE /api/v1/keywords/:id - Delete keyword
@@ -64,12 +64,12 @@ router.delete('/:id',
       id: commonSchemas.uuid.required()
     })
   }),
-  keywordController.deleteKeyword
+  keywordController.deleteKeyword.bind(keywordController)
 );
 
 // GET /api/v1/keywords/types - Get keyword types
 router.get('/types',
-  keywordController.getKeywordTypes
+  keywordController.getKeywordTypes.bind(keywordController)
 );
 
 export default router;

@@ -35,6 +35,16 @@ export interface AnalyticsDashboard {
     avgTimeOnPage: string;
   }>;
   realtimeUsers: number;
+  conversion: {
+    conversionRate: number;
+    totalConversions: number;
+    conversionValue: number;
+    growth: {
+      conversionRate: number;
+      totalConversions: number;
+      conversionValue: number;
+    };
+  };
 }
 
 // Analytics Trends Types

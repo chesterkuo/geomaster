@@ -10,7 +10,15 @@ export class SettingsController {
   // GET /api/v1/settings/organization - Get organization/company settings
   getOrganizationSettings = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
 
       const settings = await this.settingsService.getOrganizationSettings(organizationId);
 
@@ -30,8 +38,16 @@ export class SettingsController {
   // PUT /api/v1/settings/organization - Update organization settings
   updateOrganizationSettings = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
       const updates = req.body;
+
+      if (!organizationId) {
+        res.status(400).json({
+          success: false,
+          message: 'Organization ID is required'
+        });
+        return;
+      }
 
       // Check if user has permission to manage settings
       const hasPermission = await this.settingsService.hasPermission(
@@ -139,7 +155,7 @@ export class SettingsController {
 
       await logActivity({
         userId,
-        organizationId: req.headers['x-organization-id'] as string || '0',
+        organizationId: req.organization?.id || 'unknown',
         action: 'security.password.change',
         description: 'Password changed successfully',
         ipAddress: req.ip,
@@ -163,7 +179,6 @@ export class SettingsController {
   getActiveSessions = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const organizationId = req.headers['x-organization-id'] as string;
 
       const sessions = await this.settingsService.getActiveSessions(userId);
 
@@ -204,7 +219,7 @@ export class SettingsController {
   updateUserPreferences = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
       const updates = req.body;
 
       const updatedPreferences = await this.settingsService.updateUserPreferences(
@@ -240,7 +255,7 @@ export class SettingsController {
   enable2FA = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const userId = req.user!.id;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
 
       const twoFactorData = await this.settingsService.enable2FA(userId);
 
@@ -272,7 +287,7 @@ export class SettingsController {
     try {
       const { token } = req.body;
       const userId = req.user!.id;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
 
       if (!token || token.length !== 6) {
         res.status(400).json({
@@ -319,7 +334,7 @@ export class SettingsController {
     try {
       const { token, password } = req.body;
       const userId = req.user!.id;
-      const organizationId = req.headers['x-organization-id'] as string;
+      const organizationId = req.organization?.id;
 
       if (!token || !password) {
         res.status(400).json({

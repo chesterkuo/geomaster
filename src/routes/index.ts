@@ -17,6 +17,7 @@ import reportsRoutes from './reports.routes';
 import mlOptimizationRoutes from './mlOptimization.routes';
 import integrationsRoutes from './integrations.routes';
 import abTestingRoutes from './abTesting.routes';
+import invitationRoutes from './invitation.routes';
 
 const router = Router();
 
@@ -33,6 +34,7 @@ router.use('/tracking/keywords', keywordRoutes);
 router.use('/tracking/keyword-types', keywordRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/team', teamRoutes);
+router.use('/invitations', invitationRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/alerts', alertsRoutes);
@@ -69,6 +71,7 @@ router.get('/', (req, res) => {
       tracking: '/api/v1/tracking',
       keywords: '/api/v1/keywords',
       team: '/api/v1/team',
+      invitations: '/api/v1/invitations',
       settings: '/api/v1/settings',
       alerts: '/api/v1/alerts',
       analytics: '/api/v1/analytics',

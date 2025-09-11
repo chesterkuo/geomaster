@@ -114,7 +114,15 @@ const Optimization = () => {
       }
     } catch (error: any) {
       console.error('新增頁面錯誤:', error);
-      toast.error("新增失敗: " + (error.message || '未知錯誤'));
+      
+      // 處理特定的錯誤狀態
+      if (error.response?.status === 409) {
+        toast.error("此 URL 已存在，請檢查是否已經添加過相同的頁面");
+      } else if (error.response?.data?.message) {
+        toast.error("新增失敗: " + error.response.data.message);
+      } else {
+        toast.error("新增失敗: " + (error.message || '未知錯誤'));
+      }
     } finally {
       setIsAddingPage(false);
     }

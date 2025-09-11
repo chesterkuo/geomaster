@@ -31,14 +31,97 @@ export const getAnalyticsDashboard = async (req: AuthRequest, res: Response) => 
       });
     }
 
-    const dashboardData = await analyticsService.getDashboardData(organizationId, websiteId);
+    const snapshotData = await analyticsService.getDashboardData(organizationId, websiteId);
+
+    if (!snapshotData) {
+      return res.json({
+        success: true,
+        data: {
+          overview: {
+            totalViews: 0,
+            uniqueVisitors: 0,
+            averageSessionDuration: '0:00',
+            bounceRate: 0,
+            growth: {
+              views: 0,
+              visitors: 0,
+              sessionDuration: 0,
+              bounceRate: 0
+            }
+          },
+          trafficSources: {
+            organic: 0,
+            direct: 0,
+            social: 0,
+            referral: 0,
+            email: 0,
+            paid: 0
+          },
+          deviceBreakdown: {
+            desktop: 0,
+            mobile: 0,
+            tablet: 0
+          },
+          topPages: [],
+          realtimeUsers: 0,
+          conversion: {
+            conversionRate: 0,
+            totalConversions: 0,
+            conversionValue: 0,
+            growth: {
+              conversionRate: 0,
+              totalConversions: 0,
+              conversionValue: 0
+            }
+          }
+        }
+      });
+    }
+
+    // Transform AnalyticsSnapshot data to match frontend AnalyticsDashboard interface
+    const dashboardData = {
+      overview: {
+        totalViews: snapshotData.metrics?.totalViews || 0,
+        uniqueVisitors: snapshotData.metrics?.uniqueVisitors || 0,
+        averageSessionDuration: snapshotData.metrics?.avgSessionDuration || '0:00',
+        bounceRate: snapshotData.metrics?.bounceRate || 0,
+        growth: {
+          views: snapshotData.metrics?.growth?.views || 0,
+          visitors: snapshotData.metrics?.growth?.visitors || 0,
+          sessionDuration: snapshotData.metrics?.growth?.sessionDuration || 0,
+          bounceRate: snapshotData.metrics?.growth?.bounceRate || 0
+        }
+      },
+      trafficSources: {
+        organic: snapshotData.metrics?.trafficSources?.organic || 0,
+        direct: snapshotData.metrics?.trafficSources?.direct || 0,
+        social: snapshotData.metrics?.trafficSources?.social || 0,
+        referral: snapshotData.metrics?.trafficSources?.referral || 0,
+        email: snapshotData.metrics?.trafficSources?.email || 0,
+        paid: snapshotData.metrics?.trafficSources?.paid || 0
+      },
+      deviceBreakdown: {
+        desktop: snapshotData.metrics?.deviceBreakdown?.desktop || 0,
+        mobile: snapshotData.metrics?.deviceBreakdown?.mobile || 0,
+        tablet: snapshotData.metrics?.deviceBreakdown?.tablet || 0
+      },
+      topPages: snapshotData.metrics?.topPages || [],
+      realtimeUsers: snapshotData.metrics?.realtimeUsers || 0,
+      conversion: {
+        conversionRate: snapshotData.metrics?.conversionRate || 0,
+        totalConversions: snapshotData.metrics?.totalConversions || 0,
+        conversionValue: snapshotData.metrics?.conversionValue || 0,
+        growth: {
+          conversionRate: snapshotData.metrics?.growth?.conversionRate || 0,
+          totalConversions: snapshotData.metrics?.growth?.totalConversions || 0,
+          conversionValue: snapshotData.metrics?.growth?.conversionValue || 0
+        }
+      }
+    };
 
     return res.json({
       success: true,
-      data: {
-        snapshot: dashboardData,
-        lastUpdated: dashboardData.generatedAt
-      }
+      data: dashboardData
     });
   } catch (error) {
     console.error('Get analytics dashboard error:', error);

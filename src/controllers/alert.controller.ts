@@ -112,7 +112,7 @@ export const getAlerts = async (req: AuthRequest, res: Response): Promise<void> 
 export const getAlert = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { organizationId } = req.user!;
+    const organizationId = req.organization!.id;
 
     const alert = await AlertConfiguration.findOne({
       where: { id, organizationId },
@@ -297,7 +297,7 @@ export const testAlert = async (req: AuthRequest, res: Response): Promise<void> 
  */
 export const triggerManualCheck = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { organizationId } = req.user!;
+    const organizationId = req.organization!.id;
     const { websiteId, alertType } = req.body;
 
     const job = await triggerAlertCheck({
@@ -331,7 +331,7 @@ export const triggerManualCheck = async (req: AuthRequest, res: Response): Promi
  */
 export const triggerMetricsCollectionManual = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { organizationId } = req.user!;
+    const organizationId = req.organization!.id;
     const { websiteId, platform } = req.body;
 
     const job = await triggerMetricsCollection({
@@ -400,7 +400,7 @@ export const getAlertDashboard = async (req: AuthRequest, res: Response): Promis
  */
 export const getMetricsSnapshots = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { organizationId } = req.user!;
+    const organizationId = req.organization!.id;
     const {
       websiteId,
       metricType,
@@ -449,7 +449,7 @@ export const getMetricsSnapshots = async (req: AuthRequest, res: Response): Prom
 export const resendNotification = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const { organizationId } = req.user!;
+    const organizationId = req.organization!.id;
 
     const alertHistory = await AlertHistory.findOne({
       where: { id, organizationId }

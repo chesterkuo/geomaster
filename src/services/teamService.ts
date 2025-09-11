@@ -20,23 +20,28 @@ interface Invitation {
   email: string;
   role: string;
   status: string;
-  sentDate: string;
+  createdAt: string;
   expiresAt: string;
   invitedBy: string;
   message: string | null;
   token: string;
+  organizationId?: string;
+  organizationName?: string;
 }
 
 interface ActivityLog {
   id: number;
   userId: string | null;
-  userName: string | null;
   action: string;
   description: string;
   ipAddress: string | null;
   userAgent: string | null;
-  timestamp: string;
+  createdAt: string;
   metadata: any;
+  user?: {
+    fullName: string;
+    email: string;
+  };
 }
 
 interface PaginationOptions {
@@ -380,7 +385,7 @@ export class TeamService {
       email: row.email,
       role: row.role,
       status: row.status,
-      sentDate: row.sentDate,
+      createdAt: row.sentDate,
       expiresAt: row.expiresAt,
       invitedBy: row.invitedBy,
       message: row.message,
@@ -483,7 +488,7 @@ export class TeamService {
       email,
       role,
       status: 'pending',
-      sentDate: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       expiresAt: expiresAt.toISOString(),
       invitedBy: '',
       message: message || null,
@@ -613,13 +618,16 @@ export class TeamService {
     const activities: ActivityLog[] = rows.map((row: any) => ({
       id: row.id,
       userId: row.userId,
-      userName: row.userName,
       action: row.action,
       description: row.description,
       ipAddress: row.ipAddress,
       userAgent: row.userAgent,
-      timestamp: row.timestamp,
-      metadata: this.safeJSONParse(row.metadata)
+      createdAt: row.timestamp,
+      metadata: this.safeJSONParse(row.metadata),
+      user: row.userName ? {
+        fullName: row.userName,
+        email: ''
+      } : undefined
     }));
 
     return {
@@ -630,6 +638,164 @@ export class TeamService {
         total,
         totalPages: Math.ceil(total / limit)
       }
+    };
+  }
+
+  // Get invitation by token (for invitation acceptance page)
+  async getInvitationByToken(token: string): Promise<Invitation | null> {
+    const rows = await db.query(
+      `SELECT 
+        i.id,
+        i.email,
+        i.role,
+        i.status,
+        i.createdAt,
+        i.expiresAt,
+        i.message,
+        i.organizationId,
+        o.name as organizationName,
+        u.full_name as invitedBy
+       FROM invitations i
+       JOIN organizations o ON i.organizationId = o.id
+       JOIN users u ON i.invitedBy = u.id
+       WHERE i.token = ? AND i.status = 'pending'`,
+      {
+        replacements: [token],
+        type: QueryTypes.SELECT
+      }
+    ) as any[];
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const row = rows[0];
+    
+    // Check if invitation has expired
+    const now = new Date();
+    const expiresAt = new Date(row.expiresAt);
+    if (now > expiresAt) {
+      // Mark as expired
+      await db.query(
+        'UPDATE invitations SET status = ? WHERE token = ?',
+        {
+          replacements: ['expired', token],
+          type: QueryTypes.UPDATE
+        }
+      );
+      return null;
+    }
+
+    return {
+      id: row.id,
+      email: row.email,
+      role: row.role,
+      status: row.status,
+      createdAt: row.createdAt,
+      expiresAt: row.expiresAt,
+      invitedBy: row.invitedBy,
+      message: row.message,
+      token,
+      organizationId: row.organizationId,
+      organizationName: row.organizationName
+    };
+  }
+
+  // Accept invitation - create user account and add to organization
+  async acceptInvitation(token: string, userData: {
+    fullName: string;
+    password: string;
+  }): Promise<{ user: any; organization: any }> {
+    // First, get the invitation
+    const invitation = await this.getInvitationByToken(token);
+    if (!invitation) {
+      throw new Error('Invitation not found or has expired');
+    }
+
+    const { email, role, organizationId } = invitation;
+
+    // Check if user already exists with this email
+    const existingUser = await db.query(
+      'SELECT id FROM users WHERE email = ?',
+      {
+        replacements: [email],
+        type: QueryTypes.SELECT
+      }
+    ) as any[];
+
+    let userId: string;
+
+    if (existingUser.length > 0) {
+      // User exists, just add to organization
+      userId = existingUser[0].id;
+    } else {
+      // Create new user
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const { v4: uuidv4 } = require('uuid');
+      
+      userId = uuidv4();
+      
+      await db.query(
+        `INSERT INTO users (id, email, password_hash, full_name, is_active, email_verified, created_at, updated_at)
+         VALUES (?, ?, ?, ?, true, true, NOW(), NOW())`,
+        {
+          replacements: [userId, email, hashedPassword, userData.fullName],
+          type: QueryTypes.INSERT
+        }
+      );
+    }
+
+    // Check if user is already a member of this organization
+    const existingMembership = await db.query(
+      'SELECT id FROM user_organizations WHERE user_id = ? AND organization_id = ?',
+      {
+        replacements: [userId, organizationId],
+        type: QueryTypes.SELECT
+      }
+    ) as any[];
+
+    if (existingMembership.length === 0) {
+      // Add user to organization
+      await db.query(
+        `INSERT INTO user_organizations (user_id, organization_id, role, status, joined_at, created_at, updated_at)
+         VALUES (?, ?, ?, 'active', NOW(), NOW(), NOW())`,
+        {
+          replacements: [userId, organizationId, role],
+          type: QueryTypes.INSERT
+        }
+      );
+    }
+
+    // Mark invitation as accepted
+    await db.query(
+      'UPDATE invitations SET status = ?, updated_at = NOW() WHERE token = ?',
+      {
+        replacements: ['accepted', token],
+        type: QueryTypes.UPDATE
+      }
+    );
+
+    // Get user and organization data
+    const userResult = await db.query(
+      'SELECT id, email, full_name as fullName, created_at as createdAt FROM users WHERE id = ?',
+      {
+        replacements: [userId],
+        type: QueryTypes.SELECT
+      }
+    ) as any[];
+
+    const orgResult = await db.query(
+      'SELECT id, name, slug FROM organizations WHERE id = ?',
+      {
+        replacements: [organizationId],
+        type: QueryTypes.SELECT
+      }
+    ) as any[];
+
+    return {
+      user: userResult[0],
+      organization: orgResult[0]
     };
   }
 }

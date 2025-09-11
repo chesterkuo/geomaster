@@ -254,6 +254,21 @@ const Team = () => {
     return role?.displayName || roleName;
   };
 
+  const getPermissionDisplayName = (permission: string) => {
+    const permissionMap: Record<string, string> = {
+      'user.manage': '管理成員',
+      'user.invite': '邀請成員',
+      'settings.manage': '管理設定',
+      'billing.manage': '管理帳單',
+      'content.edit': '編輯內容',
+      'reports.view': '查看報告',
+      'reports.export': '匯出報告',
+      'analytics.view': '查看分析',
+      'keywords.manage': '管理關鍵字'
+    };
+    return permissionMap[permission] || permission;
+  };
+
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: "default" | "secondary" | "destructive"; text: string }> = {
       'active': { variant: "default", text: "活躍" },
@@ -268,8 +283,13 @@ const Team = () => {
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('zh-TW', {
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return '未知日期';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '無效日期';
+    
+    return date.toLocaleDateString('zh-TW', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -508,6 +528,8 @@ const Team = () => {
               <>
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold">角色與權限</h2>
+                  {/* Note: Role creation is typically managed at the system level */}
+                  {/* Future implementation could include custom role creation for enterprise plans */}
                 </div>
 
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -526,7 +548,7 @@ const Team = () => {
                           <div className="space-y-1">
                             {role.permissions && Array.isArray(role.permissions) ? role.permissions.map((permission, idx) => (
                               <div key={idx} className="text-sm text-muted-foreground">
-                                • {permission}
+                                • {getPermissionDisplayName(permission)}
                               </div>
                             )) : (
                               <div className="text-sm text-muted-foreground">
@@ -545,6 +567,53 @@ const Team = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Role information guide */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5" />
+                      角色說明
+                    </CardTitle>
+                    <CardDescription>系統預設角色及其權限範圍</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-4">
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">擁有者</Badge>
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">
+                            組織的最高權限者，可管理所有功能、設定帳單、邀請和移除成員
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">管理員</Badge>
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">
+                            可管理大部分功能和成員，但無法存取帳單設定
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">編輯者</Badge>
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">
+                            可編輯內容、管理關鍵字、查看報告，但無法管理成員
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <Badge variant="outline">檢視者</Badge>
+                        <div className="flex-1">
+                          <p className="text-sm text-muted-foreground">
+                            只能查看報告和分析數據，無法進行編輯或管理操作
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             )}
           </TabsContent>

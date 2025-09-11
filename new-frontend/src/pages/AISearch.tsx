@@ -23,10 +23,17 @@ import {
   X,
   Lock,
   User,
-  Loader2
+  Loader2,
+  Download
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useVisibilityTrends, useVisibilityStats, usePlatformPerformance, useVisibilityHistory } from "@/hooks/useVisibility";
+import { useCompetitiveAnalysis, useCompetitors } from "@/hooks/useCompetitors";
+import { VisibilityTrendsChart } from "@/components/charts/VisibilityTrendsChart";
+import { PlatformDistributionChart } from "@/components/charts/PlatformDistributionChart";
+import { CompetitorComparisonChart } from "@/components/charts/CompetitorComparisonChart";
 import { aiSearchService, Keyword, Competitor, TrackingSettings, PlatformSettings } from "@/lib/api/aiSearch";
+import { websiteService, Website } from "@/lib/api/websites";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -38,6 +45,7 @@ const AISearch = () => {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [trackingSettings, setTrackingSettings] = useState<TrackingSettings | null>(null);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings[]>([]);
+  const [websites, setWebsites] = useState<Website[]>([]);
   const [newKeyword, setNewKeyword] = useState("");
   const [newCompetitor, setNewCompetitor] = useState("");
   const [loading, setLoading] = useState(true);
@@ -75,11 +83,12 @@ const AISearch = () => {
       }
 
       // Load real data for authenticated users
-      const [keywordsRes, competitorsRes, trackingRes, platformsRes] = await Promise.all([
+      const [keywordsRes, competitorsRes, trackingRes, platformsRes, websitesRes] = await Promise.all([
         aiSearchService.getKeywords(),
         aiSearchService.getCompetitors(),
         aiSearchService.getTrackingSettings(),
-        aiSearchService.getPlatformSettings()
+        aiSearchService.getPlatformSettings(),
+        websiteService.getList()
       ]);
 
       if (keywordsRes.success) setKeywords(keywordsRes.data.keywords || []);
@@ -93,6 +102,12 @@ const AISearch = () => {
           platformMap[p.platform] = p.enabled;
         });
         setSelectedPlatforms(prev => ({ ...prev, ...platformMap }));
+      }
+      
+      // Load websites and set the first one as selected
+      if (websitesRes.success && websitesRes.data.websites.length > 0) {
+        setWebsites(websitesRes.data.websites);
+        setSelectedWebsiteId(websitesRes.data.websites[0].id);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -194,22 +209,43 @@ const AISearch = () => {
   const getBrandKeywords = () => keywords.filter(k => k.intent === 'commercial' || k.intent === 'navigational');
   const getIndustryKeywords = () => keywords.filter(k => k.intent === 'informational' || k.intent === 'transactional');
 
-  const trackingData = {
-    brandMentionRate: { value: 23, change: 5, trend: "up" },
-    averagePosition: { value: 3, change: -1, trend: "up" },
-    sentimentScore: { value: 85, change: 2, trend: "up" },
-    platforms: {
-      chatgpt: { mentionRate: 18, change: 3, position: 2.8 },
-      gemini: { mentionRate: 28, change: 7, position: 2.5 },
-      perplexity: { mentionRate: 25, change: 1, position: 3.2 }
-    },
-    competition: {
-      yourBrand: 23,
-      competitorA: 31,
-      competitorB: 19,
-      others: 27
-    }
-  };
+  // Date range for visibility data
+  const [visibilityDateRange, setVisibilityDateRange] = useState('30d');
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | undefined>();
+  
+  // Fetch visibility data with React Query
+  const { data: visibilityTrends, isLoading: trendsLoading, error: trendsError } = useVisibilityTrends(
+    { dateRange: visibilityDateRange, websiteId: selectedWebsiteId },
+    { enabled: isAuthenticated }
+  );
+  
+  const { data: visibilityStats, isLoading: statsLoading } = useVisibilityStats(
+    selectedWebsiteId,
+    { enabled: isAuthenticated }
+  );
+  
+  const { data: platformPerformance, isLoading: platformLoading } = usePlatformPerformance(
+    { dateRange: visibilityDateRange, websiteId: selectedWebsiteId },
+    { enabled: isAuthenticated }
+  );
+  
+  const { data: visibilityHistory } = useVisibilityHistory(
+    selectedWebsiteId || '',
+    visibilityDateRange as '7d' | '30d' | '90d' | '12m',
+    { enabled: isAuthenticated && !!selectedWebsiteId }
+  );
+  
+  // Fetch competitive analysis data
+  const { data: competitiveAnalysis, isLoading: competitiveLoading } = useCompetitiveAnalysis(
+    selectedWebsiteId || '',
+    visibilityDateRange,
+    { enabled: isAuthenticated && !!selectedWebsiteId }
+  );
+  
+  const { data: competitorsList } = useCompetitors(
+    { websiteId: selectedWebsiteId },
+    { enabled: isAuthenticated }
+  );
 
   return (
     <DashboardLayout>
@@ -440,9 +476,20 @@ const AISearch = () => {
           </TabsContent>
 
           <TabsContent value="overview" className="space-y-6">
-            {loading ? (
+            {(loading || trendsLoading || statsLoading || platformLoading) ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="ml-2 text-sm text-muted-foreground">載入可見度數據中...</span>
+              </div>
+            ) : trendsError ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="text-lg font-medium text-red-500 mb-2">載入可見度數據失敗</div>
+                  <p className="text-sm text-muted-foreground mb-4">請檢查網路連線或聯絡技術支援</p>
+                  <Button onClick={() => window.location.reload()} variant="outline">
+                    重新載入
+                  </Button>
+                </div>
               </div>
             ) : !isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
@@ -465,122 +512,192 @@ const AISearch = () => {
               </div>
             ) : (
               <>
-                {/* 總覽指標 */}
-                <div className="grid gap-4 md:grid-cols-3">
-              <Card className="bg-gradient-card border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">品牌提及率</CardTitle>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{trackingData.brandMentionRate.value}%</div>
-                  <div className="flex items-center space-x-1 text-xs text-green-600">
-                    <TrendingUp className="h-3 w-3" />
-                    <span>↑{trackingData.brandMentionRate.change}%</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-card border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">引用位置</CardTitle>
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">平均第 {trackingData.averagePosition.value} 位</div>
-                  <div className="flex items-center space-x-1 text-xs text-green-600">
-                    <TrendingUp className="h-3 w-3" />
-                    <span>較上期提升 {Math.abs(trackingData.averagePosition.change)} 位</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-card border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">情感分析</CardTitle>
-                  <Star className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{trackingData.sentimentScore.value}% 正面</div>
-                  <div className="flex items-center space-x-1 text-xs text-green-600">
-                    <TrendingUp className="h-3 w-3" />
-                    <span>↑{trackingData.sentimentScore.change}%</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* 平台細分 */}
-            <Card className="bg-gradient-card border-border">
-              <CardHeader>
-                <CardTitle>平台細分表現</CardTitle>
-                <CardDescription>各 AI 平台的品牌提及情況</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="p-4 bg-gradient-subtle rounded-lg border border-border">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <Brain className="h-5 w-5 text-green-500" />
-                          <h4 className="font-medium">ChatGPT</h4>
-                        </div>
-                        <Badge variant="secondary">#{trackingData.platforms.chatgpt.position}</Badge>
-                      </div>
-                      <div className="text-2xl font-bold mb-1">{trackingData.platforms.chatgpt.mentionRate}%</div>
-                      <div className="text-xs text-muted-foreground mb-2">提及率</div>
-                      <Progress value={trackingData.platforms.chatgpt.mentionRate} className="h-2" />
-                      <div className="flex items-center space-x-1 text-xs text-green-600 mt-2">
-                        <TrendingUp className="h-3 w-3" />
-                        <span>↑{trackingData.platforms.chatgpt.change}%</span>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-gradient-subtle rounded-lg border border-border">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <Star className="h-5 w-5 text-blue-500" />
-                          <h4 className="font-medium">Gemini</h4>
-                        </div>
-                        <Badge variant="secondary">#{trackingData.platforms.gemini.position}</Badge>
-                      </div>
-                      <div className="text-2xl font-bold mb-1">{trackingData.platforms.gemini.mentionRate}%</div>
-                      <div className="text-xs text-muted-foreground mb-2">提及率</div>
-                      <Progress value={trackingData.platforms.gemini.mentionRate} className="h-2" />
-                      <div className="flex items-center space-x-1 text-xs text-green-600 mt-2">
-                        <TrendingUp className="h-3 w-3" />
-                        <span>↑{trackingData.platforms.gemini.change}%</span>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-gradient-subtle rounded-lg border border-border">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-2">
-                          <Eye className="h-5 w-5 text-purple-500" />
-                          <h4 className="font-medium">Perplexity</h4>
-                        </div>
-                        <Badge variant="secondary">#{trackingData.platforms.perplexity.position}</Badge>
-                      </div>
-                      <div className="text-2xl font-bold mb-1">{trackingData.platforms.perplexity.mentionRate}%</div>
-                      <div className="text-xs text-muted-foreground mb-2">提及率</div>
-                      <Progress value={trackingData.platforms.perplexity.mentionRate} className="h-2" />
-                      <div className="flex items-center space-x-1 text-xs text-green-600 mt-2">
-                        <TrendingUp className="h-3 w-3" />
-                        <span>↑{trackingData.platforms.perplexity.change}%</span>
-                      </div>
+                {/* Date Range Selector */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium">時間範圍:</label>
+                      <Select value={visibilityDateRange} onValueChange={setVisibilityDateRange}>
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="7d">過去 7 天</SelectItem>
+                          <SelectItem value="30d">過去 30 天</SelectItem>
+                          <SelectItem value="90d">過去 90 天</SelectItem>
+                          <SelectItem value="12m">過去 12 月</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    匯出報告
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
+                
+                {/* 總覽指標 */}
+                <div className="grid gap-4 md:grid-cols-3 mb-6">
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">品牌提及率</CardTitle>
+                      <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {visibilityStats?.data.brandMentionRate?.value || 0}%
+                      </div>
+                      <div className={`flex items-center space-x-1 text-xs ${
+                        (visibilityStats?.data.brandMentionRate?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {(visibilityStats?.data.brandMentionRate?.change || 0) >= 0 ? (
+                          <TrendingUp className="h-3 w-3" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3" />
+                        )}
+                        <span>
+                          {(visibilityStats?.data.brandMentionRate?.change || 0) > 0 ? '↑' : '↓'}
+                          {Math.abs(visibilityStats?.data.brandMentionRate?.change || 0)}%
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">引用位置</CardTitle>
+                      <Target className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        平均第 {visibilityStats?.data.averagePosition?.value || 0} 位
+                      </div>
+                      <div className={`flex items-center space-x-1 text-xs ${
+                        (visibilityStats?.data.averagePosition?.change || 0) <= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {(visibilityStats?.data.averagePosition?.change || 0) <= 0 ? (
+                          <TrendingUp className="h-3 w-3" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3" />
+                        )}
+                        <span>
+                          {(visibilityStats?.data.averagePosition?.change || 0) <= 0 ? '提升' : '下降'} 
+                          {Math.abs(visibilityStats?.data.averagePosition?.change || 0)} 位
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">情感分析</CardTitle>
+                      <Star className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        {visibilityStats?.data.sentimentScore?.value || 0}% 正面
+                      </div>
+                      <div className={`flex items-center space-x-1 text-xs ${
+                        (visibilityStats?.data.sentimentScore?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {(visibilityStats?.data.sentimentScore?.change || 0) >= 0 ? (
+                          <TrendingUp className="h-3 w-3" />
+                        ) : (
+                          <TrendingDown className="h-3 w-3" />
+                        )}
+                        <span>
+                          {(visibilityStats?.data.sentimentScore?.change || 0) > 0 ? '↑' : '↓'}
+                          {Math.abs(visibilityStats?.data.sentimentScore?.change || 0)}%
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Visibility Trends Chart */}
+                {visibilityTrends?.data.trends && (
+                  <div className="mb-6">
+                    <VisibilityTrendsChart 
+                      data={visibilityTrends.data.trends}
+                      title="可見度趨勢分析"
+                      description="各 AI 平台的可見度變化趨勢"
+                      chartType="line"
+                    />
+                  </div>
+                )}
+
+                {/* Platform Distribution */}
+                {platformPerformance?.data.platforms && (
+                  <div className="mb-6">
+                    <PlatformDistributionChart
+                      data={platformPerformance.data.platforms.map(platform => ({
+                        platform: platform.platform.toLowerCase(),
+                        value: platform.totalMentions,
+                        percentage: platform.mentionRate,
+                        change: platform.change
+                      }))}
+                      title="平台分佈分析"
+                      description="各 AI 平台的提及率和表現分佈"
+                    />
+                  </div>
+                )}
+
+                {/* Platform Performance Details */}
+                {platformPerformance?.data.platforms && (
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader>
+                      <CardTitle>平台細分表現</CardTitle>
+                      <CardDescription>各 AI 平台的詳細表現數據</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {platformPerformance.data.platforms.map((platform) => {
+                          const platformIcons = {
+                            chatgpt: <Brain className="h-5 w-5 text-green-500" />,
+                            gemini: <Star className="h-5 w-5 text-blue-500" />,
+                            perplexity: <Eye className="h-5 w-5 text-purple-500" />,
+                            claude: <MessageSquare className="h-5 w-5 text-orange-500" />
+                          };
+                          
+                          return (
+                            <div key={platform.platform} className="p-4 bg-gradient-subtle rounded-lg border border-border">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center space-x-2">
+                                  {platformIcons[platform.platform.toLowerCase() as keyof typeof platformIcons] || 
+                                   <MessageSquare className="h-5 w-5 text-gray-500" />}
+                                  <h4 className="font-medium capitalize">{platform.platform}</h4>
+                                </div>
+                                <Badge variant="secondary">#{platform.position}</Badge>
+                              </div>
+                              <div className="text-2xl font-bold mb-1">{platform.mentionRate}%</div>
+                              <div className="text-xs text-muted-foreground mb-2">提及率</div>
+                              <Progress value={platform.mentionRate} className="h-2" />
+                              <div className={`flex items-center space-x-1 text-xs mt-2 ${
+                                platform.change >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {platform.change >= 0 ? (
+                                  <TrendingUp className="h-3 w-3" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3" />
+                                )}
+                                <span>{platform.change > 0 ? '↑' : '↓'}{Math.abs(platform.change)}%</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </TabsContent>
 
           <TabsContent value="analysis" className="space-y-6">
-            {loading ? (
+            {(loading || competitiveLoading) ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="ml-2 text-sm text-muted-foreground">載入競爭分析數據中...</span>
               </div>
             ) : !isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
@@ -602,59 +719,192 @@ const AISearch = () => {
                 </div>
               </div>
             ) : (
-              <Card className="bg-gradient-card border-border">
-                <CardHeader>
-                  <CardTitle>競爭分析</CardTitle>
-                  <CardDescription>您與競爭對手在 AI 平台上的表現比較</CardDescription>
-                </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <div className="text-center p-4 bg-gradient-subtle rounded-lg border border-border">
-                      <div className="text-2xl font-bold text-primary mb-1">{trackingData.competition.yourBrand}%</div>
-                      <div className="text-sm font-medium mb-1">您的品牌</div>
-                      <Progress value={trackingData.competition.yourBrand} className="h-2" />
-                    </div>
-
-                    <div className="text-center p-4 bg-gradient-subtle rounded-lg border border-border">
-                      <div className="text-2xl font-bold text-red-500 mb-1">{trackingData.competition.competitorA}%</div>
-                      <div className="text-sm font-medium mb-1">Competitor A</div>
-                      <Progress value={trackingData.competition.competitorA} className="h-2" />
-                    </div>
-
-                    <div className="text-center p-4 bg-gradient-subtle rounded-lg border border-border">
-                      <div className="text-2xl font-bold text-orange-500 mb-1">{trackingData.competition.competitorB}%</div>
-                      <div className="text-sm font-medium mb-1">Competitor B</div>
-                      <Progress value={trackingData.competition.competitorB} className="h-2" />
-                    </div>
-
-                    <div className="text-center p-4 bg-gradient-subtle rounded-lg border border-border">
-                      <div className="text-2xl font-bold text-gray-500 mb-1">{trackingData.competition.others}%</div>
-                      <div className="text-sm font-medium mb-1">其他</div>
-                      <Progress value={trackingData.competition.others} className="h-2" />
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-gradient-subtle rounded-lg border border-border">
-                    <h4 className="font-medium mb-3">競爭洞察</h4>
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-start space-x-2">
-                        <TrendingUp className="h-4 w-4 text-green-500 mt-0.5" />
-                        <span>您的品牌在 Gemini 平台表現最佳，提及率領先 Competitor B 9 個百分點</span>
+              <>
+                {/* Competitor Management Section */}
+                <Card className="bg-gradient-card border-border">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>競爭對手管理</CardTitle>
+                        <CardDescription>新增、移除和管理您的競爭對手</CardDescription>
                       </div>
-                      <div className="flex items-start space-x-2">
-                        <TrendingDown className="h-4 w-4 text-red-500 mt-0.5" />
-                        <span>在 ChatGPT 平台仍需加強，落後 Competitor A 13 個百分點</span>
-                      </div>
-                      <div className="flex items-start space-x-2">
-                        <Target className="h-4 w-4 text-blue-500 mt-0.5" />
-                        <span>建議加強「專案管理」關鍵字的內容布局，提升整體市場份額</span>
-                      </div>
+                      <Button variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        新增競爭對手
+                      </Button>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-3">
+                      {competitorsList?.data.competitors?.map((competitor) => (
+                        <div key={competitor.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gradient-subtle rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium">
+                                {competitor.name.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="font-medium">{competitor.name}</div>
+                              <div className="text-sm text-muted-foreground">{competitor.domain}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={competitor.isActive ? "default" : "secondary"}>
+                              {competitor.isActive ? "活躍" : "暫停"}
+                            </Badge>
+                            <Button variant="ghost" size="sm">
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )) || (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>尚未新增任何競爭對手</p>
+                          <p className="text-sm">新增競爭對手以開始分析</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Competitive Analysis Chart */}
+                {competitiveAnalysis?.data.analysis && (
+                  <CompetitorComparisonChart
+                    data={[
+                      {
+                        ...competitiveAnalysis.data.analysis.yourBrand,
+                        competitorId: 'your-brand',
+                        domain: 'your-domain.com',
+                        isYourBrand: true,
+                        trends: { visibilityTrend: 0, mentionTrend: 0, positionTrend: 0 },
+                        platforms: {
+                          chatgpt: { mentions: 0, avgPosition: 0, sentiment: 0 },
+                          perplexity: { mentions: 0, avgPosition: 0, sentiment: 0 },
+                          gemini: { mentions: 0, avgPosition: 0, sentiment: 0 },
+                          claude: { mentions: 0, avgPosition: 0, sentiment: 0 },
+                        }
+                      },
+                      ...competitiveAnalysis.data.analysis.competitors
+                    ]}
+                    title="競爭對手表現比較"
+                    description="您與競爭對手的 GEO 分數和各項指標對比"
+                  />
+                )}
+
+                {/* Market Share Analysis */}
+                {competitiveAnalysis?.data.analysis && (
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader>
+                      <CardTitle>市場份額分析</CardTitle>
+                      <CardDescription>各品牌在 AI 平台上的市場佔有率</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <div className="text-center p-4 bg-gradient-subtle rounded-lg border border-border">
+                          <div className="text-2xl font-bold text-primary mb-1">
+                            {competitiveAnalysis.data.analysis.yourBrand.marketShare}%
+                          </div>
+                          <div className="text-sm font-medium mb-1">您的品牌</div>
+                          <Progress value={competitiveAnalysis.data.analysis.yourBrand.marketShare} className="h-2" />
+                        </div>
+
+                        {competitiveAnalysis.data.analysis.competitors.slice(0, 3).map((competitor) => (
+                          <div key={competitor.competitorId} className="text-center p-4 bg-gradient-subtle rounded-lg border border-border">
+                            <div className="text-2xl font-bold text-red-500 mb-1">{competitor.marketShare}%</div>
+                            <div className="text-sm font-medium mb-1">{competitor.name}</div>
+                            <Progress value={competitor.marketShare} className="h-2" />
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Competitive Insights */}
+                {competitiveAnalysis?.data.insights && competitiveAnalysis.data.insights.length > 0 && (
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader>
+                      <CardTitle>競爭洞察</CardTitle>
+                      <CardDescription>基於數據分析的競爭情報和建議</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {competitiveAnalysis.data.insights.map((insight, index) => {
+                          const iconMap = {
+                            opportunity: <TrendingUp className="h-4 w-4 text-green-500" />,
+                            threat: <TrendingDown className="h-4 w-4 text-red-500" />,
+                            strength: <Target className="h-4 w-4 text-blue-500" />,
+                            weakness: <X className="h-4 w-4 text-orange-500" />
+                          };
+
+                          return (
+                            <div key={index} className="flex items-start space-x-3 p-4 bg-gradient-subtle rounded-lg border border-border">
+                              {iconMap[insight.type]}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h5 className="font-medium">{insight.title}</h5>
+                                  <Badge variant="outline" className="text-xs">
+                                    {insight.impact === 'high' ? '高影響' : insight.impact === 'medium' ? '中影響' : '低影響'}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-2">{insight.description}</p>
+                                {insight.competitor && (
+                                  <p className="text-xs text-muted-foreground">相關競爭對手: {insight.competitor}</p>
+                                )}
+                                <div className="mt-2">
+                                  <p className="text-sm font-medium text-primary">建議行動:</p>
+                                  <p className="text-sm">{insight.recommendedAction}</p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Gap Analysis */}
+                {competitiveAnalysis?.data.gapAnalysis && competitiveAnalysis.data.gapAnalysis.length > 0 && (
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader>
+                      <CardTitle>差距分析</CardTitle>
+                      <CardDescription>識別與競爭對手的差距和改善機會</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {competitiveAnalysis.data.gapAnalysis.map((gap, index) => (
+                          <div key={index} className="p-4 bg-gradient-subtle rounded-lg border border-border">
+                            <div className="flex items-center justify-between mb-3">
+                              <h5 className="font-medium">{gap.category}</h5>
+                              <div className="text-right">
+                                <div className="text-sm">
+                                  您: {gap.yourScore} vs 平均: {gap.competitorAverage}
+                                </div>
+                                <div className={`text-xs ${gap.gap >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  差距: {gap.gap > 0 ? '+' : ''}{gap.gap}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-3">
+                              <Progress value={gap.yourScore} className="h-2" />
+                              <Progress value={gap.competitorAverage} className="h-2" />
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm font-medium">改善建議:</p>
+                              {gap.recommendations.map((rec, recIndex) => (
+                                <p key={recIndex} className="text-sm text-muted-foreground">• {rec}</p>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
             )}
           </TabsContent>
         </Tabs>

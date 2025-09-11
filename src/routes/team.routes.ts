@@ -27,7 +27,7 @@ const teamSchemas = {
     body: Joi.object({
       email: commonSchemas.email,
       role: Joi.string().valid('owner', 'admin', 'editor', 'viewer').required(),
-      message: Joi.string().max(500).optional()
+      message: Joi.string().max(500).allow('').optional()
     })
   },
 

@@ -20,6 +20,7 @@ import KeywordResearch from './KeywordResearch';
 import KeywordRanking from './KeywordRanking';
 import ReportTemplate from './ReportTemplate';
 import GeneratedReport from './GeneratedReport';
+import ScheduledReport from './ScheduledReport';
 import { MLModel } from './MLModel';
 import { MLOptimizationSuggestion } from './MLOptimizationSuggestion';
 import { ThirdPartyIntegration } from './ThirdPartyIntegration';
@@ -88,12 +89,12 @@ UserOrganization.belongsTo(Organization, {
 
 // Organization-Website one-to-many relationship
 Organization.hasMany(Website, {
-  foreignKey: 'organization_id',
+  foreignKey: 'organizationId',
   as: 'websites'
 });
 
 Website.belongsTo(Organization, {
-  foreignKey: 'organization_id',
+  foreignKey: 'organizationId',
   as: 'organization'
 });
 
@@ -143,12 +144,12 @@ Page.belongsTo(Organization, {
 
 // Organization-Keyword one-to-many relationship
 Organization.hasMany(Keyword, {
-  foreignKey: 'organization_id',
+  foreignKey: 'organizationId',
   as: 'keywords'
 });
 
 Keyword.belongsTo(Organization, {
-  foreignKey: 'organization_id',
+  foreignKey: 'organizationId',
   as: 'organization'
 });
 
@@ -165,23 +166,23 @@ Competitor.belongsTo(Organization, {
 
 // Organization-TrackingSettings one-to-one relationship
 Organization.hasOne(TrackingSettings, {
-  foreignKey: 'organization_id',
+  foreignKey: 'organizationId',
   as: 'trackingSettings'
 });
 
 TrackingSettings.belongsTo(Organization, {
-  foreignKey: 'organization_id',
+  foreignKey: 'organizationId',
   as: 'organization'
 });
 
 // Organization-PlatformSettings one-to-many relationship
 Organization.hasMany(PlatformSettings, {
-  foreignKey: 'organization_id',
+  foreignKey: 'organizationId',
   as: 'platformSettings'
 });
 
 PlatformSettings.belongsTo(Organization, {
-  foreignKey: 'organization_id',
+  foreignKey: 'organizationId',
   as: 'organization'
 });
 
@@ -416,6 +417,39 @@ GeneratedReport.belongsTo(User, {
   as: 'generator'
 });
 
+// Organization-ScheduledReport one-to-many relationship
+Organization.hasMany(ScheduledReport, {
+  foreignKey: 'organizationId',
+  as: 'scheduledReports'
+});
+
+ScheduledReport.belongsTo(Organization, {
+  foreignKey: 'organizationId',
+  as: 'organization'
+});
+
+// ReportTemplate-ScheduledReport one-to-many relationship
+ReportTemplate.hasMany(ScheduledReport, {
+  foreignKey: 'templateId',
+  as: 'scheduledReports'
+});
+
+ScheduledReport.belongsTo(ReportTemplate, {
+  foreignKey: 'templateId',
+  as: 'template'
+});
+
+// User-ScheduledReport one-to-many relationship (creator)
+User.hasMany(ScheduledReport, {
+  foreignKey: 'createdBy',
+  as: 'scheduledReports'
+});
+
+ScheduledReport.belongsTo(User, {
+  foreignKey: 'createdBy',
+  as: 'creator'
+});
+
 // Phase 3 Model Associations
 
 // ML Model Associations
@@ -548,6 +582,7 @@ export {
   KeywordRanking,
   ReportTemplate,
   GeneratedReport,
+  ScheduledReport,
   // Phase 3 Models
   MLModel,
   MLOptimizationSuggestion,

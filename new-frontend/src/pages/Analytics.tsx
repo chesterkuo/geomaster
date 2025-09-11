@@ -21,37 +21,177 @@ import {
   Loader2,
   Activity
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { ReportLibrary } from "@/components/reports/ReportLibrary";
+import RealTimeStats from "@/components/charts/RealTimeStats";
+import TrafficTrendsChart from "@/components/charts/TrafficTrendsChart";
+import TrafficSourcesChart from "@/components/charts/TrafficSourcesChart";
+import DeviceBreakdownChart from "@/components/charts/DeviceBreakdownChart";
+import PerformanceChart from "@/components/charts/PerformanceChart";
+import { analyticsService } from "@/lib/api/analytics";
+import { websiteService, Website } from "@/lib/api/websites";
+import { toast } from "sonner";
 
 const Analytics = () => {
   const { isAuthenticated } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [websites, setWebsites] = useState<Website[]>([]);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('');
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('7d');
 
-  const trafficSources = [
-    { source: "自然搜尋", percentage: 45.2, visitors: "12,847", color: "bg-blue-500" },
-    { source: "直接流量", percentage: 28.7, visitors: "8,162", color: "bg-green-500" },
-    { source: "社群媒體", percentage: 15.3, visitors: "4,351", color: "bg-purple-500" },
-    { source: "付費廣告", percentage: 7.8, visitors: "2,218", color: "bg-orange-500" },
-    { source: "其他", percentage: 3.0, visitors: "854", color: "bg-gray-500" }
-  ];
+  // Load data when authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadData();
+    }
+  }, [isAuthenticated]);
 
-  const topPages = [
-    { page: "/", views: "8,456", bounce: "24.3%", avgTime: "2:45" },
-    { page: "/products", views: "6,231", bounce: "31.2%", avgTime: "3:12" },
-    { page: "/blog/seo-tips", views: "4,875", bounce: "28.7%", avgTime: "4:23" },
-    { page: "/about", views: "3,642", bounce: "45.6%", avgTime: "1:58" },
-    { page: "/contact", views: "2,398", bounce: "52.1%", avgTime: "1:23" }
-  ];
+  useEffect(() => {
+    if (selectedWebsiteId) {
+      loadAnalyticsData();
+    }
+  }, [selectedWebsiteId]);
 
-  const deviceStats = [
-    { device: "桌面電腦", percentage: 52.3, icon: Monitor },
-    { device: "手機", percentage: 41.2, icon: Smartphone },
-    { device: "平板", percentage: 6.5, icon: Smartphone }
-  ];
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const websitesRes = await websiteService.getList();
+      
+      if (websitesRes.success && websitesRes.data.websites.length > 0) {
+        setWebsites(websitesRes.data.websites);
+        setSelectedWebsiteId(websitesRes.data.websites[0].id);
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      toast.error('Failed to load websites');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadAnalyticsData = async () => {
+    if (!selectedWebsiteId) return;
+    
+    try {
+      setLoading(true);
+      const dashboardRes = await analyticsService.getDashboard(selectedWebsiteId);
+      
+      if (dashboardRes.success) {
+        setAnalyticsData(dashboardRes.data);
+      }
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+      toast.error('Failed to load analytics data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Real-time data with API data integration
+  const realTimeData = {
+    activeUsers: analyticsData?.realtimeUsers || 0,
+    pagesPerSecond: 0,
+    bounceRate: analyticsData?.overview?.bounceRate || 0,
+    avgSessionDuration: analyticsData?.overview?.averageSessionDuration || '0:00',
+    topPages: analyticsData?.topPages?.slice(0, 5)?.map((page: any) => ({
+      path: page.path,
+      activeUsers: page.views
+    })) || [],
+    topCountries: [],
+    recentEvents: []
+  };
+
+  // Calculate traffic sources from API data
+  const calculateTrafficSources = () => {
+    if (!analyticsData?.trafficSources) return [];
+    
+    const sources = analyticsData.trafficSources;
+    const total = sources.organic + sources.direct + sources.social + sources.referral + sources.email + sources.paid;
+    
+    if (total === 0) return [];
+    
+    return [
+      { 
+        source: "自然搜尋", 
+        percentage: (sources.organic / total) * 100, 
+        visitors: sources.organic.toLocaleString(), 
+        color: "bg-blue-500" 
+      },
+      { 
+        source: "直接流量", 
+        percentage: (sources.direct / total) * 100, 
+        visitors: sources.direct.toLocaleString(), 
+        color: "bg-green-500" 
+      },
+      { 
+        source: "社群媒體", 
+        percentage: (sources.social / total) * 100, 
+        visitors: sources.social.toLocaleString(), 
+        color: "bg-purple-500" 
+      },
+      { 
+        source: "推薦流量", 
+        percentage: (sources.referral / total) * 100, 
+        visitors: sources.referral.toLocaleString(), 
+        color: "bg-yellow-500" 
+      },
+      { 
+        source: "Email", 
+        percentage: (sources.email / total) * 100, 
+        visitors: sources.email.toLocaleString(), 
+        color: "bg-indigo-500" 
+      },
+      { 
+        source: "付費廣告", 
+        percentage: (sources.paid / total) * 100, 
+        visitors: sources.paid.toLocaleString(), 
+        color: "bg-orange-500" 
+      }
+    ].filter(source => source.percentage > 0);
+  };
+
+  const trafficSources = calculateTrafficSources();
+
+  const topPages = analyticsData?.topPages?.map((page: any) => ({
+    page: page.path || '/',
+    views: page.views?.toLocaleString() || '0',
+    bounce: `${page.bounceRate || 0}%`,
+    avgTime: page.avgTimeOnPage || '0:00'
+  })) || [];
+
+  // Calculate device stats from API data
+  const calculateDeviceStats = () => {
+    if (!analyticsData?.deviceBreakdown) return [];
+    
+    const devices = analyticsData.deviceBreakdown;
+    const total = devices.desktop + devices.mobile + devices.tablet;
+    
+    if (total === 0) return [];
+    
+    return [
+      { 
+        device: "桌面電腦", 
+        percentage: (devices.desktop / total) * 100, 
+        icon: Monitor 
+      },
+      { 
+        device: "手機", 
+        percentage: (devices.mobile / total) * 100, 
+        icon: Smartphone 
+      },
+      { 
+        device: "平板", 
+        percentage: (devices.tablet / total) * 100, 
+        icon: Smartphone 
+      }
+    ].filter(device => device.percentage > 0);
+  };
+
+  const deviceStats = calculateDeviceStats();
 
   return (
     <DashboardLayout>
@@ -115,10 +255,16 @@ const Analytics = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">28,472</div>
+                  <div className="text-2xl font-bold">
+                    {analyticsData?.overview?.uniqueVisitors?.toLocaleString() || '0'}
+                  </div>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
-                    +12.5% 較上週
+                    {(analyticsData?.overview?.growth?.visitors || 0) >= 0 ? (
+                      <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                    ) : (
+                      <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
+                    )}
+                    {analyticsData?.overview?.growth?.visitors >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.visitors || 0}% 較上週
                   </div>
                 </CardContent>
               </Card>
@@ -129,10 +275,16 @@ const Analytics = () => {
                   <Eye className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">84,721</div>
+                  <div className="text-2xl font-bold">
+                    {analyticsData?.overview?.totalViews?.toLocaleString() || '0'}
+                  </div>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
-                    +8.2% 較上週
+                    {(analyticsData?.overview?.growth?.views || 0) >= 0 ? (
+                      <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                    ) : (
+                      <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
+                    )}
+                    {analyticsData?.overview?.growth?.views >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.views || 0}% 較上週
                   </div>
                 </CardContent>
               </Card>
@@ -143,10 +295,16 @@ const Analytics = () => {
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">2:47</div>
+                  <div className="text-2xl font-bold">
+                    {analyticsData?.overview?.averageSessionDuration || '0:00'}
+                  </div>
                   <div className="flex items-center text-xs text-muted-foreground">
-                    <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
-                    +0:15 較上週
+                    {(analyticsData?.overview?.growth?.sessionDuration || 0) >= 0 ? (
+                      <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                    ) : (
+                      <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
+                    )}
+                    {analyticsData?.overview?.growth?.sessionDuration >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.sessionDuration || 0}% 較上週
                   </div>
                 </CardContent>
               </Card>
@@ -157,10 +315,16 @@ const Analytics = () => {
                   <MousePointer className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">31.2%</div>
+                  <div className="text-2xl font-bold">
+                    {analyticsData?.overview?.bounceRate?.toFixed(1) || '0.0'}%
+                  </div>
                   <div className="flex items-center text-xs text-green-600">
-                    <TrendingUp className="mr-1 h-3 w-3 rotate-180" />
-                    -2.8% 較上週
+                    {(analyticsData?.overview?.growth?.bounceRate || 0) <= 0 ? (
+                      <TrendingUp className="mr-1 h-3 w-3 rotate-180" />
+                    ) : (
+                      <TrendingUp className="mr-1 h-3 w-3 text-red-600" />
+                    )}
+                    {analyticsData?.overview?.growth?.bounceRate || 0}% 較上週
                   </div>
                 </CardContent>
               </Card>
@@ -273,41 +437,12 @@ const Analytics = () => {
               </div>
             ) : (
               <RealTimeStats 
-                data={realTimeData?.data ? {
-                  activeUsers: realTimeData.data.realtimeUsers || 0,
-                  pagesPerSecond: 2.4,
-                  bounceRate: realTimeData.data.overview?.bounceRate || 0,
-                  avgSessionDuration: realTimeData.data.overview?.averageSessionDuration || '0:00',
-                  topPages: realTimeData.data.topPages?.slice(0, 5).map(page => ({
-                    path: page.path,
-                    activeUsers: Math.floor(Math.random() * 20) + 1
-                  })) || [],
-                  topCountries: [
-                    { country: '台灣', activeUsers: 45 },
-                    { country: '美國', activeUsers: 23 },
-                    { country: '日本', activeUsers: 18 },
-                    { country: '香港', activeUsers: 12 },
-                    { country: '新加坡', activeUsers: 8 }
-                  ],
-                  recentEvents: [
-                    { type: 'pageview' as const, path: '/', timestamp: new Date().toISOString(), country: '台灣' },
-                    { type: 'session_start' as const, path: '/products', timestamp: new Date(Date.now() - 30000).toISOString(), country: '美國' },
-                    { type: 'pageview' as const, path: '/about', timestamp: new Date(Date.now() - 60000).toISOString(), country: '日本' },
-                  ]
-                } : {
-                  activeUsers: 0,
-                  pagesPerSecond: 0,
-                  bounceRate: 0,
-                  avgSessionDuration: '0:00',
-                  topPages: [],
-                  topCountries: [],
-                  recentEvents: []
-                }}
-                loading={realTimeLoading}
-                connected={!realTimeError}
-                onRefresh={handleRefresh}
-                onTogglePause={() => setRealTimePaused(!realTimePaused)}
-                isPaused={realTimePaused}
+                data={realTimeData}
+                loading={loading}
+                connected={true}
+                onRefresh={() => window.location.reload()}
+                onTogglePause={() => console.log('Toggle pause')}
+                isPaused={false}
               />
             )}
           </TabsContent>
@@ -335,14 +470,14 @@ const Analytics = () => {
             ) : (
               <div className="space-y-6">
                 <TrafficTrendsChart 
-                  data={trends?.data?.trends || []} 
-                  loading={isLoading}
+                  data={analyticsData?.trends || []} 
+                  loading={loading}
                   period={selectedPeriod}
-                  comparison={trends?.data?.comparison}
+                  comparison={analyticsData?.comparison}
                 />
                 
                 <TrafficSourcesChart 
-                  data={dashboard?.data?.trafficSources || {
+                  data={analyticsData?.trafficSources || {
                     organic: 0,
                     direct: 0,
                     social: 0,
@@ -350,7 +485,7 @@ const Analytics = () => {
                     email: 0,
                     paid: 0
                   }}
-                  loading={isLoading}
+                  loading={loading}
                 />
               </div>
             )}
@@ -379,17 +514,17 @@ const Analytics = () => {
             ) : (
               <div className="space-y-6">
                 <DeviceBreakdownChart 
-                  data={dashboard?.data?.deviceBreakdown || {
+                  data={analyticsData?.deviceBreakdown || {
                     desktop: 0,
                     mobile: 0,
                     tablet: 0
                   }}
-                  loading={isLoading}
+                  loading={loading}
                 />
                 
                 <PerformanceChart 
-                  data={dashboard?.data?.topPages || []}
-                  loading={isLoading}
+                  data={analyticsData?.topPages || []}
+                  loading={loading}
                 />
               </div>
             )}
@@ -424,16 +559,47 @@ const Analytics = () => {
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="p-4 border border-border rounded-lg bg-gradient-subtle text-center">
-                    <div className="text-2xl font-bold text-primary">3.2%</div>
+                    <div className="text-2xl font-bold text-primary">
+                      {analyticsData?.conversion?.conversionRate ? 
+                        `${analyticsData.conversion.conversionRate.toFixed(1)}%` : '0.0%'}
+                    </div>
                     <p className="text-sm text-muted-foreground">整體轉換率</p>
+                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-1">
+                      {(analyticsData?.conversion?.growth?.conversionRate || 0) >= 0 ? (
+                        <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                      ) : (
+                        <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
+                      )}
+                      {analyticsData?.conversion?.growth?.conversionRate >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.conversionRate || 0}% 較上週
+                    </div>
                   </div>
                   <div className="p-4 border border-border rounded-lg bg-gradient-subtle text-center">
-                    <div className="text-2xl font-bold text-primary">912</div>
+                    <div className="text-2xl font-bold text-primary">
+                      {analyticsData?.conversion?.totalConversions?.toLocaleString() || '0'}
+                    </div>
                     <p className="text-sm text-muted-foreground">本月轉換數</p>
+                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-1">
+                      {(analyticsData?.conversion?.growth?.totalConversions || 0) >= 0 ? (
+                        <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                      ) : (
+                        <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
+                      )}
+                      {analyticsData?.conversion?.growth?.totalConversions >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.totalConversions || 0}% 較上週
+                    </div>
                   </div>
                   <div className="p-4 border border-border rounded-lg bg-gradient-subtle text-center">
-                    <div className="text-2xl font-bold text-primary">$45,280</div>
+                    <div className="text-2xl font-bold text-primary">
+                      ${analyticsData?.conversion?.conversionValue?.toLocaleString() || '0'}
+                    </div>
                     <p className="text-sm text-muted-foreground">轉換價值</p>
+                    <div className="flex items-center justify-center text-xs text-muted-foreground mt-1">
+                      {(analyticsData?.conversion?.growth?.conversionValue || 0) >= 0 ? (
+                        <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
+                      ) : (
+                        <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
+                      )}
+                      {analyticsData?.conversion?.growth?.conversionValue >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.conversionValue || 0}% 較上週
+                    </div>
                   </div>
                 </div>
               </CardContent>

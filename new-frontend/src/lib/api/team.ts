@@ -127,4 +127,48 @@ export const teamApi = {
   },
 };
 
+// Invitation API 服務 (不需要認證)
+export const invitationApi = {
+  // 根據token獲取邀請詳情
+  async getInvitationByToken(token: string): Promise<ApiResponse<{
+    email: string;
+    role: string;
+    organizationName: string;
+    message?: string;
+    expiresAt: string;
+    invitedBy: string;
+  }>> {
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/invitations/${token}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.json();
+  },
+
+  // 接受邀請並創建用戶
+  async acceptInvitation(token: string, data: {
+    fullName: string;
+    password: string;
+  }): Promise<ApiResponse<{
+    user: {
+      id: string;
+      email: string;
+      fullName: string;
+    };
+    organization: string;
+    role: string;
+  }>> {
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/invitations/${token}/accept`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  },
+};
+
 export default teamApi;
