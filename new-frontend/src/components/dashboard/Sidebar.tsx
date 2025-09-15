@@ -81,7 +81,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
             <span className="text-primary-foreground font-bold text-sm">G</span>
           </div>
           {!collapsed && (
-            <span className="text-foreground font-semibold text-lg">GEO Platform</span>
+            <span className="text-foreground font-semibold text-lg">GEO Master</span>
           )}
         </div>
         <Button

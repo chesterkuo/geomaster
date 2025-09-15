@@ -15,6 +15,34 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/hooks/use-auth";
 import OptimizationResults from "@/components/OptimizationResults";
 
+// Web 性能指標完整說明映射
+const PERFORMANCE_METRICS = {
+  LCP: "Largest Contentful Paint (最大內容繪製)",
+  FCP: "First Contentful Paint (首次內容繪製)", 
+  CLS: "Cumulative Layout Shift (累積版面位移)",
+  FID: "First Input Delay (首次輸入延遲)",
+  TTI: "Time to Interactive (可交互時間)",
+  TTFB: "Time to First Byte (首位元組時間)"
+};
+
+// 擴展性能指標顯示文本的工具函數
+const expandPerformanceMetrics = (text: string): string => {
+  let expandedText = text;
+  
+  // 替換常見的性能指標縮寫
+  Object.entries(PERFORMANCE_METRICS).forEach(([abbr, fullName]) => {
+    // 匹配模式：縮寫後跟冒號和數值 (如: "LCP: 3.5s")
+    const regex = new RegExp(`\\b${abbr}:\\s*([0-9.]+[a-z]*|[0-9.]+)`, 'gi');
+    expandedText = expandedText.replace(regex, `${fullName} (${abbr}): $1`);
+    
+    // 也處理只有縮寫的情況 (如: "LCP 3.5s")
+    const regexSpace = new RegExp(`\\b${abbr}\\s+([0-9.]+[a-z]*|[0-9.]+)`, 'gi');
+    expandedText = expandedText.replace(regexSpace, `${fullName} (${abbr}) $1`);
+  });
+  
+  return expandedText;
+};
+
 // 類型守衛
 function isBasicScanResults(results: ScanResults): results is BasicScanResults {
   // 基礎結果只有 summary 但沒有 technicalHealth
@@ -42,9 +70,10 @@ const generateMockBasicResults = (url: string): BasicScanResults => {
         : `${domain} 在 AI 搜索中可見度較低，建議進行全面優化。`,
       keyIssues: [
         "Schema 標記覆蓋率不足 (僅 40%)",
-        "內容更新頻率偏低",
+        "內容更新頻率偏低", 
         "缺乏結構化FAQ內容",
-        "頁面載入速度需要改善"
+        "頁面載入速度需要改善 - Largest Contentful Paint (LCP): 3.5s, First Contentful Paint (FCP): 2.5s",
+        "Core Web Vitals 需要優化 - Cumulative Layout Shift (CLS): 0.15 (建議 < 0.1)"
       ]
     },
     preview: {
@@ -74,7 +103,8 @@ const generateMockDetailedResults = (url: string): DetailedScanResults => {
       items: [
         { name: "robots.txt 配置", status: "good", detail: "已允許 AI 爬蟲存取" },
         { name: "Schema 標記", status: "warning", detail: "覆蓋率 60%（建議 85%+）" },
-        { name: "網站速度", status: "good", detail: "LCP 2.1秒（良好）" },
+        { name: "網站速度", status: "warning", detail: "Performance分數: 65/100, Largest Contentful Paint (LCP): 3.5s" },
+        { name: "Core Web Vitals", status: "warning", detail: "Cumulative Layout Shift (CLS): 0.15, First Contentful Paint (FCP): 2.5s" },
         { name: "JavaScript 渲染", status: "critical", detail: "SSR 支援不足" },
         { name: "SSL 憑證", status: "good", detail: "有效 HTTPS 配置" }
       ]
@@ -531,7 +561,7 @@ const Tracking = () => {
               {results.summary.keyIssues.map((issue, index) => (
                 <li key={index} className="flex items-start">
                   <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">{issue}</span>
+                  <span className="text-sm">{expandPerformanceMetrics(issue)}</span>
                 </li>
               ))}
             </ul>
@@ -712,7 +742,7 @@ const Tracking = () => {
                       {item.status === "critical" && <X className="h-4 w-4 text-red-500 mr-3 flex-shrink-0" />}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate">{item.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{item.detail}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail)}</div>
                       </div>
                     </div>
                   </div>
@@ -739,7 +769,7 @@ const Tracking = () => {
                       {item.status === "critical" && <X className="h-4 w-4 text-red-500 mr-3 flex-shrink-0" />}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate">{item.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{item.detail}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail)}</div>
                       </div>
                     </div>
                   </div>
@@ -766,7 +796,7 @@ const Tracking = () => {
                       {item.status === "critical" && <X className="h-4 w-4 text-red-500 mr-3 flex-shrink-0" />}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate">{item.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{item.detail}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail)}</div>
                       </div>
                     </div>
                   </div>
@@ -902,15 +932,6 @@ const Tracking = () => {
                 "使用我們的 AI 優化工具，快速提升您的網站在 AI 搜索中的可見度"
               }
             </p>
-            {/* Debug info - remove in production */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-muted-foreground mb-2 p-2 bg-muted rounded">
-                Debug: currentScan?.website?.url: {currentScan?.website?.url || 'none'} | 
-                url: {url || 'none'} | 
-                isLoading: {isLoading.toString()} | 
-                isAuthenticated: {isAuthenticated.toString()}
-              </div>
-            )}
             <div className="flex gap-4 justify-center">
               <Button 
                 className="bg-primary text-primary-foreground"
@@ -1336,7 +1357,10 @@ const Tracking = () => {
       {/* 優化結果 Modal */}
       {showOptimizationResults && optimizationResults && (
         <OptimizationResults
-          data={optimizationResults}
+          data={{
+            ...optimizationResults,
+            websiteUrl: currentScan?.website?.url || url || optimizationResults.websiteInfo?.url
+          }}
           onClose={() => {
             setShowOptimizationResults(false);
             setOptimizationResults(null);

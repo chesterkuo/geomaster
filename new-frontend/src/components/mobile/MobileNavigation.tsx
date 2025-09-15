@@ -88,7 +88,7 @@ export const MobileNavigation = ({ isOpen, onToggle }: MobileNavigationProps) =>
             </div>
             <div>
               <SheetTitle className="text-foreground font-semibold text-xl">
-                GEO Platform
+                GEO Master
               </SheetTitle>
               <p className="text-xs text-muted-foreground">行動版介面</p>
             </div>

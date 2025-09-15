@@ -18,7 +18,7 @@ interface MobileDashboardLayoutProps {
 
 export const MobileDashboardLayout = ({ 
   children, 
-  title = "GEO Platform",
+  title = "GEO Master",
   showSearch = true,
   onRefresh,
   isRefreshing = false

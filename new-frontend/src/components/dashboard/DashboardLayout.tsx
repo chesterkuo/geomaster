@@ -18,7 +18,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   if (isMobile) {
     return (
       <MobileDashboardLayout 
-        title="GEO Platform"
+        title="GEO Master"
         onRefresh={() => window.location.reload()}
       >
         {children}

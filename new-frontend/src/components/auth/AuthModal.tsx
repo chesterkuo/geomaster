@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Eye, EyeOff, Mail, Lock, User, Building } from 'lucide-react';
 import { authService, LoginRequest, RegisterRequest } from '@/lib/api/auth';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ui/use-toast';
 
 interface AuthModalProps {
@@ -22,6 +23,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { login, register } = useAuth();
 
   // 登入表單狀態
   const [loginForm, setLoginForm] = useState<LoginRequest>({
@@ -43,7 +45,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
     setIsLoading(true);
 
     try {
-      const response = await authService.login(loginForm);
+      const response = await login(loginForm.email, loginForm.password);
       
       if (response.success) {
         toast({
@@ -52,9 +54,6 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
         });
         onSuccess?.();
         onClose();
-        
-        // 重新載入頁面以更新認證狀態
-        window.location.reload();
       } else {
         toast({
           title: "登入失敗",
@@ -100,18 +99,15 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
 
     try {
       const { confirmPassword, ...requestData } = registerForm;
-      const response = await authService.register(requestData);
+      const response = await register(requestData);
       
       if (response.success) {
         toast({
           title: "註冊成功",
-          description: "歡迎加入 GEO Platform！",
+          description: "歡迎加入 GEO Master！",
         });
         onSuccess?.();
         onClose();
-        
-        // 重新載入頁面以更新認證狀態
-        window.location.reload();
       } else {
         toast({
           title: "註冊失敗",

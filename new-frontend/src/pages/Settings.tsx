@@ -10,13 +10,14 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Settings as SettingsIcon, Globe, Bell, Shield, Database, Palette, Loader2, QrCode, Copy, Eye, EyeOff, Lock, User } from "lucide-react";
+import { Settings as SettingsIcon, Globe, Bell, Shield, Database, Palette, Loader2, QrCode, Copy, Eye, EyeOff, Lock, User as UserIcon } from "lucide-react";
 import { settingsApi, OrganizationSettings, SecuritySettings, UserPreferences, ActiveSession, TwoFactorSetup } from "@/lib/api/settings";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { authService, User } from "@/lib/api/auth";
 
 const Settings = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(false);
@@ -59,6 +60,11 @@ const Settings = () => {
     itemsPerPage: 10
   });
   
+  // User profile state
+  const [profileForm, setProfileForm] = useState({
+    fullName: ""
+  });
+  
   // 2FA state
   const [twoFactorDialog, setTwoFactorDialog] = useState(false);
   const [twoFactorSetup, setTwoFactorSetup] = useState<TwoFactorSetup | null>(null);
@@ -68,6 +74,7 @@ const Settings = () => {
   // Load data on component mount and tab change
   useEffect(() => {
     if (activeTab === "general") loadOrganizationSettings();
+    else if (activeTab === "profile") loadUserProfile();
     else if (activeTab === "security") loadSecuritySettings();
     else if (activeTab === "appearance") loadUserPreferences();
   }, [activeTab]);
@@ -76,10 +83,20 @@ const Settings = () => {
   useEffect(() => {
     if (isAuthenticated) {
       if (activeTab === "general") loadOrganizationSettings();
+      else if (activeTab === "profile") loadUserProfile();
       else if (activeTab === "security") loadSecuritySettings();
       else if (activeTab === "appearance") loadUserPreferences();
     }
   }, [isAuthenticated]);
+  
+  // Load user profile data from current user
+  useEffect(() => {
+    if (user) {
+      setProfileForm({
+        fullName: user.fullName || ""
+      });
+    }
+  }, [user]);
 
   const loadOrganizationSettings = async () => {
     setLoading(true);
@@ -107,6 +124,29 @@ const Settings = () => {
       }
     } catch (error: any) {
       toast.error('獲取組織設定失敗', {
+        description: error.response?.data?.message || error.message
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadUserProfile = async () => {
+    setLoading(true);
+    try {
+      if (!isAuthenticated) {
+        setLoading(false);
+        return;
+      }
+      
+      const response = await authService.getProfile();
+      if (response.success && response.data.user) {
+        setProfileForm({
+          fullName: response.data.user.fullName || ""
+        });
+      }
+    } catch (error: any) {
+      toast.error('獲取個人資料失敗', {
         description: error.response?.data?.message || error.message
       });
     } finally {
@@ -238,6 +278,21 @@ const Settings = () => {
     }
   };
 
+  const handleSaveProfile = async () => {
+    try {
+      const response = await authService.updateProfile(profileForm);
+      if (response.success) {
+        toast.success('個人資料已更新');
+        // Reload profile data
+        loadUserProfile();
+      }
+    } catch (error: any) {
+      toast.error('更新個人資料失敗', {
+        description: error.response?.data?.message || error.message
+      });
+    }
+  };
+
   const handleEnable2FA = async () => {
     try {
       const response = await settingsApi.enable2FA();
@@ -319,8 +374,9 @@ const Settings = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="general">一般設定</TabsTrigger>
+            <TabsTrigger value="profile">個人資料</TabsTrigger>
             <TabsTrigger value="notifications">通知設定</TabsTrigger>
             <TabsTrigger value="security">安全設定</TabsTrigger>
             <TabsTrigger value="integrations">整合設定</TabsTrigger>
@@ -345,7 +401,7 @@ const Settings = () => {
                   <p className="text-sm text-muted-foreground mb-6">登入後即可配置組織設定、安全選項和個人偏好</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
-                      <User className="mr-2 h-4 w-4" />
+                      <UserIcon className="mr-2 h-4 w-4" />
                       立即登入
                     </Button>
                     <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
@@ -482,6 +538,88 @@ const Settings = () => {
             )}
           </TabsContent>
 
+          <TabsContent value="profile" className="space-y-6">
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+              </div>
+            ) : !isAuthenticated ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <UserIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Lock className="h-6 w-6 text-primary" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理個人資料</p>
+                  <p className="text-sm text-muted-foreground mb-6">登入後即可編輯您的姓名等個人資訊</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      立即登入
+                    </Button>
+                    <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserIcon className="h-5 w-5" />
+                    個人資料
+                  </CardTitle>
+                  <CardDescription>管理您的個人基本資訊</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">姓名</Label>
+                      <Input 
+                        id="fullName" 
+                        value={profileForm.fullName}
+                        onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                        placeholder="輸入您的姓名" 
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="email">電子郵件 (唯讀)</Label>
+                      <Input 
+                        id="email" 
+                        value={user?.email || ""}
+                        disabled
+                        className="bg-muted"
+                      />
+                      <p className="text-sm text-muted-foreground">電子郵件地址無法修改</p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <Label>帳戶資訊</Label>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">角色: </span>
+                        <span className="font-medium">{user?.role || "用戶"}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">建立時間: </span>
+                        <span className="font-medium">
+                          {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('zh-TW') : "未知"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button onClick={handleSaveProfile}>儲存變更</Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           <TabsContent value="notifications" className="space-y-6">
             {loading ? (
               <div className="flex justify-center py-8">
@@ -500,7 +638,7 @@ const Settings = () => {
                   <p className="text-sm text-muted-foreground mb-6">登入後即可設定電子郵件通知、推播通知和提醒偏好</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
-                      <User className="mr-2 h-4 w-4" />
+                      <UserIcon className="mr-2 h-4 w-4" />
                       立即登入
                     </Button>
                   </div>
@@ -596,7 +734,7 @@ const Settings = () => {
                   <p className="text-sm text-muted-foreground mb-6">登入後即可管理密碼、雙重驗證和登入記錄</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
-                      <User className="mr-2 h-4 w-4" />
+                      <UserIcon className="mr-2 h-4 w-4" />
                       立即登入
                     </Button>
                     <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
@@ -782,7 +920,7 @@ const Settings = () => {
                   <p className="text-sm text-muted-foreground mb-6">登入後即可連接和管理第三方服務整合</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
-                      <User className="mr-2 h-4 w-4" />
+                      <UserIcon className="mr-2 h-4 w-4" />
                       立即登入
                     </Button>
                   </div>
@@ -844,7 +982,7 @@ const Settings = () => {
                   <p className="text-sm text-muted-foreground mb-6">登入後即可設定主題、顯示偏好和儀表板配置</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
-                      <User className="mr-2 h-4 w-4" />
+                      <UserIcon className="mr-2 h-4 w-4" />
                       立即登入
                     </Button>
                     <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
@@ -1018,6 +1156,7 @@ const Settings = () => {
           setShowAuthModal(false);
           // Reload data after login based on current tab
           if (activeTab === "general") loadOrganizationSettings();
+          else if (activeTab === "profile") loadUserProfile();
           else if (activeTab === "security") loadSecuritySettings();
           else if (activeTab === "appearance") loadUserPreferences();
         }}

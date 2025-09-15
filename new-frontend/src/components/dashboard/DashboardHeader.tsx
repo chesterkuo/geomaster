@@ -25,7 +25,7 @@ export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
   };
 
   const handleProfileClick = () => {
-    navigate("/team");
+    navigate("/settings");
   };
 
   const handleLogout = async () => {
