@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useVisibilityTrends, useVisibilityStats, usePlatformPerformance, useVisibilityHistory } from "@/hooks/useVisibility";
-import { useCompetitiveAnalysis, useCompetitors } from "@/hooks/useCompetitors";
+import { useCompetitiveAnalysis, useCompetitors, useAddCompetitor } from "@/hooks/useCompetitors";
 import { VisibilityTrendsChart } from "@/components/charts/VisibilityTrendsChart";
 import { PlatformDistributionChart } from "@/components/charts/PlatformDistributionChart";
 import { CompetitorComparisonChart } from "@/components/charts/CompetitorComparisonChart";
@@ -39,7 +39,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
 
 const AISearch = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, organization } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
@@ -48,12 +48,18 @@ const AISearch = () => {
   const [websites, setWebsites] = useState<Website[]>([]);
   const [newKeyword, setNewKeyword] = useState("");
   const [newCompetitor, setNewCompetitor] = useState("");
+  const [showAddWebsite, setShowAddWebsite] = useState(false);
+  const [newWebsiteUrl, setNewWebsiteUrl] = useState("");
+  const [newWebsiteName, setNewWebsiteName] = useState("");
+  const [showAddCompetitor, setShowAddCompetitor] = useState(false);
+  const [newCompetitorUrl, setNewCompetitorUrl] = useState("");
+  const [newCompetitorName, setNewCompetitorName] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedPlatforms, setSelectedPlatforms] = useState({
     chatgpt: true,
-    gemini: true,
-    perplexity: true,
-    claude: false
+    gemini: false,
+    perplexity: false,
+    claude: true
   });
 
   // Load initial data
@@ -65,7 +71,11 @@ const AISearch = () => {
     try {
       setLoading(true);
       
-      if (!isAuthenticated) {
+      
+      // Check actual token availability instead of just React auth state
+      const hasValidAuth = localStorage.getItem('geo_access_token') && localStorage.getItem('geo_organization_id');
+      
+      if (!hasValidAuth) {
         // Show preview/mock data when not authenticated
         setTimeout(() => {
           setKeywords([
@@ -189,19 +199,48 @@ const AISearch = () => {
         .filter(([_, enabled]) => enabled)
         .map(([platform]) => platform);
       
-      const response = await aiSearchService.updateTrackingSettings({
+      const requestData = {
         trackingEnabled: true,
         trackingFrequency: frequency as any,
         platforms: enabledPlatforms
-      });
+      };
+
+      
+      const response = await aiSearchService.updateTrackingSettings(requestData);
       
       if (response.success) {
         setTrackingSettings(response.data);
         toast.success('Tracking settings updated');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating tracking settings:', error);
-      toast.error('Failed to update tracking settings');
+      
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.error || error.response?.data?.message;
+        if (errorMessage && errorMessage.includes('plan allows maximum')) {
+          // Plan limitation error
+          toast.error(`🚫 ${errorMessage}`, {
+            duration: 6000,
+          });
+        } else {
+          toast.error('權限不足：無法更新追蹤設定。請確認您有足夠的權限或聯絡管理員。');
+        }
+        console.log('403 錯誤詳情:', {
+          status: error.response?.status,
+          message: errorMessage,
+          url: error.config?.url,
+          method: error.config?.method,
+          hasToken: !!localStorage.getItem('geo_access_token'),
+          hasOrgId: !!localStorage.getItem('geo_organization_id'),
+          organizationPlan: organization?.plan,
+          enabledPlatforms: Object.entries(selectedPlatforms).filter(([_, enabled]) => enabled).length
+        });
+      } else if (error.response?.status === 401) {
+        toast.error('認證失效，請重新登入');
+        setShowAuthModal(true);
+      } else {
+        toast.error(error.response?.data?.message || '更新追蹤設定失敗，請稍後再試');
+      }
     }
   };
 
@@ -236,7 +275,7 @@ const AISearch = () => {
   );
   
   // Fetch competitive analysis data
-  const { data: competitiveAnalysis, isLoading: competitiveLoading } = useCompetitiveAnalysis(
+  const { data: competitiveAnalysis, isLoading: competitiveLoading, error: competitiveError } = useCompetitiveAnalysis(
     selectedWebsiteId || '',
     visibilityDateRange,
     { enabled: isAuthenticated && !!selectedWebsiteId }
@@ -246,6 +285,9 @@ const AISearch = () => {
     { websiteId: selectedWebsiteId },
     { enabled: isAuthenticated }
   );
+
+  // Use the addCompetitor mutation hook
+  const addCompetitorMutation = useAddCompetitor();
 
   return (
     <DashboardLayout>
@@ -420,15 +462,36 @@ const AISearch = () => {
 
                   {/* AI 平台 */}
                   <div className="space-y-3">
-                    <h4 className="font-medium">AI 平台：</h4>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">AI 平台：</h4>
+                      {organization?.plan === 'free' && (
+                        <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
+                          免費方案限制：最多2個平台
+                        </div>
+                      )}
+                      {organization?.plan && organization.plan !== 'free' && (
+                        <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
+                          {organization.plan} 方案：無限制
+                        </div>
+                      )}
+                    </div>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           id="chatgpt" 
                           checked={selectedPlatforms.chatgpt}
-                          onCheckedChange={(checked) => 
-                            setSelectedPlatforms({...selectedPlatforms, chatgpt: checked as boolean})
-                          }
+                          onCheckedChange={(checked) => {
+                            // 如果嘗試啟用平台，檢查是否已達到限制
+                            if (checked) {
+                              const currentEnabled = Object.values(selectedPlatforms).filter(Boolean).length;
+                              const maxPlatforms = organization?.plan === 'free' ? 2 : -1; // -1 = unlimited
+                              if (maxPlatforms !== -1 && currentEnabled >= maxPlatforms) {
+                                toast.error(`${organization?.plan || '免費'}方案最多可選擇${maxPlatforms}個AI平台。請升級方案以選擇更多平台。`);
+                                return;
+                              }
+                            }
+                            setSelectedPlatforms({...selectedPlatforms, chatgpt: checked as boolean});
+                          }}
                         />
                         <label htmlFor="chatgpt" className="text-sm">ChatGPT</label>
                       </div>
@@ -436,9 +499,17 @@ const AISearch = () => {
                         <Checkbox 
                           id="gemini" 
                           checked={selectedPlatforms.gemini}
-                          onCheckedChange={(checked) => 
-                            setSelectedPlatforms({...selectedPlatforms, gemini: checked as boolean})
-                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              const currentEnabled = Object.values(selectedPlatforms).filter(Boolean).length;
+                              const maxPlatforms = organization?.plan === 'free' ? 2 : -1; // -1 = unlimited
+                              if (maxPlatforms !== -1 && currentEnabled >= maxPlatforms) {
+                                toast.error(`${organization?.plan || '免費'}方案最多可選擇${maxPlatforms}個AI平台。請升級方案以選擇更多平台。`);
+                                return;
+                              }
+                            }
+                            setSelectedPlatforms({...selectedPlatforms, gemini: checked as boolean});
+                          }}
                         />
                         <label htmlFor="gemini" className="text-sm">Gemini</label>
                       </div>
@@ -446,9 +517,17 @@ const AISearch = () => {
                         <Checkbox 
                           id="perplexity" 
                           checked={selectedPlatforms.perplexity}
-                          onCheckedChange={(checked) => 
-                            setSelectedPlatforms({...selectedPlatforms, perplexity: checked as boolean})
-                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              const currentEnabled = Object.values(selectedPlatforms).filter(Boolean).length;
+                              const maxPlatforms = organization?.plan === 'free' ? 2 : -1; // -1 = unlimited
+                              if (maxPlatforms !== -1 && currentEnabled >= maxPlatforms) {
+                                toast.error(`${organization?.plan || '免費'}方案最多可選擇${maxPlatforms}個AI平台。請升級方案以選擇更多平台。`);
+                                return;
+                              }
+                            }
+                            setSelectedPlatforms({...selectedPlatforms, perplexity: checked as boolean});
+                          }}
                         />
                         <label htmlFor="perplexity" className="text-sm">Perplexity</label>
                       </div>
@@ -456,9 +535,17 @@ const AISearch = () => {
                         <Checkbox 
                           id="claude" 
                           checked={selectedPlatforms.claude}
-                          onCheckedChange={(checked) => 
-                            setSelectedPlatforms({...selectedPlatforms, claude: checked as boolean})
-                          }
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              const currentEnabled = Object.values(selectedPlatforms).filter(Boolean).length;
+                              const maxPlatforms = organization?.plan === 'free' ? 2 : -1; // -1 = unlimited
+                              if (maxPlatforms !== -1 && currentEnabled >= maxPlatforms) {
+                                toast.error(`${organization?.plan || '免費'}方案最多可選擇${maxPlatforms}個AI平台。請升級方案以選擇更多平台。`);
+                                return;
+                              }
+                            }
+                            setSelectedPlatforms({...selectedPlatforms, claude: checked as boolean});
+                          }}
                         />
                         <label htmlFor="claude" className="text-sm">Claude</label>
                       </div>
@@ -466,7 +553,53 @@ const AISearch = () => {
                   </div>
                 </div>
 
-                <Button className="w-full bg-primary text-primary-foreground">
+                <Button 
+                  className="w-full bg-primary text-primary-foreground"
+                  onClick={async () => {
+                    if (!isAuthenticated) {
+                      setShowAuthModal(true);
+                      return;
+                    }
+                    
+                    try {
+                      // 開始追蹤 - 更新追蹤設定並啟動追蹤
+                      const enabledPlatforms = Object.entries(selectedPlatforms)
+                        .filter(([_, enabled]) => enabled)
+                        .map(([platform]) => platform);
+                      
+                      if (enabledPlatforms.length === 0) {
+                        toast.error('請至少選擇一個AI平台');
+                        return;
+                      }
+                      
+                      if (enabledPlatforms.length > 2) {
+                        toast.error('免費方案最多可選擇2個AI平台，請升級方案以使用更多平台');
+                        return;
+                      }
+                      
+                      if (keywords.length === 0) {
+                        toast.error('請至少新增一個關鍵字');
+                        return;
+                      }
+                      
+                      // 更新追蹤設定並啟動追蹤
+                      const response = await aiSearchService.updateTrackingSettings({
+                        trackingEnabled: true,
+                        trackingFrequency: trackingSettings?.trackingFrequency || 'daily',
+                        platforms: enabledPlatforms
+                      });
+                      
+                      if (response.success) {
+                        setTrackingSettings(response.data);
+                        toast.success(`成功啟動AI可見度追蹤！追蹤 ${keywords.length} 個關鍵字，${enabledPlatforms.length} 個平台`);
+                      }
+                    } catch (error: any) {
+                      console.error('啟動追蹤失敗:', error);
+                      toast.error(error.response?.data?.message || error.message || '啟動追蹤失敗，請稍後重試');
+                    }
+                  }}
+                  disabled={!isAuthenticated || keywords.length === 0}
+                >
                   <Eye className="mr-2 h-4 w-4" />
                   開始追蹤
                 </Button>
@@ -484,12 +617,144 @@ const AISearch = () => {
             ) : trendsError ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <div className="text-lg font-medium text-red-500 mb-2">載入可見度數據失敗</div>
-                  <p className="text-sm text-muted-foreground mb-4">請檢查網路連線或聯絡技術支援</p>
-                  <Button onClick={() => window.location.reload()} variant="outline">
-                    重新載入
-                  </Button>
+                  <div className="text-lg font-medium text-orange-500 mb-2">可見度數據收集中</div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    由於這是新添加的網站，系統正在收集AI平台的可見度數據。
+                    <br />
+                    通常需要24-48小時才能看到完整報告。
+                  </p>
+                  <div className="space-y-2">
+                    <Button onClick={() => window.location.reload()} variant="outline">
+                      重新檢查
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      如果問題持續，請確保已正確配置追蹤設定並啟動AI可見度追蹤
+                    </p>
+                  </div>
                 </div>
+              </div>
+            ) : !selectedWebsiteId && !showAddWebsite ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <div className="relative mb-6">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Clock className="h-6 w-6 text-orange-500" />
+                    </div>
+                  </div>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">尚未設定追蹤網站</p>
+                  <p className="text-sm text-muted-foreground mb-6">需要先添加網站才能查看可見度報告</p>
+                  <div className="space-y-3">
+                    <Button onClick={() => setShowAddWebsite(true)} className="bg-primary text-primary-foreground">
+                      <Plus className="mr-2 h-4 w-4" />
+                      添加網站
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      添加網站後系統將開始收集可見度數據
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : showAddWebsite ? (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>新增網站</CardTitle>
+                    <CardDescription>添加要追蹤AI可見度的網站</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">網站URL</label>
+                      <Input
+                        value={newWebsiteUrl}
+                        onChange={(e) => setNewWebsiteUrl(e.target.value)}
+                        placeholder="https://example.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">網站名稱</label>
+                      <Input
+                        value={newWebsiteName}
+                        onChange={(e) => setNewWebsiteName(e.target.value)}
+                        placeholder="我的網站"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={async () => {
+                          if (!newWebsiteUrl) {
+                            toast.error("請輸入網站URL");
+                            return;
+                          }
+                          
+                          try {
+                            const response = await websiteService.create({
+                              url: newWebsiteUrl,
+                              name: newWebsiteName || new URL(newWebsiteUrl).hostname,
+                              scanFrequency: 'daily'
+                            });
+                            
+                            if (response.success) {
+                              toast.success("成功添加網站");
+                              setWebsites([...websites, response.data.website]);
+                              setSelectedWebsiteId(response.data.website.id);
+                              setShowAddWebsite(false);
+                              setNewWebsiteUrl("");
+                              setNewWebsiteName("");
+                            } else {
+                              toast.error(response.error || "添加網站失敗");
+                            }
+                          } catch (error: any) {
+                            console.error("創建網站錯誤:", error);
+                            if (error.response?.status === 401) {
+                              toast.error("請重新登入後再試");
+                              setShowAuthModal(true);
+                            } else if (error.response?.status === 403) {
+                              const errorMsg = error.response?.data?.message || "權限不足，請聯絡管理員或升級您的方案";
+                              
+                              // 特別處理網站數量限制錯誤
+                              if (errorMsg.includes("Maximum websites limit")) {
+                                toast.error("❌ 組織網站數量已達上限！請刪除舊網站或升級方案");
+                                setTimeout(() => {
+                                  toast.info("💡 解決方案：\n1. 前往主頁刪除不需要的網站\n2. 聯絡管理員提升組織網站限制\n3. 升級到更高方案");
+                                }, 2000);
+                              } else {
+                                toast.error(`權限錯誤：${errorMsg}`);
+                              }
+                              console.log("403錯誤詳情:", error.response?.data);
+                              
+                              // 診斷 admin 權限問題
+                              console.log("權限診斷信息:", {
+                                statusCode: error.response?.status,
+                                errorMessage: error.response?.data?.message,
+                                hasToken: !!localStorage.getItem('geo_access_token'),
+                                hasOrgId: !!localStorage.getItem('geo_organization_id'),
+                                organizationId: localStorage.getItem('geo_organization_id')
+                              });
+                            } else if (error.response?.data?.message) {
+                              toast.error(error.response.data.message);
+                            } else {
+                              toast.error("添加網站失敗，請稍後再試");
+                            }
+                          }
+                        }}
+                        className="bg-primary text-primary-foreground"
+                      >
+                        確認添加
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowAddWebsite(false);
+                          setNewWebsiteUrl("");
+                          setNewWebsiteName("");
+                        }}
+                      >
+                        取消
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             ) : !isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
@@ -512,9 +777,34 @@ const AISearch = () => {
               </div>
             ) : (
               <>
-                {/* Date Range Selector */}
+                {/* Controls and Info */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium">網站:</label>
+                      <Select value={selectedWebsiteId || ''} onValueChange={(value) => {
+                        if (value === 'add-new') {
+                          setShowAddWebsite(true);
+                        } else {
+                          setSelectedWebsiteId(value);
+                        }
+                      }}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder="選擇網站" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {websites.map((website) => (
+                            <SelectItem key={website.id} value={website.id}>
+                              {website.name || website.url}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="add-new">
+                            <Plus className="mr-2 h-4 w-4 inline" />
+                            新增網站
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="flex items-center gap-2">
                       <label className="text-sm font-medium">時間範圍:</label>
                       <Select value={visibilityDateRange} onValueChange={setVisibilityDateRange}>
@@ -530,11 +820,18 @@ const AISearch = () => {
                       </Select>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    匯出報告
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => loadData()}>
+                      <Clock className="h-4 w-4 mr-2" />
+                      重新載入
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      匯出報告
+                    </Button>
+                  </div>
                 </div>
+                
                 
                 {/* 總覽指標 */}
                 <div className="grid gap-4 md:grid-cols-3 mb-6">
@@ -545,7 +842,7 @@ const AISearch = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {visibilityStats?.data.brandMentionRate?.value || 0}%
+                        {visibilityStats?.data?.brandMentionRate?.value || 0}%
                       </div>
                       <div className={`flex items-center space-x-1 text-xs ${
                         (visibilityStats?.data.brandMentionRate?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
@@ -570,10 +867,10 @@ const AISearch = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        平均第 {visibilityStats?.data.averagePosition?.value || 0} 位
+                        平均第 {visibilityStats?.data?.averagePosition?.value || 0} 位
                       </div>
                       <div className={`flex items-center space-x-1 text-xs ${
-                        (visibilityStats?.data.averagePosition?.change || 0) <= 0 ? 'text-green-600' : 'text-red-600'
+                        (visibilityStats?.data?.averagePosition?.change || 0) <= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {(visibilityStats?.data.averagePosition?.change || 0) <= 0 ? (
                           <TrendingUp className="h-3 w-3" />
@@ -595,10 +892,10 @@ const AISearch = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {visibilityStats?.data.sentimentScore?.value || 0}% 正面
+                        {visibilityStats?.data?.sentimentScore?.value || 0}% 正面
                       </div>
                       <div className={`flex items-center space-x-1 text-xs ${
-                        (visibilityStats?.data.sentimentScore?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                        (visibilityStats?.data?.sentimentScore?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {(visibilityStats?.data.sentimentScore?.change || 0) >= 0 ? (
                           <TrendingUp className="h-3 w-3" />
@@ -615,7 +912,7 @@ const AISearch = () => {
                 </div>
 
                 {/* Visibility Trends Chart */}
-                {visibilityTrends?.data.trends && (
+                {visibilityTrends?.data?.trends && visibilityTrends.data.trends.length > 0 ? (
                   <div className="mb-6">
                     <VisibilityTrendsChart 
                       data={visibilityTrends.data.trends}
@@ -623,6 +920,22 @@ const AISearch = () => {
                       description="各 AI 平台的可見度變化趨勢"
                       chartType="line"
                     />
+                  </div>
+                ) : (
+                  <div className="mb-6">
+                    <Card className="bg-gradient-card border-border">
+                      <CardHeader>
+                        <CardTitle>可見度趨勢分析</CardTitle>
+                        <CardDescription>各 AI 平台的可見度變化趨勢</CardDescription>
+                      </CardHeader>
+                      <CardContent className="text-center py-8">
+                        <Clock className="h-8 w-8 mx-auto mb-4 text-gray-400" />
+                        <p className="text-muted-foreground mb-2">數據收集中...</p>
+                        <p className="text-sm text-muted-foreground">
+                          系統正在收集可見度數據，通常需要24-48小時才會有初始數據
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
 
@@ -689,6 +1002,56 @@ const AISearch = () => {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Competitors Overview */}
+                {competitorsList?.data.competitors && competitorsList.data.competitors.length > 0 && (
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>競爭對手概覽</CardTitle>
+                          <CardDescription>追蹤中的競爭對手及其狀態</CardDescription>
+                        </div>
+                        <Badge variant="outline">
+                          {competitorsList.data.competitors.length} 個競爭對手
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                        {competitorsList.data.competitors.slice(0, 6).map((competitor) => (
+                          <div key={competitor.id} className="flex items-center justify-between p-3 border border-border rounded-lg bg-gradient-subtle">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-primary">
+                                  {competitor.name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <div className="font-medium text-sm">{competitor.name}</div>
+                                <div className="text-xs text-muted-foreground">{competitor.domain}</div>
+                              </div>
+                            </div>
+                            <Badge variant={competitor.isActive ? "default" : "secondary"} className="text-xs">
+                              {competitor.isActive ? "追蹤中" : "暫停"}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                      {competitorsList.data.competitors.length > 6 && (
+                        <div className="mt-4 text-center">
+                          <Button variant="outline" size="sm" onClick={() => {
+                            // Switch to analysis tab to see all competitors
+                            const analysisTab = document.querySelector('[value="analysis"]') as HTMLElement;
+                            if (analysisTab) analysisTab.click();
+                          }}>
+                            查看全部 {competitorsList.data.competitors.length} 個競爭對手
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
               </>
             )}
           </TabsContent>
@@ -728,13 +1091,87 @@ const AISearch = () => {
                         <CardTitle>競爭對手管理</CardTitle>
                         <CardDescription>新增、移除和管理您的競爭對手</CardDescription>
                       </div>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => setShowAddCompetitor(true)}>
                         <Plus className="h-4 w-4 mr-2" />
                         新增競爭對手
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
+                    {showAddCompetitor ? (
+                      <div className="space-y-4 p-4 border border-border rounded-lg mb-4">
+                        <h4 className="font-medium">新增競爭對手</h4>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-sm font-medium">競爭對手網站URL</label>
+                            <Input
+                              value={newCompetitorUrl}
+                              onChange={(e) => setNewCompetitorUrl(e.target.value)}
+                              placeholder="https://competitor.com"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">競爭對手名稱（可選）</label>
+                            <Input
+                              value={newCompetitorName}
+                              onChange={(e) => setNewCompetitorName(e.target.value)}
+                              placeholder="競爭對手名稱"
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={async () => {
+                                if (!newCompetitorUrl.trim()) {
+                                  toast.error("請輸入競爭對手網站URL");
+                                  return;
+                                }
+                                
+                                // Use the mutation hook to add competitor
+                                addCompetitorMutation.mutate({
+                                  websiteUrl: newCompetitorUrl,
+                                  name: newCompetitorName || new URL(newCompetitorUrl).hostname
+                                }, {
+                                  onSuccess: () => {
+                                    // Reset form on success
+                                    setShowAddCompetitor(false);
+                                    setNewCompetitorUrl("");
+                                    setNewCompetitorName("");
+                                  },
+                                  onError: (error: any) => {
+                                    console.error("添加競爭對手錯誤:", error);
+                                    if (error?.response?.status === 401) {
+                                      setShowAuthModal(true);
+                                    }
+                                  }
+                                });
+                              }}
+                              className="bg-primary text-primary-foreground"
+                              disabled={addCompetitorMutation.isPending}
+                            >
+                              {addCompetitorMutation.isPending ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  添加中...
+                                </>
+                              ) : (
+                                "確認添加"
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setShowAddCompetitor(false);
+                                setNewCompetitorUrl("");
+                                setNewCompetitorName("");
+                              }}
+                            >
+                              取消
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+                    
                     <div className="grid gap-3">
                       {competitorsList?.data.competitors?.map((competitor) => (
                         <div key={competitor.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
@@ -769,6 +1206,7 @@ const AISearch = () => {
                   </CardContent>
                 </Card>
 
+
                 {/* Competitive Analysis Chart */}
                 {competitiveAnalysis?.data.analysis && (
                   <CompetitorComparisonChart
@@ -791,6 +1229,32 @@ const AISearch = () => {
                     title="競爭對手表現比較"
                     description="您與競爭對手的 GEO 分數和各項指標對比"
                   />
+                )}
+
+                {/* No Analysis Data Available */}
+                {!competitiveLoading && !competitiveAnalysis?.data?.analysis && competitorsList?.data?.competitors?.length > 0 && (
+                  <Card className="bg-gradient-card border-border">
+                    <CardHeader>
+                      <CardTitle>競爭分析數據收集中</CardTitle>
+                      <CardDescription>系統正在分析您與競爭對手的表現數據</CardDescription>
+                    </CardHeader>
+                    <CardContent className="text-center py-8">
+                      <div className="flex flex-col items-center space-y-4">
+                        <Clock className="h-12 w-12 text-orange-500" />
+                        <div>
+                          <p className="text-lg font-medium text-muted-foreground mb-2">數據分析中</p>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            我們正在收集並分析您與 {competitorsList.data.competitors.length} 個競爭對手的表現數據。
+                            <br />
+                            這個過程通常需要 24-48 小時完成。
+                          </p>
+                          <Button variant="outline" onClick={() => window.location.reload()}>
+                            重新檢查
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
 
                 {/* Market Share Analysis */}

@@ -12,6 +12,8 @@ import { logger } from './utils/logger';
 import { initializeWebSocketService } from './services/websocketService';
 import { setupAlertScheduler } from './services/alertQueue';
 import { RealTimeMetricsService } from './services/realTimeMetrics.service';
+import { queueManager } from './services/queue/queueManager';
+import { queueWorker } from './services/queue/queueWorker';
 
 class App {
   public app: Application;
@@ -24,9 +26,12 @@ class App {
     this.initializeMiddlewares();
     this.initializeRoutes();
     this.initializeErrorHandling();
-    this.initializeDatabase();
+  }
+
+  async initialize(): Promise<void> {
+    await this.initializeDatabase();
     this.initializeWebSocket();
-    this.initializeBackgroundJobs();
+    await this.initializeBackgroundJobs();
   }
 
   private initializeMiddlewares(): void {
@@ -191,13 +196,72 @@ class App {
     }
   }
 
-  private initializeBackgroundJobs(): void {
+  private async initializeBackgroundJobs(): Promise<void> {
     try {
+      // Initialize alert scheduler
       setupAlertScheduler();
       logger.info('Alert scheduler initialized successfully');
+      
+      // Initialize queue manager and worker
+      await this.initializeQueueSystem();
+      
     } catch (error) {
-      logger.error('Alert scheduler initialization failed:', error);
+      logger.error('Background jobs initialization failed:', error);
       // Don't exit - background jobs can be set up later
+    }
+  }
+
+  private async initializeQueueSystem(): Promise<void> {
+    try {
+      // Start queue worker
+      await queueWorker.start();
+      logger.info('Queue worker started successfully');
+      
+      // Schedule recurring AI tracking jobs for existing websites
+      await this.scheduleExistingWebsiteTracking();
+      
+    } catch (error) {
+      logger.error('Queue system initialization failed:', error);
+      throw error;
+    }
+  }
+
+  private async scheduleExistingWebsiteTracking(): Promise<void> {
+    try {
+      // Import models here to avoid circular dependencies
+      const Website = (await import('./models/Website')).default;
+      
+      // Find all active websites without Keyword association for now
+      const websites = await Website.findAll({
+        where: { isActive: true }
+      });
+
+      logger.info(`Found ${websites.length} active websites for AI tracking`);
+
+      // Schedule tracking for each website
+      for (const website of websites) {
+        // Use default keywords for now since Keyword association is not set up
+        const keywords = ['figma', 'design tool', 'AI tracking'];
+        
+        // Schedule daily AI tracking job
+        await queueManager.addRecurringTrackingJob({
+          websiteId: website.id,
+          organizationId: website.organizationId,
+          platforms: ['chatgpt', 'claude', 'gemini', 'perplexity'],
+          keywords,
+          trackingSettings: { 
+            frequency: 'daily',
+            platforms: ['chatgpt', 'claude', 'gemini', 'perplexity'],
+            alertsEnabled: true
+          }
+        }, '0 9 * * *'); // Daily at 9 AM
+
+        logger.info(`Scheduled AI tracking for website: ${website.domain}`);
+      }
+      
+    } catch (error) {
+      logger.error('Error scheduling website tracking:', error);
+      // Don't throw - this is not critical for startup
     }
   }
 

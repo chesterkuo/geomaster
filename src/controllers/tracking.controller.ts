@@ -251,7 +251,7 @@ export class TrackingController {
 
       // Execute parallel queries for trends and summary data
       const [keywordRankings, trackingResults, websiteInfo] = await Promise.all([
-        // Get keyword rankings for visibility trends
+        // Get keyword rankings for visibility trends (if available)
         KeywordRanking.findAll({
           attributes: [
             [sequelize.fn('DATE', sequelize.col('tracked_at')), 'date'],
@@ -267,13 +267,12 @@ export class TrackingController {
             [sequelize.fn('DATE', sequelize.col('tracked_at')), 'ASC']
           ]
         }),
-        // Get AI tracking results for mention counts
+        // Get AI tracking results for mention counts and trends
         AITrackingResult.findAll({
           where: {
             trackedAt: {
               [Op.gte]: startDate
-            },
-            isMentioned: true
+            }
           },
           include: [{
             model: Website,
@@ -288,9 +287,10 @@ export class TrackingController {
         }) : null
       ]);
 
-      // Process keyword rankings data into trends format
+      // Process both keyword rankings and AI tracking results into trends format
       const trendsByDate: Record<string, Record<string, number>> = {};
       
+      // First, process keyword rankings if available
       (keywordRankings as any[]).forEach(ranking => {
         const date = ranking.getDataValue('date');
         const platform = ranking.platform;
@@ -307,6 +307,60 @@ export class TrackingController {
         
         trendsByDate[date][platform] = Math.round(visibility);
       });
+
+      // Then, process AI tracking results to generate trends if no keyword data exists
+      if ((keywordRankings as any[]).length === 0 && (trackingResults as any[]).length > 0) {
+        // Group AI tracking results by date and platform to calculate daily visibility scores
+        const aiTrendsByDate: Record<string, Record<string, { mentioned: number; total: number; cited: number; }>> = {};
+        
+        (trackingResults as any[]).forEach(result => {
+          const date = result.trackedAt.toISOString().split('T')[0];
+          const platform = result.platform.toLowerCase();
+          
+          if (!aiTrendsByDate[date]) {
+            aiTrendsByDate[date] = {
+              chatgpt: { mentioned: 0, total: 0, cited: 0 },
+              perplexity: { mentioned: 0, total: 0, cited: 0 },
+              gemini: { mentioned: 0, total: 0, cited: 0 },
+              claude: { mentioned: 0, total: 0, cited: 0 }
+            };
+          }
+          
+          if (aiTrendsByDate[date][platform]) {
+            aiTrendsByDate[date][platform].total++;
+            if (result.isMentioned) {
+              aiTrendsByDate[date][platform].mentioned++;
+            }
+            if (result.isCited) {
+              aiTrendsByDate[date][platform].cited++;
+            }
+          }
+        });
+
+        // Convert AI tracking data to visibility scores (0-100 scale)
+        Object.entries(aiTrendsByDate).forEach(([date, platforms]) => {
+          if (!trendsByDate[date]) {
+            trendsByDate[date] = {
+              chatgpt: 0,
+              perplexity: 0,
+              gemini: 0,
+              claude: 0
+            };
+          }
+          
+          Object.entries(platforms).forEach(([platform, stats]) => {
+            // Calculate visibility score: (mentioned * 30 + cited * 70) / total
+            // This gives more weight to citations than just mentions
+            let score = 0;
+            if (stats.total > 0) {
+              const mentionWeight = (stats.mentioned / stats.total) * 30;
+              const citationWeight = (stats.cited / stats.total) * 70;
+              score = Math.round(mentionWeight + citationWeight);
+            }
+            trendsByDate[date][platform] = score;
+          });
+        });
+      }
 
       // Convert to array format and fill missing dates
       const trends: TrendData[] = [];
@@ -364,8 +418,8 @@ export class TrackingController {
       const topPerformingPlatform = Object.entries(platformSums)
         .sort(([,a], [,b]) => b - a)[0][0];
 
-      // Count total mentions and queries
-      const totalMentions = trackingResults.length;
+      // Count total mentions and queries (only mentioned ones for the summary)
+      const totalMentions = trackingResults.filter((result: any) => result.isMentioned).length;
       const totalQueries = await AITrackingResult.count({
         where: {
           trackedAt: {

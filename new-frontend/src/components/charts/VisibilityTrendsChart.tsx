@@ -44,7 +44,22 @@ export const VisibilityTrendsChart: React.FC<VisibilityTrendsChartProps> = ({
     if (data.length < 2) return null;
     const first = data[0][platform];
     const last = data[data.length - 1][platform];
-    const change = ((last - first) / first) * 100;
+    
+    // Safe calculation to prevent division by zero and infinity
+    let change = 0;
+    if (first === 0 && last === 0) {
+      change = 0; // No change if both are zero
+    } else if (first === 0 && last > 0) {
+      change = 100; // Show 100% increase when starting from zero
+    } else if (first > 0) {
+      change = ((last - first) / first) * 100;
+    }
+    
+    // Ensure change is finite and reasonable
+    if (!Number.isFinite(change)) {
+      change = 0;
+    }
+    
     return {
       value: last,
       change: Math.round(change),

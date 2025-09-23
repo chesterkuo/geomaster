@@ -1504,6 +1504,25 @@ const [showAuthModal, setShowAuthModal] = useState(false);
 
 ## 🆕 最近更新與改進
 
+### AI可見度追蹤系統優化 (2025-09-16) ✅ 重大更新
+- ✅ **API端點修正**：修復可見度報告API調用錯誤（400/404錯誤）
+  - 修正 visibility-trends API 參數從 `dateRange` 改為 `period`
+  - 移除不存在的 `/tracking/history` 端點，改用 `/tracking/visibility-trends`
+  - 修正 competitive-analysis API 參數從 `timeRange` 改為 `timeframe`
+  - 修正 competitors API 移除不需要的 `websiteId` 參數
+- ✅ **系統分離優化**：完善網站掃描與AI可見度追蹤的功能分離
+  - 確認網站掃描（使用 `scanService`）與AI可見度追蹤（使用 `websiteService`）獨立運作
+  - 在AI可見度追蹤頁面添加專屬的新增網站功能
+  - 修正404錯誤的按鈕導向問題
+- ✅ **錯誤處理改善**：提升用戶體驗和錯誤提示
+  - 將API錯誤改為友好的"數據收集中"提示
+  - 解釋新網站需要24-48小時收集數據的技術原因
+  - 添加401/403錯誤的具體處理和重新認證流程
+- ✅ **技術架構文檔化**：完整記錄AI可見度分析實作架構
+  - 詳細說明4個AI平台（ChatGPT、Gemini、Perplexity、Claude）的追蹤機制
+  - 記錄數據收集流程、追蹤頻率和統計意義要求
+  - 建立完整的性能和擴展性技術規格
+
 ### 統一認證系統實作 (2025-09-06) ✅ 重大更新
 - ✅ **全平台認證保護**：完成 6 個頁面、24 個標籤的統一認證實現
 - ✅ **統一設計模式**：建立一致的認證檢查與使用者引導流程
@@ -1578,6 +1597,493 @@ const [showAuthModal, setShowAuthModal] = useState(false);
 - ✅ **優化建議系統**：自動生成具體可執行的 GEO 優化建議
 
 ## 🚀 AI 搜索擴展功能
+
+### 🔍 AI可見度分析系統實作架構
+
+#### 核心追蹤機制 ✅ 已完整實作
+**系統採用企業級AI可見度追蹤架構，提供4個主要AI平台的實時監控**
+
+##### 🏗️ 系統架構總覽
+```
+用戶設定 → 查詢生成器 → AI平台工廠 → 並行平台呼叫 → 提及檢測 → 情感分析 → 結果儲存
+    ↓           ↓           ↓           ↓           ↓         ↓         ↓
+關鍵字配置  模板化查詢   多平台實例    ChatGPT      智能匹配    詞彙庫    資料庫
+競爭對手    4類查詢      統一介面      Claude       置信度     評分      Redis佇列
+追蹤頻率    變數替換     錯誤處理      Gemini       邊界檢測   趨勢      報告生成
+           優先排序     速率控制      Perplexity   模糊匹配   加權
+```
+
+##### 📋 追蹤結果數據結構
+```typescript
+// 完整追蹤結果架構
+interface TrackingResult {
+  platform: 'chatgpt' | 'claude' | 'gemini' | 'perplexity';
+  query: string;              // 生成的查詢文本
+  response: string;           // AI平台原始回應
+  mentions: Mention[];        // 檢測到的品牌提及
+  competitors: CompetitorMention[]; // 競爭對手分析
+  metadata: QueryMetadata;    // 執行元數據
+  timestamp: Date;            // 追蹤時間戳
+}
+
+interface Mention {
+  type: 'direct' | 'indirect';     // 提及類型
+  website: string;                 // 目標網站
+  content: string;                 // 提及內容
+  position: number;                // 在回應中的位置
+  context: string;                 // 上下文（前後100字符）
+  sentiment: 'positive' | 'neutral' | 'negative';
+  confidence: number;              // 檢測置信度 (0-1)
+  citationQuality: 'high' | 'medium' | 'low'; // 引用品質
+}
+
+interface CompetitorMention {
+  competitorDomain: string;        // 競爭對手域名
+  competitorName: string;          // 競爭對手名稱
+  mentions: Mention[];             // 該競爭對手的提及
+  relativePosition: number | null; // 相對位置排序
+  visibilityScore: number;         // 可見度分數
+}
+```
+
+##### 🔧 核心組件實現
+
+**1. 查詢生成器 (`queryGenerator.ts`)**
+- **4類查詢模板**：品牌查詢、競爭查詢、功能查詢、比較查詢
+- **智能變數替換**：{website}, {websiteName}, {competitor}, {keyword}, {category}
+- **類別推斷算法**：根據網站名稱和關鍵字自動推斷業務類別
+- **優先級排序**：品牌查詢(10分) > 比較查詢(9分) > 競爭查詢(8分) > 功能查詢(7分)
+
+**2. AI平台服務 (`chatgptService.ts`, `claudeService.ts` 等)**
+- **統一介面設計**：所有平台實現相同的 `AITrackingPlatform` 介面
+- **速率限制管理**：ChatGPT(60/分鐘)、Claude(50/分鐘)、Gemini(60/分鐘)、Perplexity(20/分鐘)
+- **錯誤處理機制**：API限制、配額超限、認證失敗的專門錯誤類型
+- **成本計算**：精確的API使用成本追蹤
+
+**3. 提及檢測器 (`mentionDetector.ts`)**
+- **目標變體生成**：自動生成品牌名稱的多種變體（大小寫、域名清理、常見擴展）
+- **置信度算法**：基於精確匹配(+0.3)、正面指標(+0.1)、詞邊界檢查(+0.2)
+- **模糊匹配支援**：使用Levenshtein距離算法，支援80%相似度閾值
+- **上下文提取**：每個提及前後100字符的智能上下文擷取
+
+**4. 情感分析器 (`sentimentAnalyzer.ts`)**
+- **專業詞彙庫**：35個正面詞彙、35個負面詞彙、14個增強詞、18個否定詞
+- **增強器處理**：'very good' → +1.5分（good +1 × very 1.5倍增強）
+- **否定詞處理**：'not reliable' → -1.0分（reliable +1 × not -1倍否定）
+- **距離權重**：越接近提及的詞彙影響權重越大
+
+#### 追蹤頻率與數據收集策略
+**支援三種企業級追蹤頻率設定：**
+- **hourly**：每小時追蹤（實時監控，適用於品牌危機管理）
+- **daily**：每日追蹤（預設值，適用於一般品牌監控）
+- **weekly**：每週追蹤（基礎監控，適用於長期趨勢分析）
+
+**數據收集流程：**
+1. **查詢執行階段**：系統向4個AI平台發送品牌相關查詢
+2. **回應分析階段**：使用NLP技術分析AI回應中的品牌提及
+3. **位置記錄階段**：精確記錄品牌在AI回應中的出現位置
+4. **情感分析階段**：判斷AI提及的正面/中性/負面傾向
+5. **分數計算階段**：基於位置、提及類型、情感計算綜合可見度分數
+
+#### 24-48小時數據收集週期的技術原理
+**統計有效性要求：**
+- **趨勢識別**：需要至少24小時的多時間點數據建立可靠趨勢線
+- **波動平滑**：48小時窗口可有效過濾AI回應的隨機波動
+- **基準建立**：建立可靠的品牌可見度基準需要多樣本統計
+
+**技術限制考量：**
+- **API速率限制**：各AI平台嚴格的請求頻率限制
+- **成本效益平衡**：避免過度頻繁的API調用產生不必要成本
+- **上下文變化**：AI平台回應會隨時間和上下文自然變化，需要時間累積代表性樣本
+
+#### 可見度評分算法 ✅ 已實作詳細計算機制
+**多維度評分體系（0-100分）包含以下實際實現：**
+
+##### 📊 評分權重分配
+```typescript
+// 實際可見度分數計算實現 (chatgptService.ts:263-291)
+calculateVisibilityScore(mentions: Mention[], competitors: CompetitorMention[]): number {
+  let score = 0;
+  
+  // 1. 基礎提及評分 (每個提及10分基礎)
+  mentions.forEach(mention => {
+    let mentionScore = 10;
+    
+    // 2. 情感調整 (+5分正面, -3分負面)
+    if (mention.sentiment === 'positive') mentionScore += 5;
+    else if (mention.sentiment === 'negative') mentionScore -= 3;
+    
+    // 3. 引用品質調整 (高品質+3分, 低品質-1分)
+    if (mention.citationQuality === 'high') mentionScore += 3;
+    else if (mention.citationQuality === 'low') mentionScore -= 1;
+    
+    // 4. 置信度權重 (乘以檢測置信度)
+    mentionScore *= mention.confidence;
+    
+    score += mentionScore;
+  });
+  
+  // 5. 競爭對手調整 (相對可見度比較)
+  const competitorMentionCount = competitors.reduce((sum, comp) => sum + comp.mentions.length, 0);
+  if (competitorMentionCount > 0) {
+    score *= (mentions.length / (mentions.length + competitorMentionCount));
+  }
+  
+  return Math.min(Math.max(score, 0), 100); // 限制在0-100分範圍
+}
+```
+
+##### 🎯 引用品質評估算法
+```typescript
+// 實際引用品質評估實現 (chatgptService.ts:307-319)
+assessCitationQuality(context: string): 'high' | 'medium' | 'low' {
+  const highQualityIndicators = ['expert', 'research', 'study', 'data', 'analysis', 'recommend'];
+  const lowQualityIndicators = ['maybe', 'probably', 'seem', 'appear', 'might'];
+  
+  const contextLower = context.toLowerCase();
+  
+  const highScore = highQualityIndicators.filter(indicator => contextLower.includes(indicator)).length;
+  const lowScore = lowQualityIndicators.filter(indicator => contextLower.includes(indicator)).length;
+  
+  if (highScore > lowScore) return 'high';      // 專業指標佔優
+  if (lowScore > highScore) return 'low';       // 不確定指標佔優
+  return 'medium';                              // 平衡狀態
+}
+```
+
+##### 🏆 競爭對手可見度比較
+```typescript
+// 競爭對手可見度分數計算實現 (chatgptService.ts:293-300)
+calculateCompetitorVisibilityScore(mentions: Mention[]): number {
+  return mentions.reduce((score, mention) => {
+    let mentionScore = 10;                      // 基礎分數
+    if (mention.sentiment === 'positive') mentionScore += 5;   // 正面加分
+    else if (mention.sentiment === 'negative') mentionScore -= 3; // 負面扣分
+    return score + (mentionScore * mention.confidence);        // 置信度權重
+  }, 0);
+}
+```
+
+##### 📈 實際評分示例
+**用戶設定 "ygr games" 的評分計算：**
+```
+情況1: AI回應 "YGR Games is an excellent gaming platform that I highly recommend"
+- 基礎分數: 10分
+- 情感加分: +5分 (positive)
+- 引用品質: +3分 (high - 包含'recommend')
+- 置信度: ×0.9
+- 最終分數: (10+5+3) × 0.9 = 16.2分
+
+情況2: AI回應 "I'm not familiar with ygr games, maybe you could try other options"
+- 基礎分數: 10分
+- 情感調整: 0分 (neutral)
+- 引用品質: -1分 (low - 包含'maybe')
+- 置信度: ×0.7
+- 最終分數: (10+0-1) × 0.7 = 6.3分
+```
+
+#### 競爭分析實作機制
+**同步競爭對手監控：**
+```typescript
+interface CompetitiveAnalysis {
+  timeframe: '7d' | '30d' | '90d';
+  organization: {
+    websites: Website[];
+    totalMentions: number;
+    totalCitations: number;
+    platformBreakdown: Record<string, MetricsByPlatform>;
+  };
+  competitors: CompetitorMetrics[];
+  benchmarks: {
+    industryAverage: number;
+    topPerformer: number;
+    marketShare: number;
+  };
+}
+```
+
+#### 實時警報系統架構
+**智能閾值監控：**
+- **趨勢警報**：檢測可見度分數的異常變化（±20%）
+- **競爭對手警報**：監控競爭對手表現超越預警
+- **情感變化警報**：檢測品牌提及情感的負面轉向
+- **新提及警報**：即時通知新的AI平台品牌提及
+
+#### 🚀 背景處理系統實現
+**Bull Queue + Redis 佇列架構：**
+
+##### 工作處理流程 (`aiTrackingJob.ts`)
+```typescript
+// 完整AI追蹤工作處理器實現
+class AITrackingJobProcessor {
+  async processAITrackingJob(job: Job<AITrackingJobData>): Promise<TrackingJobResult> {
+    const { websiteId, organizationId, platforms, keywords, competitors, trackingSettings } = job.data;
+    
+    // 1. 生成查詢集合
+    const queryGenerator = new QueryGenerator();
+    const queries = queryGenerator.generateQueries({
+      website: website.url,
+      websiteName: website.name,
+      keywords: keywords.map(k => k.keyword),
+      competitors: competitors.map(c => c.websiteUrl),
+      trackingSettings
+    });
+    
+    // 2. 並行處理多個AI平台
+    const platformPromises = platforms.map(async (platformName) => {
+      const platform = platformFactory.createPlatformWithDefaults(platformName);
+      const platformResults: TrackingResult[] = [];
+      
+      // 3. 批次查詢執行（避免速率限制）
+      for (const query of queries) {
+        try {
+          const result = await platform.query({
+            query: query.query,
+            website: website.url,
+            keywords: keywords.map(k => k.keyword),
+            competitors: competitors.map(c => c.websiteUrl)
+          });
+          platformResults.push(result);
+          
+          // 4. 智能延遲（基於平台速率限制）
+          await this.intelligentDelay(platformName);
+        } catch (error) {
+          // 5. 錯誤處理和重試機制
+          await this.handleTrackingError(error, platformName, query);
+        }
+      }
+      
+      return { platform: platformName, results: platformResults };
+    });
+    
+    // 6. 等待所有平台完成
+    const allResults = await Promise.all(platformPromises);
+    
+    // 7. 結果彙總和儲存
+    return await this.saveTrackingResults(allResults, websiteId, organizationId);
+  }
+  
+  // 智能延遲機制（根據不同平台調整）
+  private async intelligentDelay(platform: string): Promise<void> {
+    const delays = {
+      'chatgpt': 1000,    // 1秒 (60請求/分鐘)
+      'claude': 1200,     // 1.2秒 (50請求/分鐘)
+      'gemini': 1000,     // 1秒 (60請求/分鐘)  
+      'perplexity': 3000  // 3秒 (20請求/分鐘)
+    };
+    
+    await new Promise(resolve => setTimeout(resolve, delays[platform] || 1000));
+  }
+}
+```
+
+##### 佇列管理系統 (`queueManager.ts`)
+```typescript
+// Bull Queue 配置和管理
+export class QueueManager {
+  private queues = new Map<QueueType, Queue>();
+  
+  async initializeQueues(): Promise<void> {
+    // AI追蹤佇列初始化
+    const aiTrackingQueue = new Queue('ai-tracking', {
+      redis: { host: 'localhost', port: 6379 },
+      settings: {
+        stalledInterval: 30000,    // 30秒檢查卡住的工作
+        maxStalledCount: 3,        // 最多重試3次
+      },
+      defaultJobOptions: {
+        removeOnComplete: 100,     // 保留最近100個完成的工作
+        removeOnFail: 50,          // 保留最近50個失敗的工作
+        attempts: 3,               // 失敗重試3次
+        backoff: 'exponential',    // 指數退避重試
+      }
+    });
+    
+    // 設定循環任務（根據用戶追蹤頻率）
+    await aiTrackingQueue.add('recurring-tracking', {}, {
+      repeat: { cron: '0 * * * *' } // 每小時執行
+    });
+    
+    this.queues.set('ai-tracking', aiTrackingQueue);
+  }
+  
+  // 工作進度監控
+  async getQueueHealth(): Promise<QueueHealthInfo> {
+    const queue = this.queues.get('ai-tracking');
+    const [waiting, active, completed, failed] = await Promise.all([
+      queue.getWaiting(),
+      queue.getActive(), 
+      queue.getCompleted(),
+      queue.getFailed()
+    ]);
+    
+    return {
+      waiting: waiting.length,
+      active: active.length,
+      completed: completed.length,
+      failed: failed.length,
+      isHealthy: failed.length < active.length * 0.1 // 失敗率低於10%為健康
+    };
+  }
+}
+```
+
+#### 🔧 性能優化與擴展性
+**資料庫架構優化：**
+```sql
+-- 高效查詢索引設計
+CREATE INDEX idx_tracking_org_date ON ai_tracking_results (organization_id, tracked_at DESC);
+CREATE INDEX idx_tracking_platform ON ai_tracking_results (platform, tracked_at DESC);
+CREATE INDEX idx_visibility_score ON ai_tracking_results (visibility_score DESC);
+CREATE INDEX idx_website_platform ON ai_tracking_results (website_id, platform);
+CREATE INDEX idx_competitor_analysis ON ai_tracking_results (organization_id, platform, tracked_at) 
+  WHERE competitor_domain IS NOT NULL;
+
+-- 分區表設計（按月分區，提升大數據查詢效能）
+CREATE TABLE ai_tracking_results_2024_09 PARTITION OF ai_tracking_results 
+  FOR VALUES FROM ('2024-09-01') TO ('2024-10-01');
+```
+
+**Redis 快取策略：**
+```typescript
+// 智能快取機制
+export class TrackingCacheManager {
+  private redis: Redis;
+  
+  // 快取查詢結果（24小時TTL）
+  async cacheTrackingResult(key: string, result: TrackingResult): Promise<void> {
+    await this.redis.setex(`tracking:${key}`, 86400, JSON.stringify(result));
+  }
+  
+  // 快取平台可用性（5分鐘TTL）
+  async cachePlatformHealth(platform: string, isHealthy: boolean): Promise<void> {
+    await this.redis.setex(`health:${platform}`, 300, isHealthy.toString());
+  }
+  
+  // 智能快取失效（當檢測到重要變化時）
+  async invalidateRelatedCache(organizationId: string, websiteId: string): Promise<void> {
+    const keys = await this.redis.keys(`tracking:${organizationId}:${websiteId}:*`);
+    if (keys.length > 0) {
+      await this.redis.del(...keys);
+    }
+  }
+}
+```
+
+**快取策略：**
+- **Redis快取**：15分鐘自清理機制，優化重複查詢
+- **趨勢數據預計算**：每日批次計算趨勢指標
+- **平台分析聚合**：實時聚合各平台表現數據
+
+#### API端點完整實作 ✅
+**17個專業分析端點已完整實作：**
+- **追蹤管理**：`/tracking/settings`, `/tracking/platforms`
+- **可見度分析**：`/tracking/visibility-trends`, `/tracking/mentions`
+- **競爭分析**：`/tracking/competitors`, `/tracking/competitive-analysis`
+- **關鍵字管理**：`/tracking/keywords`, `/tracking/keyword-types`
+- **報告生成**：支援CSV、Excel、PDF格式匯出
+
+#### 前端可見度分析系統實作 ✅
+**React + TypeScript 企業級可見度追蹤介面**
+
+**核心組件架構：**
+```typescript
+// AISearch.tsx - 主要可見度追蹤頁面
+- 🏷️ 關鍵字管理標籤：支援品牌關鍵字CRUD操作
+- 📊 可見度報告標籤：即時趨勢圖表和平台分析
+- 🎯 競爭分析標籤：競爭對手比較和市場基準
+- ⚙️ 追蹤設定標籤：平台配置和通知管理
+
+// 智能錯誤處理與用戶引導
+- 🔐 統一認證檢查：自動引導未登入用戶
+- 📈 數據收集提示：友好說明24-48小時等待期
+- 🚀 功能導航：清晰的功能分區和操作指引
+```
+
+**可見度報告視覺化：**
+```typescript
+// 多維度數據展示
+interface VisibilityReportComponents {
+  trendsChart: VisibilityTrendsChart;      // 時間序列趨勢圖
+  platformDistribution: PlatformDistributionChart; // 平台分布圓餅圖
+  competitorComparison: CompetitorComparisonChart; // 競爭對手對比
+  realTimeStats: VisibilityStatsCards;    // 實時統計卡片
+}
+
+// 統計指標卡片
+const VisibilityMetrics = {
+  brandMentionRate: { value: number, change: number, trend: 'up' | 'down' },
+  averagePosition: { value: number, change: number, trend: 'up' | 'down' },
+  sentimentScore: { value: number, change: number, trend: 'up' | 'down' }
+}
+```
+
+**系統分離設計原則：**
+```typescript
+// 雙重追蹤系統獨立運作
+1. 網站掃描系統 (Tracking.tsx)
+   - 使用 scanService API
+   - 技術健康度、SEO、性能分析
+   - 掃描記錄和結果管理
+
+2. AI可見度追蹤系統 (AISearch.tsx)
+   - 使用 websiteService + aiSearchService API
+   - AI平台可見度監控
+   - 品牌提及和競爭分析
+
+// 避免功能混淆的清晰分界
+- 不同的網站管理系統
+- 不同的API端點
+- 不同的數據結構
+- 不同的分析目標
+```
+
+**錯誤處理與用戶體驗優化：**
+```typescript
+// 漸進式錯誤處理策略
+const ErrorHandlingLevels = {
+  level1_authentication: {
+    detect: "401 Unauthorized",
+    action: "自動顯示登入對話框",
+    message: "登入已過期，請重新登入"
+  },
+  level2_permissions: {
+    detect: "403 Forbidden", 
+    action: "方案升級引導",
+    message: "權限不足，請聯絡管理員或升級您的方案"
+  },
+  level3_data_collection: {
+    detect: "API數據為空",
+    action: "友好解釋等待期",
+    message: "系統正在收集AI平台數據，通常需要24-48小時"
+  },
+  level4_network_errors: {
+    detect: "網路或服務錯誤",
+    action: "重試機制",
+    message: "請檢查網路連線或稍後再試"
+  }
+}
+```
+
+**響應式設計與互動優化：**
+```typescript
+// Tailwind CSS + shadcn/ui 現代化設計
+const UIComponents = {
+  cards: "統一的卡片設計語言，支援懸停效果和載入狀態",
+  charts: "基於 Recharts 的互動式圖表，支援縮放和篩選",
+  forms: "表單驗證和即時反饋，優化的輸入體驗",
+  modals: "模態對話框統一管理，支援巢狀和動畫",
+  navigation: "直觀的標籤導航，清晰的功能分區"
+}
+
+// 效能優化策略
+const PerformanceOptimizations = {
+  reactQuery: "智能快取和背景更新，減少不必要的API調用",
+  lazyLoading: "圖表和大數據集的延遲載入",
+  virtualScrolling: "大列表的虛擬滾動優化",
+  memoization: "組件和計算結果的記憶化優化"
+}
+```
 
 ### 資料庫架構設計
 

@@ -240,5 +240,6 @@ export const aiSearchService = {
   }): Promise<ApiResponse<CompetitiveAnalysis>> {
     const response = await apiClient.get('/tracking/competitive-analysis', { params });
     return response.data;
-  }
+  },
+
 };

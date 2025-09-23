@@ -157,7 +157,7 @@ export class TrackingConfigController {
         const planLimits = PLAN_LIMITATIONS[planKey] || PLAN_LIMITATIONS[ORGANIZATION_PLANS.FREE];
         
         const defaultPlatforms = organization.plan === ORGANIZATION_PLANS.FREE 
-          ? [AI_PLATFORMS.CHATGPT, AI_PLATFORMS.CLAUDE] // Free tier gets basic platforms
+          ? [AI_PLATFORMS.GEMINI] // Free tier gets only Gemini
           : Object.values(AI_PLATFORMS); // Paid tiers get all platforms
 
         const newSettings = await TrackingSettings.create({

@@ -31,6 +31,9 @@ interface NavItem {
   badge?: string;
 }
 
+// Check if SEO features are enabled
+const enableSeoFeatures = import.meta.env.VITE_ENABLE_SEO_FEATURES === 'true';
+
 const menuSections = [
   {
     title: "主要功能",
@@ -41,14 +44,15 @@ const menuSections = [
       { id: "ai-search", label: "AI 可見度追蹤", icon: Brain, path: "/ai-search", badge: "新功能" },
     ]
   },
-  {
+  // Only include SEO features if enabled
+  ...(enableSeoFeatures ? [{
     title: "分析工具", 
     items: [
       { id: "analytics", label: "競爭分析", icon: BarChart3, path: "/analytics" },
       { id: "research", label: "關鍵字研究", icon: Search, path: "/research" },
       { id: "reporting", label: "報告中心", icon: Map, path: "/reporting" },
     ]
-  },
+  }] : []),
   {
     title: "設定功能",
     items: [

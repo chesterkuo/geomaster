@@ -109,7 +109,10 @@ class CompetitorsService {
   }>> {
     const queryParams = new URLSearchParams();
     
-    Object.entries(filters).forEach(([key, value]) => {
+    // Remove websiteId from competitors API as it's not needed according to API docs
+    const { websiteId, ...validFilters } = filters;
+    
+    Object.entries(validFilters).forEach(([key, value]) => {
       if (value !== undefined) {
         if (Array.isArray(value)) {
           value.forEach(v => queryParams.append(key, v.toString()));
@@ -147,7 +150,8 @@ class CompetitorsService {
 
   // Get competitive analysis data
   async getCompetitiveAnalysis(websiteId: string, timeRange: string = '30d'): Promise<ApiResponse<CompetitorAnalysisData>> {
-    const response = await apiClient.get(`/tracking/competitive-analysis?websiteId=${websiteId}&timeRange=${timeRange}`);
+    // Use 'timeframe' parameter as expected by backend, and remove websiteId from query
+    const response = await apiClient.get(`/tracking/competitive-analysis?timeframe=${timeRange}`);
     return response.data;
   }
 

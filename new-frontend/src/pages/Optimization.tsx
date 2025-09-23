@@ -20,7 +20,10 @@ import {
   CheckCircle,
   XCircle,
   Lock,
-  User
+  User,
+  Clock,
+  Info,
+  HelpCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { contentService, Page, PageCreateData } from "@/lib/api/content";
@@ -61,22 +64,47 @@ const Optimization = () => {
     try {
       setIsLoading(true);
       
-      if (!isAuthenticated) {
-        // Show empty data when not authenticated
-        setPages([]);
-        setIsLoading(false);
-        return;
-      }
-
+      // 嘗試加載頁面，即使身份驗證狀態未確定
       const response = await contentService.getPages();
       if (response.success) {
         setPages(response.data);
+        console.log('載入頁面成功:', response.data.length, '個頁面');
       } else {
+        console.error('API 響應失敗:', response.message);
         toast.error("載入頁面失敗: " + response.message);
+        
+        // 如果是身份驗證錯誤，顯示登入提示
+        if (response.message?.includes('token') || response.message?.includes('unauthorized')) {
+          setShowAuthModal(true);
+        }
       }
     } catch (error: any) {
       console.error('載入頁面錯誤:', error);
-      toast.error("載入頁面失敗: " + (error.message || '未知錯誤'));
+      
+      // 處理401認證錯誤
+      if (error.response?.status === 401) {
+        console.log('檢測到401錯誤，需要重新登入');
+        toast.error("登入已過期，請重新登入");
+        setShowAuthModal(true);
+        return;
+      }
+      
+      // 處理403權限錯誤
+      if (error.response?.status === 403) {
+        toast.error("權限不足，請聯絡管理員");
+        return;
+      }
+      
+      // 更詳細的錯誤處理
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.log('身份驗證錯誤，顯示登入對話框');
+        setShowAuthModal(true);
+        toast.error("請先登入以查看頁面列表");
+      } else if (error.response?.data?.message) {
+        toast.error("載入頁面失敗: " + error.response.data.message);
+      } else {
+        toast.error("載入頁面失敗: " + (error.message || '網路連接錯誤'));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -116,8 +144,11 @@ const Optimization = () => {
       console.error('新增頁面錯誤:', error);
       
       // 處理特定的錯誤狀態
-      if (error.response?.status === 409) {
-        toast.error("此 URL 已存在，請檢查是否已經添加過相同的頁面");
+      if (error.response?.status === 409 || error.response?.data?.message?.includes('already exists')) {
+        toast.error("此 URL 已存在，重新載入頁面列表");
+        // 重新載入頁面列表以顯示現有頁面
+        loadPages();
+        setShowAddDialog(false);
       } else if (error.response?.data?.message) {
         toast.error("新增失敗: " + error.response.data.message);
       } else {
@@ -131,18 +162,67 @@ const Optimization = () => {
   const handleAnalyzePage = async (page: Page) => {
     try {
       setIsAnalyzing(true);
+      
+      // 立即設置頁面為分析中狀態
+      const analyzingPage: Page = {
+        ...page,
+        analysisStatus: 'analyzing'
+      };
+      
+      setPages(prev => prev.map(p => p.id === page.id ? analyzingPage : p));
+      if (selectedPage?.id === page.id) {
+        setSelectedPage(analyzingPage);
+      }
+      
       toast.info(`開始分析 ${page.title}...`);
       
       const response = await contentService.analyzePage(page.id);
       if (response.success) {
-        toast.success(`${page.title} 分析完成！GEO 分數: ${response.data.geoScore}`);
-        // Refresh pages to get updated analysis data
-        loadPages();
+        const { geoScore, estimatedImprovement, issues, message } = response.data;
+        
+        // 更新頁面狀態
+        const updatedPage: Page = {
+          ...page,
+          geoScore,
+          estimatedImprovement,
+          issues,
+          analysisStatus: 'completed',
+          lastAnalyzedAt: new Date().toISOString()
+        };
+
+        // 更新頁面列表
+        setPages(prev => prev.map(p => p.id === page.id ? updatedPage : p));
+        
+        // 如果當前正在查看詳細頁面，也更新選中的頁面
+        if (selectedPage?.id === page.id) {
+          setSelectedPage(updatedPage);
+        }
+
+        toast.success(`${page.title} 分析完成！GEO 分數: ${geoScore}`);
+        
+        // 顯示分析結果詳情
+        if (issues && issues.length > 0) {
+          setTimeout(() => {
+            toast.info(`發現 ${issues.length} 個可優化項目，點擊查看詳情了解更多`);
+          }, 2000);
+        }
       } else {
+        // 分析失敗，恢復原狀態
+        setPages(prev => prev.map(p => p.id === page.id ? page : p));
+        if (selectedPage?.id === page.id) {
+          setSelectedPage(page);
+        }
         toast.error("分析失敗: " + response.message);
       }
     } catch (error: any) {
       console.error('分析頁面錯誤:', error);
+      
+      // 分析失敗，恢復原狀態
+      setPages(prev => prev.map(p => p.id === page.id ? page : p));
+      if (selectedPage?.id === page.id) {
+        setSelectedPage(page);
+      }
+      
       toast.error("分析失敗: " + (error.message || '未知錯誤'));
     } finally {
       setIsAnalyzing(false);
@@ -306,42 +386,204 @@ const Optimization = () => {
               <CardContent>
                 {selectedPage.analysisStatus === 'completed' ? (
                   <div className="space-y-4">
-                    {selectedPage.geoScore && (
-                      <div className="flex items-center justify-between">
-                        <span>GEO 分數</span>
-                        <span className={`font-bold text-lg ${getScoreColor(selectedPage.geoScore)}`}>
-                          {selectedPage.geoScore} / 100
-                        </span>
-                      </div>
-                    )}
-                    
-                    {selectedPage.estimatedImprovement && (
-                      <div className="flex items-center space-x-2">
-                        <TrendingUp className="h-4 w-4 text-green-500" />
-                        <span className="text-sm text-green-600">
-                          預估可提升至 {selectedPage.estimatedImprovement} 分
-                        </span>
+                    {selectedPage.geoScore !== undefined ? (
+                      <>
+                        <div className="flex items-center justify-between p-3 bg-gradient-subtle rounded-lg">
+                          <span className="font-medium">GEO 分數</span>
+                          <span className={`font-bold text-xl ${getScoreColor(selectedPage.geoScore)}`}>
+                            {selectedPage.geoScore} / 100
+                          </span>
+                        </div>
+                        
+                        {selectedPage.estimatedImprovement && (
+                          <div className="flex items-center space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <TrendingUp className="h-5 w-5 text-green-500" />
+                            <div>
+                              <span className="text-sm font-medium text-green-800">
+                                預估優化潛力
+                              </span>
+                              <p className="text-sm text-green-600">
+                                可提升至 {selectedPage.estimatedImprovement} 分 
+                                <span className="font-medium">
+                                  (+{selectedPage.estimatedImprovement - selectedPage.geoScore} 分)
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* GEO分數計算說明 */}
+                        <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
+                          <div className="flex items-center mb-3">
+                            <Info className="h-5 w-5 text-blue-600 mr-2" />
+                            <Label className="text-sm font-medium text-blue-800">
+                              GEO 分數計算說明
+                            </Label>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-blue-800">技術SEO (30%)</h4>
+                              <ul className="text-blue-700 space-y-1 pl-3">
+                                <li>• 網頁載入速度</li>
+                                <li>• 行動裝置適配性</li>
+                                <li>• HTML標籤結構</li>
+                                <li>• SSL安全性</li>
+                              </ul>
+                            </div>
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-blue-800">內容品質 (25%)</h4>
+                              <ul className="text-blue-700 space-y-1 pl-3">
+                                <li>• 標題標籤優化</li>
+                                <li>• 內容長度與深度</li>
+                                <li>• 關鍵字分佈</li>
+                                <li>• 內容原創性</li>
+                              </ul>
+                            </div>
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-blue-800">用戶體驗 (25%)</h4>
+                              <ul className="text-blue-700 space-y-1 pl-3">
+                                <li>• 網站導航結構</li>
+                                <li>• 互動元素設計</li>
+                                <li>• 內容可讀性</li>
+                                <li>• 網頁無障礙性</li>
+                              </ul>
+                            </div>
+                            <div className="space-y-2">
+                              <h4 className="font-medium text-blue-800">搜尋優化 (20%)</h4>
+                              <ul className="text-blue-700 space-y-1 pl-3">
+                                <li>• Meta描述優化</li>
+                                <li>• 內部連結策略</li>
+                                <li>• 圖片Alt標籤</li>
+                                <li>• Schema標記</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 具體優化建議 */}
+                        <div className="border border-purple-200 bg-purple-50 rounded-lg p-4">
+                          <div className="flex items-center mb-3">
+                            <HelpCircle className="h-5 w-5 text-purple-600 mr-2" />
+                            <Label className="text-sm font-medium text-purple-800">
+                              針對此頁面的優化建議
+                            </Label>
+                          </div>
+                          <div className="space-y-3">
+                            {selectedPage.geoScore < 70 && (
+                              <div className="space-y-2">
+                                <h4 className="font-medium text-purple-800">優先處理項目：</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {selectedPage.geoScore < 60 && (
+                                    <div className="bg-red-100 border border-red-200 rounded p-3">
+                                      <h5 className="font-medium text-red-800 mb-2">🚨 高優先級</h5>
+                                      <ul className="text-sm text-red-700 space-y-1">
+                                        <li>• 檢查網頁載入速度（目標 &lt; 3秒）</li>
+                                        <li>• 優化標題標籤（H1, H2 結構）</li>
+                                        <li>• 確保行動裝置相容性</li>
+                                        <li>• 新增或優化 Meta 描述</li>
+                                      </ul>
+                                    </div>
+                                  )}
+                                  {selectedPage.geoScore >= 40 && (
+                                    <div className="bg-yellow-100 border border-yellow-200 rounded p-3">
+                                      <h5 className="font-medium text-yellow-800 mb-2">⚡ 中優先級</h5>
+                                      <ul className="text-sm text-yellow-700 space-y-1">
+                                        <li>• 增加內容長度（建議 &gt; 300字）</li>
+                                        <li>• 優化關鍵字密度（2-4%）</li>
+                                        <li>• 新增內部連結</li>
+                                        <li>• 改善圖片 Alt 標籤</li>
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="bg-green-100 border border-green-200 rounded p-3">
+                                  <h5 className="font-medium text-green-800 mb-2">📈 進階優化</h5>
+                                  <ul className="text-sm text-green-700 space-y-1">
+                                    <li>• 實施 Schema.org 結構化標記</li>
+                                    <li>• 優化 Core Web Vitals 指標</li>
+                                    <li>• 建立相關頁面內容集群</li>
+                                    <li>• 增強用戶互動體驗元素</li>
+                                  </ul>
+                                </div>
+                              </div>
+                            )}
+                            {selectedPage.geoScore >= 70 && (
+                              <div className="bg-green-100 border border-green-200 rounded p-3">
+                                <h5 className="font-medium text-green-800 mb-2">🎯 維持優勢</h5>
+                                <ul className="text-sm text-green-700 space-y-1">
+                                  <li>• 定期更新內容保持新鮮度</li>
+                                  <li>• 監控載入速度變化</li>
+                                  <li>• 擴展相關主題內容</li>
+                                  <li>• 優化內部連結網絡</li>
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-4">
+                        <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
+                        <p className="text-sm text-muted-foreground">分析完成，但未獲得評分數據</p>
                       </div>
                     )}
 
-                    {selectedPage.issues && selectedPage.issues.length > 0 && (
-                      <div>
-                        <Label className="text-sm font-medium">發現的問題</Label>
-                        <ul className="mt-2 space-y-1">
+                    {selectedPage.issues && selectedPage.issues.length > 0 ? (
+                      <div className="border border-amber-200 bg-amber-50 rounded-lg p-4">
+                        <div className="flex items-center mb-3">
+                          <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
+                          <Label className="text-sm font-medium text-amber-800">
+                            發現 {selectedPage.issues.length} 個可優化項目
+                          </Label>
+                        </div>
+                        <ul className="space-y-2">
                           {selectedPage.issues.map((issue, index) => (
-                            <li key={index} className="text-sm text-muted-foreground flex items-center">
-                              <AlertTriangle className="h-3 w-3 mr-2 text-yellow-500 flex-shrink-0" />
-                              {issue}
+                            <li key={index} className="text-sm text-amber-700 flex items-start">
+                              <span className="inline-block w-2 h-2 bg-amber-400 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                              <span>{issue}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
-                    )}
+                    ) : selectedPage.geoScore !== undefined ? (
+                      // 根據分數顯示不同的訊息
+                      selectedPage.geoScore >= 70 ? (
+                        <div className="border border-green-200 bg-green-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                            <span className="text-sm font-medium text-green-800">
+                              恭喜！此頁面表現優秀，已達到良好水準
+                            </span>
+                          </div>
+                        </div>
+                      ) : selectedPage.geoScore >= 50 ? (
+                        <div className="border border-yellow-200 bg-yellow-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
+                            <span className="text-sm font-medium text-yellow-800">
+                              此頁面表現一般，仍有優化空間，建議檢查技術SEO和內容品質
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="border border-red-200 bg-red-50 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <XCircle className="h-5 w-5 text-red-600 mr-2" />
+                            <span className="text-sm font-medium text-red-800">
+                              此頁面需要重點改善，建議優先處理基礎SEO、載入速度和內容結構
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    ) : null}
 
                     {selectedPage.lastAnalyzedAt && (
-                      <p className="text-xs text-muted-foreground">
-                        最後分析時間: {new Date(selectedPage.lastAnalyzedAt).toLocaleString('zh-TW')}
-                      </p>
+                      <div className="border-t pt-3">
+                        <p className="text-xs text-muted-foreground flex items-center">
+                          <Clock className="h-3 w-3 mr-1" />
+                          最後分析時間: {new Date(selectedPage.lastAnalyzedAt).toLocaleString('zh-TW')}
+                        </p>
+                      </div>
                     )}
                   </div>
                 ) : selectedPage.analysisStatus === 'analyzing' ? (
@@ -638,6 +880,7 @@ const Optimization = () => {
                       </Button>
                       <Button 
                         onClick={() => setSelectedPage(page)}
+                        size="sm"
                         className="bg-primary text-primary-foreground shadow-glow"
                       >
                         查看詳情

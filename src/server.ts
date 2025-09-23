@@ -22,20 +22,33 @@ if (missingEnvVars.length > 0) {
 }
 
 // Create and start the application
-const app = new App();
-const port = parseInt(process.env.PORT || '8000', 10);
+async function startServer() {
+  try {
+    const app = new App();
+    const port = parseInt(process.env.PORT || '8000', 10);
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (error: Error) => {
-  logger.error('Uncaught Exception:', error);
-  process.exit(1);
-});
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (error: Error) => {
+      logger.error('Uncaught Exception:', error);
+      process.exit(1);
+    });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+      logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+      process.exit(1);
+    });
 
-// Start server
-app.listen(port);
+    // Initialize the application (database, queue system, etc.)
+    await app.initialize();
+
+    // Start server
+    app.listen(port);
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
