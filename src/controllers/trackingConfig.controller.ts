@@ -275,7 +275,7 @@ export class TrackingConfigController {
       if (!existingSettings) {
         // Create new settings with plan-appropriate defaults
         const defaultPlatforms = organization.plan === ORGANIZATION_PLANS.FREE 
-          ? [AI_PLATFORMS.CHATGPT, AI_PLATFORMS.CLAUDE] 
+          ? [AI_PLATFORMS.GEMINI] 
           : Object.values(AI_PLATFORMS);
         
         trackingSettings = await TrackingSettings.create({
