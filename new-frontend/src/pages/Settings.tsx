@@ -15,12 +15,31 @@ import { settingsApi, OrganizationSettings, SecuritySettings, UserPreferences, A
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { authService, User } from "@/lib/api/auth";
+import { ApiKeySettings } from "@/components/settings/ApiKeySettings";
 
 const Settings = () => {
   const { isAuthenticated, user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(false);
+  
+  // Feature flags from environment variables
+  const enableNotifications = import.meta.env.VITE_ENABLE_NOTIFICATIONS_SETTINGS === 'true';
+  const enableIntegrations = import.meta.env.VITE_ENABLE_INTEGRATIONS_SETTINGS === 'true';
+  const enableAppearance = import.meta.env.VITE_ENABLE_APPEARANCE_SETTINGS === 'true';
+  
+  // Create dynamic tabs array based on feature flags
+  const availableTabs = [
+    { value: "general", label: "一般設定" },
+    { value: "profile", label: "個人資料" },
+    { value: "apikeys", label: "AI API Keys" },
+    ...(enableNotifications ? [{ value: "notifications", label: "通知設定" }] : []),
+    { value: "security", label: "安全設定" },
+    ...(enableIntegrations ? [{ value: "integrations", label: "整合設定" }] : []),
+    ...(enableAppearance ? [{ value: "appearance", label: "外觀設定" }] : [])
+  ];
+  
+  const gridColsClass = `grid-cols-${availableTabs.length}`;
   
   // Organization settings state
   const [orgSettings, setOrgSettings] = useState<OrganizationSettings | null>(null);
@@ -374,13 +393,12 @@ const Settings = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="general">一般設定</TabsTrigger>
-            <TabsTrigger value="profile">個人資料</TabsTrigger>
-            <TabsTrigger value="notifications">通知設定</TabsTrigger>
-            <TabsTrigger value="security">安全設定</TabsTrigger>
-            <TabsTrigger value="integrations">整合設定</TabsTrigger>
-            <TabsTrigger value="appearance">外觀設定</TabsTrigger>
+          <TabsList className={`grid w-full ${gridColsClass}`}>
+            {availableTabs.map((tab) => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
@@ -620,101 +638,107 @@ const Settings = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="notifications" className="space-y-6">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="relative mb-6">
-                    <Bell className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Lock className="h-6 w-6 text-primary" />
+          <TabsContent value="apikeys" className="space-y-6">
+            <ApiKeySettings />
+          </TabsContent>
+
+          {enableNotifications && (
+            <TabsContent value="notifications" className="space-y-6">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : !isAuthenticated ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="relative mb-6">
+                      <Bell className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Lock className="h-6 w-6 text-primary" />
+                      </div>
                     </div>
-                  </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理通知設定</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可設定電子郵件通知、推播通知和提醒偏好</p>
-                  <div className="space-y-3">
-                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      立即登入
-                    </Button>
+                    <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理通知設定</p>
+                    <p className="text-sm text-muted-foreground mb-6">登入後即可設定電子郵件通知、推播通知和提醒偏好</p>
+                    <div className="space-y-3">
+                      <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        立即登入
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    通知偏好設定
-                  </CardTitle>
-                  <CardDescription>選擇您希望接收的通知類型</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">電子郵件通知</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>SEO 警報</Label>
-                          <p className="text-sm text-muted-foreground">當網站出現SEO問題時通知</p>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bell className="h-5 w-5" />
+                      通知偏好設定
+                    </CardTitle>
+                    <CardDescription>選擇您希望接收的通知類型</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">電子郵件通知</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>SEO 警報</Label>
+                            <p className="text-sm text-muted-foreground">當網站出現SEO問題時通知</p>
+                          </div>
+                          <Switch defaultChecked />
                         </div>
-                        <Switch defaultChecked />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>排名變化</Label>
-                          <p className="text-sm text-muted-foreground">關鍵字排名重大變化通知</p>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>排名變化</Label>
+                            <p className="text-sm text-muted-foreground">關鍵字排名重大變化通知</p>
+                          </div>
+                          <Switch defaultChecked />
                         </div>
-                        <Switch defaultChecked />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>週報</Label>
-                          <p className="text-sm text-muted-foreground">每週SEO表現摘要報告</p>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>週報</Label>
+                            <p className="text-sm text-muted-foreground">每週SEO表現摘要報告</p>
+                          </div>
+                          <Switch />
                         </div>
-                        <Switch />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>月報</Label>
-                          <p className="text-sm text-muted-foreground">每月詳細分析報告</p>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>月報</Label>
+                            <p className="text-sm text-muted-foreground">每月詳細分析報告</p>
+                          </div>
+                          <Switch defaultChecked />
                         </div>
-                        <Switch defaultChecked />
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">推播通知</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>即時警報</Label>
-                          <p className="text-sm text-muted-foreground">重要事件的即時推播通知</p>
-                        </div>
-                        <Switch />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>任務提醒</Label>
-                          <p className="text-sm text-muted-foreground">優化任務和截止日期提醒</p>
-                        </div>
-                        <Switch defaultChecked />
                       </div>
                     </div>
-                  </div>
 
-                  <Button>儲存通知設定</Button>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+                    <Separator />
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">推播通知</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>即時警報</Label>
+                            <p className="text-sm text-muted-foreground">重要事件的即時推播通知</p>
+                          </div>
+                          <Switch />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>任務提醒</Label>
+                            <p className="text-sm text-muted-foreground">優化任務和截止日期提醒</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button>儲存通知設定</Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          )}
 
           <TabsContent value="security" className="space-y-6">
             {loading ? (
@@ -902,188 +926,192 @@ const Settings = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="integrations" className="space-y-6">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="relative mb-6">
-                    <Globe className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Lock className="h-6 w-6 text-primary" />
-                    </div>
-                  </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理整合設定</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可連接和管理第三方服務整合</p>
-                  <div className="space-y-3">
-                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      立即登入
-                    </Button>
-                  </div>
+          {enableIntegrations && (
+            <TabsContent value="integrations" className="space-y-6">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-              </div>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="h-5 w-5" />
-                    第三方整合
-                  </CardTitle>
-                  <CardDescription>連接外部服務和工具</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    {[
-                      { name: "Google Analytics", status: "已連接", description: "網站流量分析" },
-                      { name: "Google Search Console", status: "未連接", description: "搜尋引擎數據" },
-                      { name: "Facebook Pixel", status: "已連接", description: "社群媒體追蹤" },
-                      { name: "Google Ads", status: "未連接", description: "廣告效果追蹤" }
-                    ].map((integration, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                        <div>
-                          <h4 className="font-medium">{integration.name}</h4>
-                          <p className="text-sm text-muted-foreground">{integration.description}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`text-sm ${integration.status === "已連接" ? "text-green-600" : "text-muted-foreground"}`}>
-                            {integration.status}
-                          </span>
-                          <Button size="sm" variant={integration.status === "已連接" ? "outline" : "default"}>
-                            {integration.status === "已連接" ? "管理" : "連接"}
-                          </Button>
-                        </div>
+              ) : !isAuthenticated ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="relative mb-6">
+                      <Globe className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Lock className="h-6 w-6 text-primary" />
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="appearance" className="space-y-6">
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : !isAuthenticated ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center">
-                  <div className="relative mb-6">
-                    <Palette className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Lock className="h-6 w-6 text-primary" />
                     </div>
-                  </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能自訂外觀</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可設定主題、顯示偏好和儀表板配置</p>
-                  <div className="space-y-3">
-                    <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
-                      <UserIcon className="mr-2 h-4 w-4" />
-                      立即登入
-                    </Button>
-                    <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Palette className="h-5 w-5" />
-                    外觀設定
-                  </CardTitle>
-                  <CardDescription>自訂應用程式的外觀和主題</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">主題設定</h3>
-                    <div className="space-y-2">
-                      <Label>主題模式</Label>
-                      <Select value={preferencesForm.theme} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, theme: value })}>
-                        <SelectTrigger className="w-40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="light">淺色模式</SelectItem>
-                          <SelectItem value="dark">深色模式</SelectItem>
-                          <SelectItem value="system">跟隨系統</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">顯示設定</h3>
+                    <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理整合設定</p>
+                    <p className="text-sm text-muted-foreground mb-6">登入後即可連接和管理第三方服務整合</p>
                     <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>緊湊模式</Label>
-                          <p className="text-sm text-muted-foreground">減少介面元素間距</p>
-                        </div>
-                        <Switch 
-                          checked={preferencesForm.compactMode}
-                          onCheckedChange={(checked) => setPreferencesForm({ ...preferencesForm, compactMode: checked })}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>動畫效果</Label>
-                          <p className="text-sm text-muted-foreground">啟用介面動畫和轉場效果</p>
-                        </div>
-                        <Switch 
-                          checked={preferencesForm.animations}
-                          onCheckedChange={(checked) => setPreferencesForm({ ...preferencesForm, animations: checked })}
-                        />
-                      </div>
+                      <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        立即登入
+                      </Button>
                     </div>
                   </div>
+                </div>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="h-5 w-5" />
+                      第三方整合
+                    </CardTitle>
+                    <CardDescription>連接外部服務和工具</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      {[
+                        { name: "Google Analytics", status: "已連接", description: "網站流量分析" },
+                        { name: "Google Search Console", status: "未連接", description: "搜尋引擎數據" },
+                        { name: "Facebook Pixel", status: "已連接", description: "社群媒體追蹤" },
+                        { name: "Google Ads", status: "未連接", description: "廣告效果追蹤" }
+                      ].map((integration, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                          <div>
+                            <h4 className="font-medium">{integration.name}</h4>
+                            <p className="text-sm text-muted-foreground">{integration.description}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm ${integration.status === "已連接" ? "text-green-600" : "text-muted-foreground"}`}>
+                              {integration.status}
+                            </span>
+                            <Button size="sm" variant={integration.status === "已連接" ? "outline" : "default"}>
+                              {integration.status === "已連接" ? "管理" : "連接"}
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          )}
 
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">儀表板設定</h3>
-                    <div className="grid grid-cols-2 gap-4">
+          {enableAppearance && (
+            <TabsContent value="appearance" className="space-y-6">
+              {loading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : !isAuthenticated ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="relative mb-6">
+                      <Palette className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Lock className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                    <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能自訂外觀</p>
+                    <p className="text-sm text-muted-foreground mb-6">登入後即可設定主題、顯示偏好和儀表板配置</p>
+                    <div className="space-y-3">
+                      <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        立即登入
+                      </Button>
+                      <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Palette className="h-5 w-5" />
+                      外觀設定
+                    </CardTitle>
+                    <CardDescription>自訂應用程式的外觀和主題</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">主題設定</h3>
                       <div className="space-y-2">
-                        <Label>預設檢視</Label>
-                        <Select value={preferencesForm.defaultView} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, defaultView: value })}>
-                          <SelectTrigger>
+                        <Label>主題模式</Label>
+                        <Select value={preferencesForm.theme} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, theme: value })}>
+                          <SelectTrigger className="w-40">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="overview">總覽</SelectItem>
-                            <SelectItem value="analytics">分析</SelectItem>
-                            <SelectItem value="reports">報告</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>每頁項目數</Label>
-                        <Select value={preferencesForm.itemsPerPage.toString()} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, itemsPerPage: parseInt(value) })}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5">5 項</SelectItem>
-                            <SelectItem value="10">10 項</SelectItem>
-                            <SelectItem value="25">25 項</SelectItem>
-                            <SelectItem value="50">50 項</SelectItem>
+                            <SelectItem value="light">淺色模式</SelectItem>
+                            <SelectItem value="dark">深色模式</SelectItem>
+                            <SelectItem value="system">跟隨系統</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-                  </div>
 
-                  <Button onClick={handleSavePreferences}>儲存外觀設定</Button>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
+                    <Separator />
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">顯示設定</h3>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>緊湊模式</Label>
+                            <p className="text-sm text-muted-foreground">減少介面元素間距</p>
+                          </div>
+                          <Switch 
+                            checked={preferencesForm.compactMode}
+                            onCheckedChange={(checked) => setPreferencesForm({ ...preferencesForm, compactMode: checked })}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label>動畫效果</Label>
+                            <p className="text-sm text-muted-foreground">啟用介面動畫和轉場效果</p>
+                          </div>
+                          <Switch 
+                            checked={preferencesForm.animations}
+                            onCheckedChange={(checked) => setPreferencesForm({ ...preferencesForm, animations: checked })}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">儀表板設定</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>預設檢視</Label>
+                          <Select value={preferencesForm.defaultView} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, defaultView: value })}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="overview">總覽</SelectItem>
+                              <SelectItem value="analytics">分析</SelectItem>
+                              <SelectItem value="reports">報告</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>每頁項目數</Label>
+                          <Select value={preferencesForm.itemsPerPage.toString()} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, itemsPerPage: parseInt(value) })}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5">5 項</SelectItem>
+                              <SelectItem value="10">10 項</SelectItem>
+                              <SelectItem value="25">25 項</SelectItem>
+                              <SelectItem value="50">50 項</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button onClick={handleSavePreferences}>儲存外觀設定</Button>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          )}
         </Tabs>
 
         {/* 2FA Setup Dialog */}

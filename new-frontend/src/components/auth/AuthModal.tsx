@@ -52,8 +52,8 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
           title: "登入成功",
           description: "歡迎回來！",
         });
-        onSuccess?.();
-        onClose();
+        // 強制更新頁面狀態
+        window.location.reload();
       } else {
         toast({
           title: "登入失敗",
@@ -87,10 +87,22 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
       return;
     }
 
+    // 驗證密碼強度
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
     if (registerForm.password.length < 6) {
       toast({
         title: "密碼太短",
         description: "密碼至少需要6個字元",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    if (!passwordRegex.test(registerForm.password)) {
+      toast({
+        title: "密碼格式錯誤",
+        description: "密碼必須包含大寫字母、小寫字母和數字",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -106,8 +118,8 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
           title: "註冊成功",
           description: "歡迎加入 GEO Master！",
         });
-        onSuccess?.();
-        onClose();
+        // 強制更新頁面狀態
+        window.location.reload();
       } else {
         toast({
           title: "註冊失敗",
@@ -270,7 +282,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                       <Input
                         id="register-password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="至少6個字元"
+                        placeholder="請輸入密碼"
                         className="pl-10 pr-10"
                         value={registerForm.password}
                         onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
@@ -284,6 +296,15 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
+                    </div>
+                    <div className="text-xs text-gray-500 space-y-1">
+                      <p>密碼必須包含：</p>
+                      <ul className="ml-2 space-y-0.5">
+                        <li>• 至少一個小寫字母 (a-z)</li>
+                        <li>• 至少一個大寫字母 (A-Z)</li>
+                        <li>• 至少一個數字 (0-9)</li>
+                        <li>• 最少6個字元</li>
+                      </ul>
                     </div>
                   </div>
                   <div className="space-y-2">

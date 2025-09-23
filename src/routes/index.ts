@@ -18,6 +18,7 @@ import mlOptimizationRoutes from './mlOptimization.routes';
 import integrationsRoutes from './integrations.routes';
 import abTestingRoutes from './abTesting.routes';
 import invitationRoutes from './invitation.routes';
+import platformSettingsRoutes from './platformSettings.routes';
 
 const router = Router();
 
@@ -36,6 +37,7 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/team', teamRoutes);
 router.use('/invitations', invitationRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/platforms', platformSettingsRoutes);
 router.use('/alerts', alertRoutes);
 router.use('/alerts', alertsRoutes);
 router.use('/analytics', analyticsRoutes);

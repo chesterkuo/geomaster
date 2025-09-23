@@ -466,7 +466,7 @@ const AISearch = () => {
                       <h4 className="font-medium">AI 平台：</h4>
                       {organization?.plan === 'free' && (
                         <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
-                          免費方案限制：最多2個平台
+                          免費方案限制：僅限 Gemini 平台
                         </div>
                       )}
                       {organization?.plan && organization.plan !== 'free' && (
@@ -480,74 +480,71 @@ const AISearch = () => {
                         <Checkbox 
                           id="chatgpt" 
                           checked={selectedPlatforms.chatgpt}
+                          disabled={organization?.plan === 'free'}
                           onCheckedChange={(checked) => {
-                            // 如果嘗試啟用平台，檢查是否已達到限制
-                            if (checked) {
-                              const currentEnabled = Object.values(selectedPlatforms).filter(Boolean).length;
-                              const maxPlatforms = organization?.plan === 'free' ? 2 : -1; // -1 = unlimited
-                              if (maxPlatforms !== -1 && currentEnabled >= maxPlatforms) {
-                                toast.error(`${organization?.plan || '免費'}方案最多可選擇${maxPlatforms}個AI平台。請升級方案以選擇更多平台。`);
-                                return;
-                              }
+                            // 免費方案不允許選擇 ChatGPT
+                            if (organization?.plan === 'free') {
+                              toast.error('免費方案僅限使用 Gemini 平台。請升級方案以使用其他AI平台。');
+                              return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, chatgpt: checked as boolean});
                           }}
                         />
-                        <label htmlFor="chatgpt" className="text-sm">ChatGPT</label>
+                        <label htmlFor="chatgpt" className={`text-sm ${organization?.plan === 'free' ? 'text-gray-400' : ''}`}>
+                          ChatGPT
+                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-amber-600">(需升級)</span>}
+                        </label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           id="gemini" 
                           checked={selectedPlatforms.gemini}
                           onCheckedChange={(checked) => {
-                            if (checked) {
-                              const currentEnabled = Object.values(selectedPlatforms).filter(Boolean).length;
-                              const maxPlatforms = organization?.plan === 'free' ? 2 : -1; // -1 = unlimited
-                              if (maxPlatforms !== -1 && currentEnabled >= maxPlatforms) {
-                                toast.error(`${organization?.plan || '免費'}方案最多可選擇${maxPlatforms}個AI平台。請升級方案以選擇更多平台。`);
-                                return;
-                              }
-                            }
                             setSelectedPlatforms({...selectedPlatforms, gemini: checked as boolean});
                           }}
                         />
-                        <label htmlFor="gemini" className="text-sm">Gemini</label>
+                        <label htmlFor="gemini" className="text-sm">
+                          Gemini
+                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-green-600">(免費)</span>}
+                        </label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           id="perplexity" 
                           checked={selectedPlatforms.perplexity}
+                          disabled={organization?.plan === 'free'}
                           onCheckedChange={(checked) => {
-                            if (checked) {
-                              const currentEnabled = Object.values(selectedPlatforms).filter(Boolean).length;
-                              const maxPlatforms = organization?.plan === 'free' ? 2 : -1; // -1 = unlimited
-                              if (maxPlatforms !== -1 && currentEnabled >= maxPlatforms) {
-                                toast.error(`${organization?.plan || '免費'}方案最多可選擇${maxPlatforms}個AI平台。請升級方案以選擇更多平台。`);
-                                return;
-                              }
+                            // 免費方案不允許選擇 Perplexity
+                            if (organization?.plan === 'free') {
+                              toast.error('免費方案僅限使用 Gemini 平台。請升級方案以使用其他AI平台。');
+                              return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, perplexity: checked as boolean});
                           }}
                         />
-                        <label htmlFor="perplexity" className="text-sm">Perplexity</label>
+                        <label htmlFor="perplexity" className={`text-sm ${organization?.plan === 'free' ? 'text-gray-400' : ''}`}>
+                          Perplexity
+                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-amber-600">(需升級)</span>}
+                        </label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           id="claude" 
                           checked={selectedPlatforms.claude}
+                          disabled={organization?.plan === 'free'}
                           onCheckedChange={(checked) => {
-                            if (checked) {
-                              const currentEnabled = Object.values(selectedPlatforms).filter(Boolean).length;
-                              const maxPlatforms = organization?.plan === 'free' ? 2 : -1; // -1 = unlimited
-                              if (maxPlatforms !== -1 && currentEnabled >= maxPlatforms) {
-                                toast.error(`${organization?.plan || '免費'}方案最多可選擇${maxPlatforms}個AI平台。請升級方案以選擇更多平台。`);
-                                return;
-                              }
+                            // 免費方案不允許選擇 Claude
+                            if (organization?.plan === 'free') {
+                              toast.error('免費方案僅限使用 Gemini 平台。請升級方案以使用其他AI平台。');
+                              return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, claude: checked as boolean});
                           }}
                         />
-                        <label htmlFor="claude" className="text-sm">Claude</label>
+                        <label htmlFor="claude" className={`text-sm ${organization?.plan === 'free' ? 'text-gray-400' : ''}`}>
+                          Claude
+                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-amber-600">(需升級)</span>}
+                        </label>
                       </div>
                     </div>
                   </div>
@@ -572,9 +569,12 @@ const AISearch = () => {
                         return;
                       }
                       
-                      if (enabledPlatforms.length > 2) {
-                        toast.error('免費方案最多可選擇2個AI平台，請升級方案以使用更多平台');
-                        return;
+                      // 免費方案只允許使用 Gemini
+                      if (organization?.plan === 'free') {
+                        if (enabledPlatforms.length > 1 || !enabledPlatforms.includes('gemini')) {
+                          toast.error('免費方案僅限使用 Gemini 平台，請升級方案以使用其他AI平台');
+                          return;
+                        }
                       }
                       
                       if (keywords.length === 0) {
