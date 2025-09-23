@@ -78,6 +78,36 @@ export function ApiKeySettings() {
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
+  // Utility function to ensure fixed-length API key display
+  const normalizeApiKeyDisplay = (apiKeyMasked: string | undefined): string => {
+    if (!apiKeyMasked) return '';
+    
+    // If already in correct format (4 chars + 8 stars + 4 chars = 16 total), return as is
+    if (apiKeyMasked.length === 16 && /^.{4}\*{8}.{4}$/.test(apiKeyMasked)) {
+      return apiKeyMasked;
+    }
+    
+    // Handle legacy formats like "***1234" or other patterns
+    if (apiKeyMasked.includes('***')) {
+      const parts = apiKeyMasked.split('***');
+      if (parts.length === 2 && parts[1].length >= 4) {
+        const start = parts[0].substring(0, 4) || '****';
+        const end = parts[1].substring(parts[1].length - 4);
+        return `${start.padEnd(4, '*')}********${end}`;
+      }
+    }
+    
+    // For any other format, try to extract meaningful parts
+    if (apiKeyMasked.length >= 8) {
+      const start = apiKeyMasked.substring(0, 4);
+      const end = apiKeyMasked.substring(apiKeyMasked.length - 4);
+      return `${start}********${end}`;
+    }
+    
+    // Fallback for very short keys
+    return '****-***-****';
+  };
+
   useEffect(() => {
     loadPlatformSettings();
   }, []);
@@ -197,7 +227,9 @@ export function ApiKeySettings() {
           }
         });
         
-        // 關閉對話框並重新載入設定作為備份
+        // 清空敏感資料並關閉對話框
+        setApiKey('');
+        setValidationResult(null);
         setDialogOpen(false);
         await loadPlatformSettings();
       } else {
@@ -356,7 +388,7 @@ export function ApiKeySettings() {
                         <span className="text-sm text-green-600">API Key 已設定</span>
                         {setting?.apiKeyMasked && (
                           <span className="text-xs text-gray-500 font-mono">
-                            {setting.apiKeyMasked}
+                            {normalizeApiKeyDisplay(setting.apiKeyMasked)}
                           </span>
                         )}
                       </div>

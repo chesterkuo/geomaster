@@ -366,7 +366,7 @@ export class PlatformSettingsController {
     const key = crypto.scryptSync(secretKey, 'salt', 32);
     const iv = crypto.randomBytes(16);
     
-    const cipher = crypto.createCipher(algorithm, key);
+    const cipher = crypto.createCipherGCM(algorithm, key, iv);
     cipher.setAAD(Buffer.from('api-key'));
     
     let encrypted = cipher.update(apiKey, 'utf8', 'hex');
@@ -390,7 +390,7 @@ export class PlatformSettingsController {
       const iv = Buffer.from(ivHex, 'hex');
       const authTag = Buffer.from(authTagHex, 'hex');
       
-      const decipher = crypto.createDecipher(algorithm, key);
+      const decipher = crypto.createDecipherGCM(algorithm, key, iv);
       decipher.setAAD(Buffer.from('api-key'));
       decipher.setAuthTag(authTag);
       
@@ -408,12 +408,13 @@ export class PlatformSettingsController {
    * Mask API key for display purposes
    */
   private maskApiKey(apiKey: string): string {
-    if (apiKey.length <= 8) {
+    if (!apiKey || apiKey.length <= 8) {
       return '***';
     }
     const start = apiKey.substring(0, 4);
     const end = apiKey.substring(apiKey.length - 4);
-    const middle = '*'.repeat(Math.max(apiKey.length - 8, 4));
+    // Fixed length display: 4 start + 8 asterisks + 4 end = 16 characters total
+    const middle = '*'.repeat(8);
     return `${start}${middle}${end}`;
   }
 }

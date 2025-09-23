@@ -268,7 +268,7 @@ export class ApiKeyValidationService {
         return {
           format: 'Starts with "sk-ant-" followed by additional characters',
           example: 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-          documentation: 'https://docs.anthropic.com/claude/reference/getting-started'
+          documentation: 'https://docs.claude.com/en/home'
         };
       
       case 'perplexity':

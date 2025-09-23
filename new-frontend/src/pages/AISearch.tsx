@@ -41,6 +41,32 @@ import { AuthModal } from "@/components/auth/AuthModal";
 const AISearch = () => {
   const { isAuthenticated, organization } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+
+  // Helper function to check if a platform is available (considering API keys)
+  const isPlatformAvailable = (platform: string): { available: boolean; hasApiKey: boolean; message: string } => {
+    const platformSetting = platformSettings.find(p => p.platform === platform);
+    const hasApiKey = platformSetting?.hasApiKey || false;
+    
+    // Debug logging
+    console.log(`Platform: ${platform}, Setting:`, platformSetting, `HasApiKey: ${hasApiKey}`);
+    
+    // If organization is not on free plan, all platforms are available
+    if (organization?.plan !== 'free') {
+      return { available: true, hasApiKey, message: `${organization?.plan} 方案` };
+    }
+    
+    // For free plan users
+    if (platform === 'gemini') {
+      return { available: true, hasApiKey, message: '免費' };
+    }
+    
+    // For paid-only platforms on free plan
+    if (hasApiKey) {
+      return { available: true, hasApiKey: true, message: '使用您的 API Key' };
+    }
+    
+    return { available: false, hasApiKey: false, message: '需升級或設定 API Key' };
+  };
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [trackingSettings, setTrackingSettings] = useState<TrackingSettings | null>(null);
@@ -105,7 +131,10 @@ const AISearch = () => {
       if (competitorsRes.success) setCompetitors(competitorsRes.data.competitors || []);
       if (trackingRes.success) setTrackingSettings(trackingRes.data);
       if (platformsRes.success) {
+        console.log('Platform settings from API:', platformsRes.data);
         setPlatformSettings(platformsRes.data);
+        // Store in localStorage for console debugging
+        localStorage.setItem('platformSettings', JSON.stringify(platformsRes.data));
         // Update selected platforms based on API data
         const platformMap: any = {};
         platformsRes.data.forEach(p => {
@@ -466,7 +495,7 @@ const AISearch = () => {
                       <h4 className="font-medium">AI 平台：</h4>
                       {organization?.plan === 'free' && (
                         <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
-                          免費方案限制：僅限 Gemini 平台
+                          免費方案：設定 API Key 可使用所有平台
                         </div>
                       )}
                       {organization?.plan && organization.plan !== 'free' && (
@@ -480,19 +509,19 @@ const AISearch = () => {
                         <Checkbox 
                           id="chatgpt" 
                           checked={selectedPlatforms.chatgpt}
-                          disabled={organization?.plan === 'free'}
+                          disabled={!isPlatformAvailable('chatgpt').available}
                           onCheckedChange={(checked) => {
-                            // 免費方案不允許選擇 ChatGPT
-                            if (organization?.plan === 'free') {
-                              toast.error('免費方案僅限使用 Gemini 平台。請升級方案以使用其他AI平台。');
+                            const platformStatus = isPlatformAvailable('chatgpt');
+                            if (!platformStatus.available) {
+                              toast.error('ChatGPT 需要升級方案或設定您的 API Key。');
                               return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, chatgpt: checked as boolean});
                           }}
                         />
-                        <label htmlFor="chatgpt" className={`text-sm ${organization?.plan === 'free' ? 'text-gray-400' : ''}`}>
+                        <label htmlFor="chatgpt" className={`text-sm ${!isPlatformAvailable('chatgpt').available ? 'text-gray-400' : ''}`}>
                           ChatGPT
-                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-amber-600">(需升級)</span>}
+                          <span className="ml-2 text-xs text-amber-600">({isPlatformAvailable('chatgpt').message})</span>
                         </label>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -512,38 +541,38 @@ const AISearch = () => {
                         <Checkbox 
                           id="perplexity" 
                           checked={selectedPlatforms.perplexity}
-                          disabled={organization?.plan === 'free'}
+                          disabled={!isPlatformAvailable('perplexity').available}
                           onCheckedChange={(checked) => {
-                            // 免費方案不允許選擇 Perplexity
-                            if (organization?.plan === 'free') {
-                              toast.error('免費方案僅限使用 Gemini 平台。請升級方案以使用其他AI平台。');
+                            const platformStatus = isPlatformAvailable('perplexity');
+                            if (!platformStatus.available) {
+                              toast.error('Perplexity 需要升級方案或設定您的 API Key。');
                               return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, perplexity: checked as boolean});
                           }}
                         />
-                        <label htmlFor="perplexity" className={`text-sm ${organization?.plan === 'free' ? 'text-gray-400' : ''}`}>
+                        <label htmlFor="perplexity" className={`text-sm ${!isPlatformAvailable('perplexity').available ? 'text-gray-400' : ''}`}>
                           Perplexity
-                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-amber-600">(需升級)</span>}
+                          <span className="ml-2 text-xs text-amber-600">({isPlatformAvailable('perplexity').message})</span>
                         </label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           id="claude" 
                           checked={selectedPlatforms.claude}
-                          disabled={organization?.plan === 'free'}
+                          disabled={!isPlatformAvailable('claude').available}
                           onCheckedChange={(checked) => {
-                            // 免費方案不允許選擇 Claude
-                            if (organization?.plan === 'free') {
-                              toast.error('免費方案僅限使用 Gemini 平台。請升級方案以使用其他AI平台。');
+                            const platformStatus = isPlatformAvailable('claude');
+                            if (!platformStatus.available) {
+                              toast.error('Claude 需要升級方案或設定您的 API Key。');
                               return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, claude: checked as boolean});
                           }}
                         />
-                        <label htmlFor="claude" className={`text-sm ${organization?.plan === 'free' ? 'text-gray-400' : ''}`}>
+                        <label htmlFor="claude" className={`text-sm ${!isPlatformAvailable('claude').available ? 'text-gray-400' : ''}`}>
                           Claude
-                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-amber-600">(需升級)</span>}
+                          <span className="ml-2 text-xs text-amber-600">({isPlatformAvailable('claude').message})</span>
                         </label>
                       </div>
                     </div>
@@ -569,12 +598,23 @@ const AISearch = () => {
                         return;
                       }
                       
-                      // 免費方案只允許使用 Gemini
-                      if (organization?.plan === 'free') {
-                        if (enabledPlatforms.length > 1 || !enabledPlatforms.includes('gemini')) {
-                          toast.error('免費方案僅限使用 Gemini 平台，請升級方案以使用其他AI平台');
-                          return;
-                        }
+                      // 檢查選中的平台是否都可用
+                      const unavailablePlatforms = enabledPlatforms.filter(platform => 
+                        !isPlatformAvailable(platform).available
+                      );
+                      
+                      if (unavailablePlatforms.length > 0) {
+                        const platformNames = unavailablePlatforms.map(p => {
+                          switch(p) {
+                            case 'chatgpt': return 'ChatGPT';
+                            case 'claude': return 'Claude';
+                            case 'perplexity': return 'Perplexity';
+                            case 'gemini': return 'Gemini';
+                            default: return p;
+                          }
+                        }).join(', ');
+                        toast.error(`${platformNames} 需要升級方案或設定 API Key 才能使用`);
+                        return;
                       }
                       
                       if (keywords.length === 0) {

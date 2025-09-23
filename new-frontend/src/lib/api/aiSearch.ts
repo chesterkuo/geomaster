@@ -95,7 +95,8 @@ export interface PlatformSettings {
   platform: 'chatgpt' | 'gemini' | 'perplexity' | 'claude';
   enabled: boolean;
   settings: Record<string, any>;
-  apiKey?: string;
+  hasApiKey?: boolean;
+  apiKeyMasked?: string;
   lastSync?: string;
   createdAt: string;
   updatedAt: string;

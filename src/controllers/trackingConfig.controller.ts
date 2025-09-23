@@ -102,7 +102,11 @@ export class TrackingConfigController {
   // Helper method to mask API keys securely
   private maskApiKey(apiKey: string | null | undefined): string | undefined {
     if (!apiKey || apiKey.length < 8) return undefined;
-    return '***' + apiKey.slice(-4);
+    const start = apiKey.substring(0, 4);
+    const end = apiKey.substring(apiKey.length - 4);
+    // Fixed length display: 4 start + 8 asterisks + 4 end = 16 characters total
+    const middle = '*'.repeat(8);
+    return `${start}${middle}${end}`;
   }
 
   // Helper method to validate organization access
@@ -113,17 +117,21 @@ export class TrackingConfigController {
     return { isValid: true, organizationId: req.organization.id };
   }
 
-  // Helper method to get platform features based on organization plan
-  private getPlatformFeaturesForPlan(platform: AvailablePlatform, organizationPlan: string): AvailablePlatform {
+  // Helper method to get platform features based on organization plan and API key availability
+  private getPlatformFeaturesForPlan(platform: AvailablePlatform, organizationPlan: string, hasApiKey: boolean = false): AvailablePlatform {
     const planKey = organizationPlan as keyof typeof PLAN_LIMITATIONS;
     const planLimits = PLAN_LIMITATIONS[planKey] || PLAN_LIMITATIONS[ORGANIZATION_PLANS.FREE];
     
     const maxRequestsForPlan = Math.floor((platform.maxRequestsPerDay || 100) * planLimits.requestMultiplier);
     
+    // If user has their own API key, they can use any platform regardless of plan
+    const canUseWithApiKey = hasApiKey && platform.requiresApiKey;
+    const isSupportedInFreePlan = organizationPlan === ORGANIZATION_PLANS.FREE ? !platform.pricing?.paidOnly || canUseWithApiKey : platform.supported;
+    
     return {
       ...platform,
       maxRequestsPerDay: maxRequestsForPlan,
-      supported: organizationPlan === ORGANIZATION_PLANS.FREE ? !platform.pricing?.paidOnly : platform.supported
+      supported: isSupportedInFreePlan
     };
   }
   // GET /api/v1/tracking/settings - Get tracking configuration
@@ -401,11 +409,11 @@ export class TrackingConfigController {
         });
       }
 
-      // Check plan limitations for paid-only platforms
-      if (availablePlatform.pricing?.paidOnly && organization.plan === ORGANIZATION_PLANS.FREE) {
+      // Check plan limitations for paid-only platforms, but allow if user has their own API key
+      if (availablePlatform.pricing?.paidOnly && organization.plan === ORGANIZATION_PLANS.FREE && !apiKey && !existingPlatformSettings?.apiKey) {
         return res.status(403).json({
           success: false,
-          error: `Platform '${platform}' is only available for paid plans. Please upgrade your account.`
+          error: `Platform '${platform}' is only available for paid plans. However, you can use it by providing your own API key.`
         });
       }
 
@@ -458,9 +466,11 @@ export class TrackingConfigController {
       // Prepare response with masked sensitive data
       const responseData = {
         ...platformSettings.toJSON(),
-        apiKey: this.maskApiKey(platformSettings.apiKey),
+        apiKeyMasked: this.maskApiKey(platformSettings.apiKey),
         platformInfo: availablePlatform
       };
+      // Remove the actual apiKey from response for security
+      delete responseData.apiKey;
 
       return res.json({
         success: true,
@@ -492,7 +502,8 @@ export class TrackingConfigController {
         Organization.findByPk(organizationId),
         PlatformSettings.findAll({
           where: { organizationId },
-          order: [['platform', 'ASC']]
+          order: [['platform', 'ASC']],
+          attributes: ['id', 'platform', 'enabled', 'settings', 'lastSync', 'createdAt', 'updatedAt', 'organizationId', 'apiKey']
         }),
         TrackingSettings.findOne({ where: { organizationId } })
       ]);
@@ -508,9 +519,10 @@ export class TrackingConfigController {
       const existingPlatforms = existingPlatformSettings.map(p => p.platform);
       
       // Get platforms that should be available for this organization
-      const availablePlatformsForPlan = this.AVAILABLE_PLATFORMS.filter(platform => 
-        this.getPlatformFeaturesForPlan(platform, organization.plan).supported
-      );
+      const availablePlatformsForPlan = this.AVAILABLE_PLATFORMS.filter(platform => {
+        const hasApiKey = existingPlatformSettings.find(p => p.platform === platform.id)?.apiKey;
+        return this.getPlatformFeaturesForPlan(platform, organization.plan, !!hasApiKey).supported;
+      });
       
       const missingPlatforms = availablePlatformsForPlan
         .map(p => p.id)
@@ -531,7 +543,7 @@ export class TrackingConfigController {
             settings: {
               createdAutomatically: true,
               organizationPlan: organization.plan,
-              maxRequestsPerDay: this.getPlatformFeaturesForPlan(platformConfig, organization.plan).maxRequestsPerDay
+              maxRequestsPerDay: this.getPlatformFeaturesForPlan(platformConfig, organization.plan, false).maxRequestsPerDay
             }
           });
         });
@@ -545,11 +557,15 @@ export class TrackingConfigController {
       
       const responseData = await Promise.all(sortedPlatforms.map(async (settings) => {
         const platformConfig = this.AVAILABLE_PLATFORMS.find(p => p.id === settings.platform)!;
-        const enhancedPlatformConfig = this.getPlatformFeaturesForPlan(platformConfig, organization.plan);
+        const enhancedPlatformConfig = this.getPlatformFeaturesForPlan(platformConfig, organization.plan, !!settings.apiKey);
         
+        const settingData = settings.toJSON();
+        // Remove the actual apiKey from response for security
+        delete settingData.apiKey;
         return {
-          ...settings.toJSON(),
-          apiKey: this.maskApiKey(settings.apiKey),
+          ...settingData,
+          apiKeyMasked: this.maskApiKey(settings.apiKey),
+          hasApiKey: settings.apiKey ? true : false,
           platformInfo: enhancedPlatformConfig,
           status: {
             configured: settings.enabled && (settings.apiKey || !platformConfig.requiresApiKey),
@@ -594,8 +610,8 @@ export class TrackingConfigController {
       const [organization, currentPlatformSettings] = await Promise.all([
         Organization.findByPk(organizationId),
         PlatformSettings.findAll({ 
-          where: { organizationId, enabled: true },
-          attributes: ['platform']
+          where: { organizationId },
+          attributes: ['platform', 'enabled', 'apiKey']
         })
       ]);
 
@@ -610,20 +626,24 @@ export class TrackingConfigController {
       
       // Apply plan-specific limitations and enhancements
       const availablePlatformsForOrg = this.AVAILABLE_PLATFORMS.map(platform => {
-        const enhancedPlatform = this.getPlatformFeaturesForPlan(platform, organization.plan);
+        const hasApiKey = currentPlatformSettings.find(ps => ps.platform === platform.id)?.apiKey;
+        const enhancedPlatform = this.getPlatformFeaturesForPlan(platform, organization.plan, !!hasApiKey);
         
         return {
           ...enhancedPlatform,
           status: {
             enabled: enabledPlatforms.includes(platform.id),
             availableInPlan: enhancedPlatform.supported,
-            upgradeRequired: !enhancedPlatform.supported && organization.plan === 'free'
+            upgradeRequired: !enhancedPlatform.supported && organization.plan === 'free',
+            hasApiKey: !!hasApiKey
           },
           // Add plan-specific messaging
           planLimitations: organization.plan === ORGANIZATION_PLANS.FREE ? {
-            message: enhancedPlatform.pricing?.paidOnly 
-              ? 'Upgrade to access this platform'
-              : 'Limited features on free plan',
+            message: enhancedPlatform.pricing?.paidOnly && !hasApiKey
+              ? 'Set up your API key or upgrade to access this platform'
+              : hasApiKey 
+                ? 'Using your own API key'
+                : 'Limited features on free plan',
             upgradeUrl: `/billing/upgrade?platform=${platform.id}`
           } : null
         };
