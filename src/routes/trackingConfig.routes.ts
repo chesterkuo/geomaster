@@ -59,4 +59,18 @@ router.get('/platforms/available',
   trackingConfigController.getAvailablePlatforms.bind(trackingConfigController)
 );
 
+// POST /api/v1/tracking/start - Start manual tracking
+router.post('/start',
+  validateRequest({
+    body: Joi.object({
+      websiteId: commonSchemas.uuid.optional(),
+      keywords: Joi.array().items(Joi.string().trim().min(1).max(100)).min(1).max(50).optional(),
+      platforms: Joi.array().items(
+        Joi.string().valid('chatgpt', 'gemini', 'perplexity', 'claude')
+      ).min(1).max(4).optional()
+    })
+  }),
+  trackingConfigController.startTracking.bind(trackingConfigController)
+);
+
 export default router;

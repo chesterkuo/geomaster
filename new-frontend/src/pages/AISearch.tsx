@@ -45,7 +45,8 @@ const AISearch = () => {
   // Helper function to check if a platform is available (considering API keys)
   const isPlatformAvailable = (platform: string): { available: boolean; hasApiKey: boolean; message: string } => {
     const platformSetting = platformSettings.find(p => p.platform === platform);
-    const hasApiKey = platformSetting?.hasApiKey || false;
+    // Check both hasApiKey field and apiKey field for backward compatibility
+    const hasApiKey = platformSetting?.hasApiKey || (platformSetting?.apiKey && platformSetting.apiKey !== null && platformSetting.apiKey !== '') || false;
     
     // Debug logging
     console.log(`Platform: ${platform}, Setting:`, platformSetting, `HasApiKey: ${hasApiKey}`);

@@ -38,7 +38,7 @@ export class AITrackingJobProcessor {
       }
 
       const competitorData = await Competitor.findAll({
-        where: { websiteId } as any
+        where: { organizationId } as any
       });
 
       await job.progress(20);

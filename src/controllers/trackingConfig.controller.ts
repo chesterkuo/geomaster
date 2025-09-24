@@ -3,9 +3,12 @@ import TrackingSettings from '../models/TrackingSettings';
 import PlatformSettings from '../models/PlatformSettings';
 import Organization from '../models/Organization';
 import Website from '../models/Website';
+import Keyword from '../models/Keyword';
 import { v4 as uuidv4 } from 'uuid';
 import { Op } from 'sequelize';
 import { AI_PLATFORMS, ORGANIZATION_PLANS, PLATFORM_CONFIGS, PLAN_LIMITATIONS } from '../config/constants';
+import { queueManager } from '../services/queue/queueManager';
+import { logger } from '../utils/logger';
 
 // Enhanced TypeScript interfaces for better type safety
 interface AuthRequest extends Request {
@@ -671,6 +674,178 @@ export class TrackingConfigController {
       return res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch available platforms',
+        ...(process.env.NODE_ENV === 'development' && { details: (error as Error).message })
+      });
+    }
+  }
+
+  // POST /api/v1/tracking/start - Start manual tracking
+  async startTracking(req: AuthRequest, res: Response): Promise<Response> {
+    try {
+      const organizationId = req.organization?.id;
+      if (!organizationId) {
+        return res.status(401).json({ 
+          success: false, 
+          error: 'Organization not found' 
+        });
+      }
+
+      // Optional body parameters for customizing the tracking job
+      const { 
+        websiteId, 
+        keywords: customKeywords, 
+        platforms: customPlatforms 
+      }: {
+        websiteId?: string;
+        keywords?: string[];
+        platforms?: string[];
+      } = req.body || {};
+
+      // Fetch organization, tracking settings, and websites
+      const [organization, trackingSettings, websites] = await Promise.all([
+        Organization.findByPk(organizationId),
+        TrackingSettings.findOne({ where: { organizationId } }),
+        websiteId 
+          ? Website.findAll({ where: { id: websiteId, organizationId, isActive: true } })
+          : Website.findAll({ where: { organizationId, isActive: true } })
+      ]);
+
+      if (!organization) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Organization not found' 
+        });
+      }
+
+      if (websites.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: websiteId ? 'Website not found or not active' : 'No active websites found for tracking'
+        });
+      }
+
+      // Get or create default tracking settings
+      let finalTrackingSettings = trackingSettings;
+      if (!finalTrackingSettings) {
+        finalTrackingSettings = await TrackingSettings.create({
+          organizationId,
+          trackingEnabled: true,
+          trackingFrequency: 'daily',
+          platforms: [AI_PLATFORMS.GEMINI],
+          alertsEnabled: false,
+          alertThreshold: 5,
+          alertEmails: [],
+          settings: {}
+        });
+      }
+
+      // Use custom parameters if provided, otherwise use settings
+      const platformsToUse = customPlatforms || finalTrackingSettings.platforms;
+      
+      let keywordsToUse: string[] = [];
+      if (customKeywords && customKeywords.length > 0) {
+        keywordsToUse = customKeywords;
+      } else {
+        // Fetch keywords from database
+        const keywordRecords = await Keyword.findAll({
+          where: { organizationId },
+          attributes: ['keyword']
+        });
+        keywordsToUse = keywordRecords.map(k => k.keyword);
+        
+        // If no keywords in database, use default keywords
+        if (keywordsToUse.length === 0) {
+          keywordsToUse = ['business', 'services', 'solutions'];
+        }
+      }
+
+      if (keywordsToUse.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'No keywords available for tracking. Please add keywords first.'
+        });
+      }
+
+      // Validate platforms
+      const validPlatforms = platformsToUse.filter(p => Object.values(AI_PLATFORMS).includes(p as any));
+      if (validPlatforms.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'No valid platforms specified for tracking'
+        });
+      }
+
+      // Queue tracking jobs for each website
+      const queuedJobs: any[] = [];
+      for (const website of websites) {
+        try {
+          const jobData = {
+            websiteId: website.id,
+            organizationId,
+            keywords: keywordsToUse,
+            platforms: validPlatforms,
+            trackingSettings: {
+              frequency: finalTrackingSettings.trackingFrequency,
+              alertsEnabled: finalTrackingSettings.alertsEnabled,
+              alertThreshold: finalTrackingSettings.alertThreshold,
+              manuallyTriggered: true,
+              triggeredBy: req.user?.id || 'manual'
+            }
+          };
+
+          await queueManager.addTrackingJob(jobData);
+          
+          queuedJobs.push({
+            websiteId: website.id,
+            websiteDomain: website.domain,
+            keywords: keywordsToUse,
+            platforms: validPlatforms,
+            status: 'queued'
+          });
+
+          logger.info(`Manual tracking job queued for website ${website.domain} (${website.id})`, {
+            organizationId,
+            websiteId: website.id,
+            keywordCount: keywordsToUse.length,
+            platformCount: validPlatforms.length,
+            triggeredBy: req.user?.id
+          });
+
+        } catch (error) {
+          logger.error(`Failed to queue tracking job for website ${website.domain}:`, error);
+          queuedJobs.push({
+            websiteId: website.id,
+            websiteDomain: website.domain,
+            status: 'failed',
+            error: (error as Error).message
+          });
+        }
+      }
+
+      const successfulJobs = queuedJobs.filter(job => job.status === 'queued');
+      const failedJobs = queuedJobs.filter(job => job.status === 'failed');
+
+      return res.json({
+        success: true,
+        message: `Manual tracking started for ${successfulJobs.length} website(s)`,
+        data: {
+          summary: {
+            totalWebsites: websites.length,
+            successfulJobs: successfulJobs.length,
+            failedJobs: failedJobs.length,
+            keywords: keywordsToUse,
+            platforms: validPlatforms
+          },
+          jobs: queuedJobs,
+          estimatedProcessingTime: `${successfulJobs.length * 2}-${successfulJobs.length * 5} minutes`
+        }
+      });
+
+    } catch (error) {
+      logger.error('Error starting manual tracking:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to start tracking',
         ...(process.env.NODE_ENV === 'development' && { details: (error as Error).message })
       });
     }
