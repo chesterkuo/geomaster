@@ -285,6 +285,7 @@ const AISearch = () => {
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string | undefined>();
   
   // Fetch visibility data with React Query
+  console.log('📊 Fetching visibility trends with:', { dateRange: visibilityDateRange, websiteId: selectedWebsiteId });
   const { data: visibilityTrends, isLoading: trendsLoading, error: trendsError } = useVisibilityTrends(
     { dateRange: visibilityDateRange, websiteId: selectedWebsiteId },
     { enabled: isAuthenticated }
@@ -848,17 +849,48 @@ const AISearch = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <label className="text-sm font-medium">{t('aiSearch.overview.timeRange')}</label>
-                      <Select value={visibilityDateRange} onValueChange={setVisibilityDateRange}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="7d">{t('aiSearch.timeRanges.7d')}</SelectItem>
-                          <SelectItem value="30d">{t('aiSearch.timeRanges.30d')}</SelectItem>
-                          <SelectItem value="90d">{t('aiSearch.timeRanges.90d')}</SelectItem>
-                          <SelectItem value="12m">{t('aiSearch.timeRanges.12m')}</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={visibilityDateRange === '7d' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            console.log('🔄 Date range changed to: 7d');
+                            setVisibilityDateRange('7d');
+                          }}
+                        >
+                          {t('aiSearch.timeRanges.7d')}
+                        </Button>
+                        <Button
+                          variant={visibilityDateRange === '30d' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            console.log('🔄 Date range changed to: 30d');
+                            setVisibilityDateRange('30d');
+                          }}
+                        >
+                          {t('aiSearch.timeRanges.30d')}
+                        </Button>
+                        <Button
+                          variant={visibilityDateRange === '90d' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            console.log('🔄 Date range changed to: 90d');
+                            setVisibilityDateRange('90d');
+                          }}
+                        >
+                          {t('aiSearch.timeRanges.90d')}
+                        </Button>
+                        <Button
+                          variant={visibilityDateRange === '12m' ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => {
+                            console.log('🔄 Date range changed to: 12m');
+                            setVisibilityDateRange('12m');
+                          }}
+                        >
+                          {t('aiSearch.timeRanges.12m')}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

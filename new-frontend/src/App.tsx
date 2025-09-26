@@ -16,6 +16,7 @@ import Alerts from "./pages/Alerts";
 import InviteAccept from "./pages/InviteAccept";
 import NotFound from "./pages/NotFound";
 import { I18nDemo } from "./components/demo/I18nDemo";
+import { SessionManager } from "./components/auth/SessionManager";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,7 @@ const App = () => (
       <div className="dark">
         <Toaster />
         <Sonner />
+        <SessionManager />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Tracking />} />

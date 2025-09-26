@@ -97,6 +97,10 @@
     "loginSuccess": "Login successful",
     "logoutSuccess": "Logout successful",
     "registerSuccess": "Registration successful",
+    "sessionExpired": "Session Expired",
+    "sessionExpiredDescription": "Your session has expired. You will be redirected to login shortly.",
+    "sessionIssue": "Session Issue",
+    "sessionIssueDescription": "There was an issue with your session. Please refresh the page if problems persist.",
     "accountCreated": "Account created successfully",
     "verifyEmail": "Please verify your email",
     "emailSent": "Verification email sent",
@@ -346,7 +350,12 @@
     "generateDetailedOptimizationReports": "Generate detailed optimization reports and action plans",
     "generateReport": "Generate Report",
     "medium": "Medium",
-    "low": "Low"
+    "low": "Low",
+    "geoMasterReport": "GEO Master Report",
+    "reportGenerationStarted": "Report Generation Started",
+    "reportGenerationDescription": "Your report is being generated. You will be notified when it's ready.",
+    "reportGenerationFailed": "Report Generation Failed",
+    "loginNow": "Login Now"
   },
   "optimization": {
     "title": "Content Optimization",
@@ -683,9 +692,9 @@
     "gapAnalysis": {
       "title": "Gap Analysis",
       "description": "Identify gaps and improvement opportunities compared to competitors",
-      "yourScore": "You: {score}",
-      "averageScore": "Average: {average}",
-      "gap": "Gap: {gap}",
+      "yourScore": "You: {{score}}",
+      "averageScore": "Average: {{average}}",
+      "gap": "Gap: {{gap}}",
       "improvementSuggestions": "Improvement Suggestions:"
     },
     "diagnosis": {
@@ -1200,6 +1209,7 @@
     "generating": "Generating",
     "completed": "Completed",
     "failed": "Generation Failed",
+    "tryAgainLater": "Please try again later",
     "schedule": "Schedule",
     "frequency": "Frequency",
     "daily": "Daily",
@@ -1335,6 +1345,29 @@
     "dates": {
       "unknownDate": "Unknown date",
       "invalidDate": "Invalid date"
+    },
+    "activityActions": {
+      "team.members.list": "Viewed team members",
+      "team.members.invite": "Invited team member",
+      "team.members.update": "Updated team member",
+      "team.members.remove": "Removed team member",
+      "team.invitations.send": "Sent invitation",
+      "team.invitations.resend": "Resent invitation",
+      "team.invitations.cancel": "Cancelled invitation",
+      "platform.api_key.create": "Created API key",
+      "platform.api_key.update": "Updated API key",
+      "platform.api_key.delete": "Deleted API key",
+      "settings.profile.update": "Updated profile",
+      "settings.organization.update": "Updated organization settings",
+      "auth.login": "Logged in",
+      "auth.logout": "Logged out",
+      "website.create": "Created website",
+      "website.update": "Updated website",
+      "website.delete": "Deleted website",
+      "scan.start": "Started scan",
+      "scan.complete": "Completed scan",
+      "report.generate": "Generated report",
+      "report.download": "Downloaded report"
     }
   },
   "alerts": {

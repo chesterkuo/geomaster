@@ -64,7 +64,7 @@ export function useWebSocketAlerts(options: UseWebSocketAlertsOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [recentAlerts, setRecentAlerts] = useState<AlertNotification[]>([]);
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.74.100.10:8000';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.74.100.10:3000';
 
   const connect = () => {
     if (socketRef.current?.connected) {

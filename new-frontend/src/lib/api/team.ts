@@ -138,7 +138,7 @@ export const invitationApi = {
     expiresAt: string;
     invitedBy: string;
   }>> {
-    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/invitations/${token}`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/api/v1/invitations/${token}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ export const invitationApi = {
     organization: string;
     role: string;
   }>> {
-    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api/v1/invitations/${token}/accept`, {
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/api/v1/invitations/${token}/accept`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

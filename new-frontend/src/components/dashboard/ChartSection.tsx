@@ -13,6 +13,7 @@ interface ChartSectionProps {
 export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -35,25 +36,43 @@ export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => 
     }
   };
 
-  // Generate trend data from platform distribution
-  const trendData = isAuthenticated && dashboardData ?
-    [
-      { name: t("common.monday", "Mon"), value: 45 },
-      { name: t("common.tuesday", "Tue"), value: 52 },
-      { name: t("common.wednesday", "Wed"), value: 48 },
-      { name: t("common.thursday", "Thu"), value: 61 },
-      { name: t("common.friday", "Fri"), value: 55 },
-      { name: t("common.saturday", "Sat"), value: 67 },
-      { name: t("common.sunday", "Sun"), value: 58 },
-    ] : [
-      { name: t("common.monday", "Mon"), value: 0 },
-      { name: t("common.tuesday", "Tue"), value: 0 },
-      { name: t("common.wednesday", "Wed"), value: 0 },
-      { name: t("common.thursday", "Thu"), value: 0 },
-      { name: t("common.friday", "Fri"), value: 0 },
-      { name: t("common.saturday", "Sat"), value: 0 },
-      { name: t("common.sunday", "Sun"), value: 0 },
-    ];
+  // Generate trend data based on selected time range
+  const getTrendData = () => {
+    if (!isAuthenticated || !dashboardData) {
+      return Array(7).fill(null).map((_, i) => ({
+        name: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+        value: 0
+      }));
+    }
+
+    // Different data patterns for different time ranges
+    const dataPatterns = {
+      '7d': [
+        { name: t("common.monday", "Mon"), value: 45 },
+        { name: t("common.tuesday", "Tue"), value: 52 },
+        { name: t("common.wednesday", "Wed"), value: 48 },
+        { name: t("common.thursday", "Thu"), value: 61 },
+        { name: t("common.friday", "Fri"), value: 55 },
+        { name: t("common.saturday", "Sat"), value: 67 },
+        { name: t("common.sunday", "Sun"), value: 58 },
+      ],
+      '30d': [
+        { name: 'Week 1', value: 42 },
+        { name: 'Week 2', value: 58 },
+        { name: 'Week 3', value: 65 },
+        { name: 'Week 4', value: 73 },
+      ],
+      '90d': [
+        { name: 'Month 1', value: 35 },
+        { name: 'Month 2', value: 48 },
+        { name: 'Month 3', value: 62 },
+      ]
+    };
+
+    return dataPatterns[timeRange];
+  };
+
+  const trendData = getTrendData();
 
   // Get platform data from API
   const pieData = isAuthenticated && dashboardData ? 
@@ -77,11 +96,36 @@ export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => 
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-foreground">{t("dashboard.aiPlatformVisibilityTrend")}</h3>
           <div className="flex space-x-2">
-            <Button variant="outline" size="sm" className="bg-primary text-primary-foreground border-primary">
+            <Button
+              variant={timeRange === '7d' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                console.log('🔄 Dashboard time range changed to: 7d');
+                setTimeRange('7d');
+              }}
+            >
               {t("dashboard.7days", "7 days")}
             </Button>
-            <Button variant="outline" size="sm">{t("dashboard.30days", "30 days")}</Button>
-            <Button variant="outline" size="sm">{t("dashboard.90days", "90 days")}</Button>
+            <Button
+              variant={timeRange === '30d' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                console.log('🔄 Dashboard time range changed to: 30d');
+                setTimeRange('30d');
+              }}
+            >
+              {t("dashboard.30days", "30 days")}
+            </Button>
+            <Button
+              variant={timeRange === '90d' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                console.log('🔄 Dashboard time range changed to: 90d');
+                setTimeRange('90d');
+              }}
+            >
+              {t("dashboard.90days", "90 days")}
+            </Button>
           </div>
         </div>
 

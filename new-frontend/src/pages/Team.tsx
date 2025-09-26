@@ -271,6 +271,15 @@ const Team = () => {
     return permissionMap[permission] || permission;
   };
 
+  const getActivityActionDisplayName = (action: string) => {
+    // Check if the action has a translation key
+    const translationKey = `team.activityActions.${action}`;
+    const translated = t(translationKey);
+
+    // If translation exists (not the same as the key), use it, otherwise return the original action
+    return translated !== translationKey ? translated : action;
+  };
+
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: "default" | "secondary" | "destructive"; text: string }> = {
       'active': { variant: "default", text: t('team.status.active') },
@@ -776,7 +785,7 @@ const Team = () => {
                               {activity.user?.fullName || t('team.activity.system')}
                             </span>
                             <Badge variant="outline" className="text-xs">
-                              {activity.action}
+                              {getActivityActionDisplayName(activity.action)}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mt-1">

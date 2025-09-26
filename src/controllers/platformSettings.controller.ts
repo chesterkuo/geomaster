@@ -380,23 +380,23 @@ export class PlatformSettingsController {
   /**
    * Decrypt API key from storage
    */
-  private decryptApiKey(encryptedApiKey: string): string {
+  public decryptApiKey(encryptedApiKey: string): string {
     try {
       const algorithm = 'aes-256-gcm';
       const secretKey = process.env.API_KEY_ENCRYPTION_KEY || 'default-encryption-key-change-in-production';
       const key = crypto.scryptSync(secretKey, 'salt', 32);
-      
+
       const [ivHex, authTagHex, encrypted] = encryptedApiKey.split(':');
       const iv = Buffer.from(ivHex, 'hex');
       const authTag = Buffer.from(authTagHex, 'hex');
-      
+
       const decipher = crypto.createDecipher('aes-256-gcm', key);
       decipher.setAAD(Buffer.from('api-key'));
       decipher.setAuthTag(authTag);
-      
+
       let decrypted = decipher.update(encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
-      
+
       return decrypted;
     } catch (error) {
       console.error('Error decrypting API key:', error);

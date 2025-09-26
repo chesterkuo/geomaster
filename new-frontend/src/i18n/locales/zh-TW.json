@@ -96,6 +96,10 @@
     "loginSuccess": "登入成功",
     "logoutSuccess": "登出成功",
     "registerSuccess": "註冊成功",
+    "sessionExpired": "會話已過期",
+    "sessionExpiredDescription": "您的會話已過期，即將跳轉到登入頁面。",
+    "sessionIssue": "會話問題",
+    "sessionIssueDescription": "您的會話出現問題，如果問題持續請重新整理頁面。",
     "accountCreated": "帳號建立成功",
     "verifyEmail": "請驗證您的電子郵件",
     "emailSent": "驗證郵件已發送",
@@ -193,7 +197,12 @@
     "generateDetailedOptimizationReports": "生成詳細優化報告和行動計劃",
     "generateReport": "生成報告",
     "medium": "中",
-    "low": "低"
+    "low": "低",
+    "geoMasterReport": "GEO Master 報告",
+    "reportGenerationStarted": "報告生成已開始",
+    "reportGenerationDescription": "您的報告正在生成中。準備就緒後我們將通知您。",
+    "reportGenerationFailed": "報告生成失敗",
+    "loginNow": "立即登入"
   },
   "tracking": {
     "title": "網站掃描",
@@ -744,9 +753,9 @@
     "gapAnalysis": {
       "title": "差距分析",
       "description": "識別與競爭對手的差距和改善機會",
-      "yourScore": "您: {score}",
-      "averageScore": "平均: {average}",
-      "gap": "差距: {gap}",
+      "yourScore": "您: {{score}}",
+      "averageScore": "平均: {{average}}",
+      "gap": "差距: {{gap}}",
       "improvementSuggestions": "改善建議:"
     },
     "diagnosis": {
@@ -1105,6 +1114,7 @@
     "generating": "生成中",
     "completed": "已完成",
     "failed": "生成失敗",
+    "tryAgainLater": "請稍後重試",
     "schedule": "排程",
     "frequency": "頻率",
     "daily": "每日",
@@ -1155,7 +1165,30 @@
     "joinedDate": "加入日期",
     "activityLog": "活動記錄",
     "userActivity": "用戶活動",
-    "systemActivity": "系統活動"
+    "systemActivity": "系統活動",
+    "activityActions": {
+      "team.members.list": "查看團隊成員",
+      "team.members.invite": "邀請團隊成員",
+      "team.members.update": "更新團隊成員",
+      "team.members.remove": "移除團隊成員",
+      "team.invitations.send": "發送邀請",
+      "team.invitations.resend": "重新發送邀請",
+      "team.invitations.cancel": "取消邀請",
+      "platform.api_key.create": "建立API密鑰",
+      "platform.api_key.update": "更新API密鑰",
+      "platform.api_key.delete": "刪除API密鑰",
+      "settings.profile.update": "更新個人資料",
+      "settings.organization.update": "更新組織設定",
+      "auth.login": "登入",
+      "auth.logout": "登出",
+      "website.create": "建立網站",
+      "website.update": "更新網站",
+      "website.delete": "刪除網站",
+      "scan.start": "開始掃描",
+      "scan.complete": "完成掃描",
+      "report.generate": "生成報告",
+      "report.download": "下載報告"
+    }
   },
   "alerts": {
     "title": "警報中心",

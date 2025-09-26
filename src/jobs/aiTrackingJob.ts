@@ -1,9 +1,9 @@
 import { Job } from 'bull';
-import { 
-  AITrackingJobData, 
-  TrackingJobResult, 
+import {
+  AITrackingJobData,
+  TrackingJobResult,
   TrackingResult,
-  QueryParams 
+  QueryParams
 } from '../services/platforms/aiPlatformInterface';
 import { platformFactory } from '../services/platforms/platformFactory';
 import AITrackingResult from '../models/AITrackingResult';
@@ -11,6 +11,7 @@ import Website from '../models/Website';
 import Competitor from '../models/Competitor';
 import { QueryGenerator } from '../services/aiTracking/queryGenerator';
 import { ResultAnalyzer } from '../services/aiTracking/resultAnalyzer';
+import { apiKeyManager } from '../services/apiKeyManagerService';
 
 export class AITrackingJobProcessor {
   private queryGenerator: QueryGenerator;
@@ -66,9 +67,25 @@ export class AITrackingJobProcessor {
         try {
           console.log(`🤖 Processing platform: ${platformName}`);
           
-          // Create platform instance
-          const platform = platformFactory.createPlatformWithDefaults(platformName);
-          
+          // Create platform instance using organization's API key configuration
+          let platform;
+          try {
+            platform = await platformFactory.createPlatformWithApiKeys(platformName, organizationId);
+          } catch (error: any) {
+            console.warn(`⚠️ Platform ${platformName} not available for organization ${organizationId}: ${error.message}`);
+
+            // Add errors for all queries for this platform
+            queries.forEach(query => {
+              errors.push({
+                query: query.query,
+                error: `Platform ${platformName} not available: ${error.message}`,
+                code: 'PLATFORM_NOT_AVAILABLE'
+              });
+            });
+            completedQueries += queries.length;
+            continue;
+          }
+
           // Validate platform is available
           const isAvailable = await platform.isAvailable();
           if (!isAvailable) {

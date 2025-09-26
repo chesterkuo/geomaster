@@ -2,7 +2,6 @@ import Bull from 'bull';
 import { Website, Scan, Content } from '../models';
 import { CrawlerService, CrawlResult } from './crawler.service';
 import { OptimizationService } from './optimization.service';
-import { AITrackingService } from './ai-tracking.service';
 import { logger } from '../utils/logger';
 import { queueRedis } from '../config/redis';
 import { QUEUE_NAMES, SCAN_TYPES, SCAN_STATUS, GEO_SCORING_WEIGHTS } from '../config/constants';
@@ -27,7 +26,6 @@ export class ScanService {
   private scanQueue: Bull.Queue;
   private crawlerService: CrawlerService;
   private optimizationService: OptimizationService;
-  private aiTrackingService: AITrackingService;
 
   constructor() {
     this.scanQueue = new Bull(QUEUE_NAMES.WEBSITE_SCAN, {
@@ -39,7 +37,6 @@ export class ScanService {
 
     this.crawlerService = new CrawlerService();
     this.optimizationService = new OptimizationService();
-    this.aiTrackingService = new AITrackingService();
 
     this.setupQueueProcessors();
   }

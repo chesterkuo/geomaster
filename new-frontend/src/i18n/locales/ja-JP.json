@@ -97,6 +97,10 @@
     "loginSuccess": "ログインに成功しました",
     "logoutSuccess": "ログアウトしました",
     "registerSuccess": "登録に成功しました",
+    "sessionExpired": "セッションが期限切れです",
+    "sessionExpiredDescription": "セッションが期限切れになりました。間もなくログインページにリダイレクトされます。",
+    "sessionIssue": "セッションの問題",
+    "sessionIssueDescription": "セッションに問題が発生しました。問題が続く場合はページを更新してください。",
     "accountCreated": "アカウントが作成されました",
     "verifyEmail": "メールアドレスを確認してください",
     "emailSent": "確認メールを送信しました",
@@ -194,7 +198,12 @@
     "generateDetailedOptimizationReports": "詳細な最適化レポートとアクションプランを生成",
     "generateReport": "レポート生成",
     "medium": "中",
-    "low": "低"
+    "low": "低",
+    "geoMasterReport": "GEO Master レポート",
+    "reportGenerationStarted": "レポート生成開始",
+    "reportGenerationDescription": "レポートを生成中です。準備ができ次第お知らせします。",
+    "reportGenerationFailed": "レポート生成失敗",
+    "loginNow": "今すぐログイン"
   },
   "tracking": {
     "title": "ウェブサイトスキャン",
@@ -678,9 +687,9 @@
     "gapAnalysis": {
       "title": "ギャップ分析",
       "description": "競合他社との差を特定し、改善機会を発見",
-      "yourScore": "あなた：{score}",
-      "averageScore": "平均：{average}",
-      "gap": "差：{gap}",
+      "yourScore": "あなた：{{score}}",
+      "averageScore": "平均：{{average}}",
+      "gap": "差：{{gap}}",
       "improvementSuggestions": "改善提案："
     },
     "diagnosis": {
@@ -1189,6 +1198,7 @@
     "generating": "生成中",
     "completed": "完了",
     "failed": "生成失敗",
+    "tryAgainLater": "しばらくしてから再試行してください",
     "schedule": "スケジュール",
     "frequency": "頻度",
     "daily": "毎日",
@@ -1324,6 +1334,29 @@
     "dates": {
       "unknownDate": "不明な日付",
       "invalidDate": "無効な日付"
+    },
+    "activityActions": {
+      "team.members.list": "チームメンバーを表示",
+      "team.members.invite": "チームメンバーを招待",
+      "team.members.update": "チームメンバーを更新",
+      "team.members.remove": "チームメンバーを削除",
+      "team.invitations.send": "招待を送信",
+      "team.invitations.resend": "招待を再送信",
+      "team.invitations.cancel": "招待をキャンセル",
+      "platform.api_key.create": "APIキーを作成",
+      "platform.api_key.update": "APIキーを更新",
+      "platform.api_key.delete": "APIキーを削除",
+      "settings.profile.update": "プロフィールを更新",
+      "settings.organization.update": "組織設定を更新",
+      "auth.login": "ログイン",
+      "auth.logout": "ログアウト",
+      "website.create": "ウェブサイトを作成",
+      "website.update": "ウェブサイトを更新",
+      "website.delete": "ウェブサイトを削除",
+      "scan.start": "スキャンを開始",
+      "scan.complete": "スキャンを完了",
+      "report.generate": "レポートを生成",
+      "report.download": "レポートをダウンロード"
     }
   },
   "alerts": {

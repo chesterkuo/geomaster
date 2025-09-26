@@ -97,6 +97,10 @@
     "loginSuccess": "登录成功",
     "logoutSuccess": "退出登录成功",
     "registerSuccess": "注册成功",
+    "sessionExpired": "会话已过期",
+    "sessionExpiredDescription": "您的会话已过期，即将跳转到登录页面。",
+    "sessionIssue": "会话问题",
+    "sessionIssueDescription": "您的会话出现问题，如果问题持续请刷新页面。",
     "accountCreated": "账户创建成功",
     "verifyEmail": "请验证您的邮箱",
     "emailSent": "验证邮件已发送",
@@ -194,7 +198,12 @@
     "generateDetailedOptimizationReports": "生成详细的优化报告和行动计划",
     "generateReport": "生成报告",
     "medium": "中",
-    "low": "低"
+    "low": "低",
+    "geoMasterReport": "GEO Master 报告",
+    "reportGenerationStarted": "报告生成已开始",
+    "reportGenerationDescription": "您的报告正在生成中。准备就绪后我们将通知您。",
+    "reportGenerationFailed": "报告生成失败",
+    "loginNow": "立即登录"
   },
   "tracking": {
     "title": "网站扫描",
@@ -678,9 +687,9 @@
     "gapAnalysis": {
       "title": "差距分析",
       "description": "识别与竞争对手的差距和改善机会",
-      "yourScore": "您: {score}",
-      "averageScore": "平均: {average}",
-      "gap": "差距: {gap}",
+      "yourScore": "您: {{score}}",
+      "averageScore": "平均: {{average}}",
+      "gap": "差距: {{gap}}",
       "improvementSuggestions": "改善建议:"
     },
     "diagnosis": {
@@ -1189,6 +1198,7 @@
     "generating": "生成中",
     "completed": "已完成",
     "failed": "生成失败",
+    "tryAgainLater": "请稍后重试",
     "schedule": "调度",
     "frequency": "频率",
     "daily": "每日",
@@ -1324,6 +1334,29 @@
     "dates": {
       "unknownDate": "未知日期",
       "invalidDate": "无效日期"
+    },
+    "activityActions": {
+      "team.members.list": "查看团队成员",
+      "team.members.invite": "邀请团队成员",
+      "team.members.update": "更新团队成员",
+      "team.members.remove": "移除团队成员",
+      "team.invitations.send": "发送邀请",
+      "team.invitations.resend": "重新发送邀请",
+      "team.invitations.cancel": "取消邀请",
+      "platform.api_key.create": "创建API密钥",
+      "platform.api_key.update": "更新API密钥",
+      "platform.api_key.delete": "删除API密钥",
+      "settings.profile.update": "更新个人资料",
+      "settings.organization.update": "更新组织设置",
+      "auth.login": "登录",
+      "auth.logout": "退出登录",
+      "website.create": "创建网站",
+      "website.update": "更新网站",
+      "website.delete": "删除网站",
+      "scan.start": "开始扫描",
+      "scan.complete": "完成扫描",
+      "report.generate": "生成报告",
+      "report.download": "下载报告"
     }
   },
   "alerts": {

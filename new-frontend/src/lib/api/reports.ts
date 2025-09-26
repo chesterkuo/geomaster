@@ -346,7 +346,7 @@ export class ReportsAPI {
    * Generate single report
    */
   static async generateReport(data: GenerateReportData): Promise<ApiResponse<{ report: GeneratedReport; message: string }>> {
-    const response = await apiClient.post('/reports/generate', data);
+    const response = await apiClient.post('/reports', data);
     return response.data;
   }
 

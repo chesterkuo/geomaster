@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Lock, User, Globe, TrendingUp, FileText } from "lucide-react";
+import { Plus, Lock, User, Globe, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { dashboardService, DashboardStats } from "@/lib/api/dashboard";
 import { useTranslation } from "react-i18next";
@@ -36,6 +36,7 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
     }
   };
 
+
   return (
     <Card className="p-6 bg-gradient-card border-border">
       <Tabs defaultValue="tracking" className="w-full">
@@ -47,15 +48,7 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
             <TabsTrigger value="optimization" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               {t("dashboard.contentOptimization")}
             </TabsTrigger>
-            <TabsTrigger value="generation" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              {t("dashboard.reportGeneration")}
-            </TabsTrigger>
           </TabsList>
-          
-          <Button size="sm" className="bg-primary text-primary-foreground">
-            <Plus className="h-4 w-4 mr-2" />
-            {t("dashboard.addProject")}
-          </Button>
         </div>
 
         <TabsContent value="tracking" className="space-y-4">
@@ -176,71 +169,6 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
           )}
         </TabsContent>
 
-        <TabsContent value="generation" className="space-y-4">
-          {!isAuthenticated ? (
-            <div className="text-center py-12">
-              <div className="text-muted-foreground mb-4">
-                <div className="relative w-16 h-16 mx-auto mb-4">
-                  <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
-                    <Plus className="h-8 w-8" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                    <Lock className="h-3 w-3 text-primary-foreground" />
-                  </div>
-                </div>
-                <h4 className="text-lg font-medium text-foreground mb-2">{t("dashboard.loginToGenerateReports")}</h4>
-                <p className="text-sm mb-4">{t("dashboard.generateDetailedReports")}</p>
-                <Button onClick={onShowAuth} className="bg-primary text-primary-foreground">
-                  <User className="mr-2 h-4 w-4" />
-                  {t("dashboard.loginNow")}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {loading ? (
-                <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
-              ) : dashboardData?.alerts.length ? (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3">{t("dashboard.alertsAndNotifications")}</h4>
-                  {dashboardData.alerts.map((alert, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 bg-background/50 rounded-lg border">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        alert.type === 'warning' ? 'bg-orange-100' : 'bg-blue-100'
-                      }`}>
-                        <FileText className={`h-4 w-4 ${
-                          alert.type === 'warning' ? 'text-orange-600' : 'text-blue-600'
-                        }`} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{alert.message}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(alert.timestamp).toLocaleDateString('zh-TW')}
-                        </p>
-                      </div>
-                      <div className={`text-xs px-2 py-1 rounded-full ${
-                        alert.severity === 'medium' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {alert.severity === 'medium' ? t("dashboard.medium") : t("dashboard.low")}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
-                    <Plus className="h-8 w-8" />
-                  </div>
-                  <h4 className="text-lg font-medium text-foreground mb-2">{t("dashboard.aiOptimizationSuggestions")}</h4>
-                  <p className="text-sm text-muted-foreground mb-4">{t("dashboard.generateDetailedOptimizationReports")}</p>
-                  <Button className="bg-primary text-primary-foreground">
-                    {t("dashboard.generateReport")}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </TabsContent>
       </Tabs>
     </Card>
   );

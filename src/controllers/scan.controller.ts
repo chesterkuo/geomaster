@@ -233,7 +233,7 @@ function generateFallbackScanResults(url: string, scanType: string): BasicScanRe
 async function getOrCreateAnonymousOrganization() {
   const { Organization } = await import('../models');
   
-  const anonymousOrgSlug = 'anonymous-scans';
+  const anonymousOrgSlug = 'anonymousscans';
   let anonymousOrg = await Organization.findOne({
     where: { slug: anonymousOrgSlug }
   });

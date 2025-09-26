@@ -3,6 +3,7 @@ import axios from 'axios';
 import { AITrackingResult, Website } from '../models';
 import { logger } from '../utils/logger';
 import { AI_PLATFORMS } from '../config/constants';
+import { apiKeyManager, ApiKeyConfig } from './apiKeyManagerService';
 
 export interface TrackingQuery {
   query: string;
@@ -24,16 +25,10 @@ export interface TrackingResult {
 }
 
 export class AITrackingService {
-  private openai: OpenAI;
-  private perplexityApiKey: string;
-  private geminiApiKey: string;
+  private organizationId: string;
 
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
-    this.perplexityApiKey = process.env.PERPLEXITY_API_KEY || '';
-    this.geminiApiKey = process.env.GOOGLE_API_KEY || '';
+  constructor(organizationId: string) {
+    this.organizationId = organizationId;
   }
 
   async trackWebsiteVisibility(websiteId: string, queries: string[], platforms?: string[]): Promise<TrackingResult[]> {
@@ -72,20 +67,29 @@ export class AITrackingService {
 
   private async queryAIPlatform(platform: string, query: string, websiteUrl: string, domain: string): Promise<TrackingResult> {
     let response = '';
-    
+
     try {
+      // Get API key configuration for the platform
+      const apiKeyConfig = await apiKeyManager.getApiKeyForPlatform(platform, this.organizationId);
+
+      if (!apiKeyConfig) {
+        throw new Error(`No API key available for platform: ${platform}`);
+      }
+
+      logger.info(`Using ${apiKeyConfig.source} API key for ${platform} (user-provided: ${apiKeyConfig.isUserProvided})`);
+
       switch (platform) {
         case AI_PLATFORMS.CHATGPT:
-          response = await this.queryChatGPT(query);
+          response = await this.queryChatGPT(query, apiKeyConfig);
           break;
         case AI_PLATFORMS.PERPLEXITY:
-          response = await this.queryPerplexity(query);
+          response = await this.queryPerplexity(query, apiKeyConfig);
           break;
         case AI_PLATFORMS.GEMINI:
-          response = await this.queryGemini(query);
+          response = await this.queryGemini(query, apiKeyConfig);
           break;
         case AI_PLATFORMS.CLAUDE:
-          response = await this.queryClaude(query);
+          response = await this.queryClaude(query, apiKeyConfig);
           break;
         default:
           throw new Error(`Unsupported platform: ${platform}`);
@@ -106,8 +110,12 @@ export class AITrackingService {
     }
   }
 
-  private async queryChatGPT(query: string): Promise<string> {
-    const response = await this.openai.chat.completions.create({
+  private async queryChatGPT(query: string, apiKeyConfig: ApiKeyConfig): Promise<string> {
+    const openai = new OpenAI({
+      apiKey: apiKeyConfig.apiKey
+    });
+
+    const response = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
         {
@@ -126,11 +134,7 @@ export class AITrackingService {
     return response.choices[0].message.content || '';
   }
 
-  private async queryPerplexity(query: string): Promise<string> {
-    if (!this.perplexityApiKey) {
-      throw new Error('Perplexity API key not configured');
-    }
-
+  private async queryPerplexity(query: string, apiKeyConfig: ApiKeyConfig): Promise<string> {
     try {
       const response = await axios.post('https://api.perplexity.ai/chat/completions', {
         model: 'llama-3.1-sonar-large-128k-online',
@@ -150,7 +154,7 @@ export class AITrackingService {
         return_citations: true
       }, {
         headers: {
-          'Authorization': `Bearer ${this.perplexityApiKey}`,
+          'Authorization': `Bearer ${apiKeyConfig.apiKey}`,
           'Content-Type': 'application/json'
         }
       });
@@ -162,13 +166,9 @@ export class AITrackingService {
     }
   }
 
-  private async queryGemini(query: string): Promise<string> {
-    if (!this.geminiApiKey) {
-      throw new Error('Gemini API key not configured');
-    }
-
+  private async queryGemini(query: string, apiKeyConfig: ApiKeyConfig): Promise<string> {
     try {
-      const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${this.geminiApiKey}`, {
+      const response = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKeyConfig.apiKey}`, {
         contents: [
           {
             parts: [
@@ -191,11 +191,32 @@ export class AITrackingService {
     }
   }
 
-  private async queryClaude(query: string): Promise<string> {
-    // Note: Claude API would require Anthropic's API key and SDK
-    // For now, we'll simulate or skip this platform
-    logger.warn('Claude API not implemented yet');
-    return '';
+  private async queryClaude(query: string, apiKeyConfig: ApiKeyConfig): Promise<string> {
+    try {
+      // Using Anthropic SDK would be ideal, but for now using direct API call
+      const response = await axios.post('https://api.anthropic.com/v1/messages', {
+        model: 'claude-3-sonnet-20240229',
+        max_tokens: 2000,
+        temperature: 0.1,
+        messages: [
+          {
+            role: 'user',
+            content: query
+          }
+        ]
+      }, {
+        headers: {
+          'Authorization': `Bearer ${apiKeyConfig.apiKey}`,
+          'Content-Type': 'application/json',
+          'anthropic-version': '2023-06-01'
+        }
+      });
+
+      return response.data.content[0].text || '';
+    } catch (error) {
+      logger.error('Claude API error:', error);
+      throw new Error('Failed to query Claude');
+    }
   }
 
   private analyzeResponse(platform: string, query: string, response: string, websiteUrl: string, domain: string): TrackingResult {
@@ -436,6 +457,12 @@ export class AITrackingService {
         throw new Error('Website not found');
       }
 
+      // Get API key for ChatGPT to generate keywords
+      const apiKeyConfig = await apiKeyManager.getApiKeyForPlatform('chatgpt', this.organizationId);
+      if (!apiKeyConfig) {
+        throw new Error('No ChatGPT API key available for keyword generation');
+      }
+
       const prompt = `
 Based on the website ${website.url} and the topic "${topic}", generate 15-20 relevant search queries that users might ask AI assistants when looking for information related to this topic.
 
@@ -452,7 +479,11 @@ Return the queries as a JSON array of strings. Return only the JSON array, no ot
 Example format: ["query 1", "query 2", "query 3"]
 `;
 
-      const response = await this.openai.chat.completions.create({
+      const openai = new OpenAI({
+        apiKey: apiKeyConfig.apiKey
+      });
+
+      const response = await openai.chat.completions.create({
         model: 'gpt-4',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 1000,

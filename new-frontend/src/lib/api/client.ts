@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import i18n from '@/i18n';
 
 // API 配置
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.74.100.10:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.74.100.10:3000';
 const API_VERSION = '/api/v1';
 
 // Debug log to verify environment variable
@@ -110,38 +110,147 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Token refresh state management
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token!);
+    }
+  });
+
+  failedQueue = [];
+};
+
 // 回應攔截器 - 處理錯誤和 token 刷新
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-    
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean;
+      _retryCount?: number;
+    };
+
+    // Enhanced logging for debugging
+    console.log('🔍 API Response Error:', {
+      status: error.response?.status,
+      url: originalRequest?.url,
+      method: originalRequest?.method,
+      hasRefreshToken: !!tokenManager.getRefreshToken(),
+      isRetry: !!originalRequest?._retry,
+      retryCount: originalRequest?._retryCount || 0
+    });
+
     // 如果是 401 錯誤且有 refresh token，嘗試刷新
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       const refreshToken = tokenManager.getRefreshToken();
-      
+
       if (refreshToken) {
+        if (isRefreshing) {
+          // If already refreshing, queue this request
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then((token) => {
+            if (originalRequest?.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+            }
+            return apiClient(originalRequest!);
+          }).catch((err) => {
+            return Promise.reject(err);
+          });
+        }
+
+        originalRequest._retry = true;
+        originalRequest._retryCount = (originalRequest._retryCount || 0) + 1;
+        isRefreshing = true;
+
         try {
+          console.log('🔄 Attempting token refresh...');
           const response = await axios.post(`${API_BASE_URL}${API_VERSION}/auth/refresh`, {
             refreshToken
           });
-          
+
           const { token, refreshToken: newRefreshToken } = response.data.data;
           tokenManager.setAccessToken(token);
           tokenManager.setRefreshToken(newRefreshToken);
-          
-          // 重試原始請求
-          return apiClient(originalRequest);
-        } catch (refreshError) {
-          // 刷新失敗，清除 tokens 並跳轉到登入頁
-          tokenManager.clearTokens();
-          window.location.href = '/login';
+
+          console.log('✅ Token refresh successful');
+
+          // Dispatch success event
+          if (typeof window !== 'undefined') {
+            const event = new CustomEvent('auth:token-refresh-success');
+            window.dispatchEvent(event);
+          }
+
+          processQueue(null, token);
+
+          // Update authorization header and retry
+          if (originalRequest?.headers) {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+          }
+
+          return apiClient(originalRequest!);
+        } catch (refreshError: any) {
+          console.error('❌ Token refresh failed:', refreshError);
+
+          // More specific error handling
+          const refreshErrorStatus = refreshError.response?.status;
+          const refreshErrorMessage = refreshError.response?.data?.message || refreshError.message;
+
+          processQueue(refreshError, null);
+
+          // Only clear tokens and redirect if refresh token is truly invalid
+          if (refreshErrorStatus === 401 || refreshErrorStatus === 403) {
+            console.warn('🚪 Refresh token invalid, clearing session');
+            tokenManager.clearTokens();
+
+            // Graceful redirect with notification
+            if (typeof window !== 'undefined') {
+              // Show user-friendly message before redirect
+              const event = new CustomEvent('auth:session-expired', {
+                detail: { message: 'Your session has expired. Please log in again.' }
+              });
+              window.dispatchEvent(event);
+
+              // Delay redirect to allow user to see the message
+              setTimeout(() => {
+                window.location.href = '/login';
+              }, 2000);
+            }
+          } else {
+            // For other errors (network, server issues), don't force logout
+            console.warn('🔧 Temporary refresh failure, keeping session:', refreshErrorMessage);
+
+            // Dispatch failure event for non-critical errors
+            if (typeof window !== 'undefined') {
+              const event = new CustomEvent('auth:token-refresh-failure', {
+                detail: { message: refreshErrorMessage, status: refreshErrorStatus }
+              });
+              window.dispatchEvent(event);
+            }
+          }
+
           return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      } else {
+        // No refresh token available
+        console.warn('🚫 No refresh token available');
+        tokenManager.clearTokens();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
         }
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
