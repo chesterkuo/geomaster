@@ -1,31 +1,36 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { jsPDF } from 'jspdf';
 
-// Web 性能指標完整說明映射
-const PERFORMANCE_METRICS = {
-  LCP: "Largest Contentful Paint (最大內容繪製)",
-  FCP: "First Contentful Paint (首次內容繪製)", 
-  CLS: "Cumulative Layout Shift (累積版面位移)",
-  FID: "First Input Delay (首次輸入延遲)",
-  TTI: "Time to Interactive (可交互時間)",
-  TTFB: "Time to First Byte (首位元組時間)"
-};
+// Web 性能指標完整說明映射 - 使用 i18n 翻譯
+const getPerformanceMetrics = (t: any) => ({
+  LCP: t('diagnosis.performanceMetrics.LCP'),
+  FCP: t('diagnosis.performanceMetrics.FCP'),
+  CLS: t('diagnosis.performanceMetrics.CLS'),
+  FID: t('diagnosis.performanceMetrics.FID'),
+  TTI: t('diagnosis.performanceMetrics.TTI'),
+  TTFB: t('diagnosis.performanceMetrics.TTFB')
+});
 
 // 擴展性能指標顯示文本的工具函數
-const expandPerformanceMetrics = (text: string): string => {
+const expandPerformanceMetrics = (text: string, t?: any): string => {
   let expandedText = text;
-  
-  // 替換常見的性能指標縮寫
-  Object.entries(PERFORMANCE_METRICS).forEach(([abbr, fullName]) => {
-    // 匹配模式：縮寫後跟冒號和數值 (如: "LCP: 3.5s")
-    const regex = new RegExp(`\\b${abbr}:\\s*([0-9.]+[a-z]*|[0-9.]+)`, 'gi');
-    expandedText = expandedText.replace(regex, `${fullName} (${abbr}): $1`);
-    
-    // 也處理只有縮寫的情況 (如: "LCP 3.5s")
-    const regexSpace = new RegExp(`\\b${abbr}\\s+([0-9.]+[a-z]*|[0-9.]+)`, 'gi');
-    expandedText = expandedText.replace(regexSpace, `${fullName} (${abbr}) $1`);
-  });
-  
+
+  if (t) {
+    const PERFORMANCE_METRICS = getPerformanceMetrics(t);
+
+    // 替換常見的性能指標縮寫
+    Object.entries(PERFORMANCE_METRICS).forEach(([abbr, fullName]) => {
+      // 匹配模式：縮寫後跟冒號和數值 (如: "LCP: 3.5s")
+      const regex = new RegExp(`\\b${abbr}:\\s*([0-9.]+[a-z]*|[0-9.]+)`, 'gi');
+      expandedText = expandedText.replace(regex, `${fullName} (${abbr}): $1`);
+
+      // 也處理只有縮寫的情況 (如: "LCP 3.5s")
+      const regexSpace = new RegExp(`\\b${abbr}\\s+([0-9.]+[a-z]*|[0-9.]+)`, 'gi');
+      expandedText = expandedText.replace(regexSpace, `${fullName} (${abbr}) $1`);
+    });
+  }
+
   return expandedText;
 };
 
@@ -111,6 +116,7 @@ interface OptimizationResultsProps {
 }
 
 const OptimizationResults: React.FC<OptimizationResultsProps> = ({ data, onClose }) => {
+  const { t } = useTranslation();
   // Add ESC key support
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -162,7 +168,7 @@ const OptimizationResults: React.FC<OptimizationResultsProps> = ({ data, onClose
 
   const downloadReport = (format: 'json' | 'markdown' | 'pdf') => {
     const reportData = {
-      title: "GEO 優化分析報告",
+      title: t('optimization.report.title'),
       website: data.websiteInfo.title,
       websiteUrl: data.websiteUrl || data.websiteInfo.url, // 添加完整URL
       generatedAt: new Date().toISOString(),
@@ -194,66 +200,66 @@ const OptimizationResults: React.FC<OptimizationResultsProps> = ({ data, onClose
   };
 
   const generateMarkdownReport = (reportData: any) => {
-    return `# GEO 優化分析報告
+    return `# ${t('optimization.report.title')}
 
-## 網站基本資訊
-- **網站**: ${reportData.websiteUrl || reportData.website}
-- **生成時間**: ${new Date(reportData.generatedAt).toLocaleString('zh-TW')}
+## ${t('optimization.report.sections.basicInfo')}
+- **${t('optimization.report.website')}**: ${reportData.websiteUrl || reportData.website}
+- **${t('optimization.report.generatedAt')}**: ${new Date(reportData.generatedAt).toLocaleString('zh-TW')}
 
-## 評分總覽
-- **GEO 評分**: ${reportData.geoScore}/100
-- **技術健康**: ${reportData.analysisDetails.technicalHealth}/100
-- **內容品質**: ${reportData.analysisDetails.contentQuality}/100
-- **AI 可見度**: ${reportData.analysisDetails.aiVisibility}/100
+## ${t('optimization.report.sections.scoreOverview')}
+- **${t('optimization.results.scores.geo')}**: ${reportData.geoScore}/100
+- **${t('optimization.results.scores.technical')}**: ${reportData.analysisDetails.technicalHealth}/100
+- **${t('optimization.results.scores.content')}**: ${reportData.analysisDetails.contentQuality}/100
+- **${t('optimization.results.scores.aiVisibility')}**: ${reportData.analysisDetails.aiVisibility}/100
 
-## 改善潛力
-- **當前分數**: ${reportData.improvements.current}/100
-- **優化後預期**: ${reportData.improvements.potential}/100
-- **預期提升**: ${reportData.improvements.potential - reportData.improvements.current} 分
+## ${t('optimization.results.improvement.title')}
+- **${t('optimization.results.improvement.currentScore')}**: ${reportData.improvements.current}/100
+- **${t('optimization.results.improvement.expectedAfter')}**: ${reportData.improvements.potential}/100
+- **${t('optimization.report.expectedImprovement')}**: ${reportData.improvements.potential - reportData.improvements.current} ${t('optimization.report.points')}
 
-## 網站概況
-- **字數**: ${reportData.websiteInfo.wordCount}
-- **圖片數量**: ${reportData.websiteInfo.imagesCount}
-- **結構化資料**: ${reportData.websiteInfo.structuredDataCount}
-- **響應時間**: ${reportData.websiteInfo.responseTime}ms
+## ${t('optimization.results.websiteOverview.title')}
+- **${t('optimization.results.websiteOverview.wordCount')}**: ${reportData.websiteInfo.wordCount}
+- **${t('optimization.results.websiteOverview.images')}**: ${reportData.websiteInfo.imagesCount}
+- **${t('optimization.results.websiteOverview.structuredData')}**: ${reportData.websiteInfo.structuredDataCount}
+- **${t('optimization.results.websiteOverview.responseTime')}**: ${reportData.websiteInfo.responseTime}ms
 - **HTTPS**: ${reportData.websiteInfo.isHttps ? '✓' : '✗'}
 - **Robots.txt**: ${reportData.websiteInfo.robotsTxtExists ? '✓' : '✗'}
 
-## 優化建議
+## ${t('optimization.results.tabs.suggestions')}
 
 ${reportData.suggestions.map((suggestion: any, index: number) => `
-### ${index + 1}. ${suggestion.type.replace('_', ' ')} 優化 (${suggestion.priority.toUpperCase()})
+### ${index + 1}. ${t(`optimization.suggestions.types.${suggestion.type}`, { defaultValue: suggestion.type.replace('_', ' ') + ' 優化' })} (${suggestion.priority.toUpperCase()})
 
-**問題描述**: ${expandPerformanceMetrics(suggestion.reason)}
+**${t('optimization.report.problemDescription')}**: ${expandPerformanceMetrics(suggestion.reason, t)}
 
-**目前狀況**:
+**${t('optimization.results.suggestion.currentSituation')}**:
 \`\`\`
-${expandPerformanceMetrics(suggestion.current)}
-\`\`\`
-
-**建議改善**:
-\`\`\`
-${expandPerformanceMetrics(suggestion.suggested)}
+${expandPerformanceMetrics(suggestion.current, t)}
 \`\`\`
 
-**實施步驟**:
+**${t('optimization.results.suggestion.suggestedImprovement')}**:
+\`\`\`
+${expandPerformanceMetrics(suggestion.suggested, t)}
+\`\`\`
+
+**${t('optimization.results.suggestion.implementationSteps')}**:
 ${suggestion.implementation.map((step: string, i: number) => `${i + 1}. ${step}`).join('\n')}
 `).join('\n')}
 
-## 執行計劃
+## ${t('optimization.results.tabs.executionPlan')}
 
 ${reportData.executionPlan.map((phase: any, index: number) => `
-### 階段 ${index + 1}: ${phase.phase}
-**預計時間**: ${phase.duration}
+### ${t('optimization.report.phase')} ${index + 1}: ${phase.phase}
+**${t('optimization.results.executionPlan.estimatedTime')}**: ${phase.duration}
 
-**執行項目**:
+**${t('optimization.results.executionPlan.tasks')}**:
 ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
 
-**預期成果**: ${phase.expectedResults}
+**${t('optimization.results.executionPlan.expectedResults')}**: ${phase.expectedResults}
 `).join('\n')}
 
 ---
-*報告生成時間: ${new Date().toLocaleString('zh-TW')}*
+*${t('optimization.report.generatedAt')}: ${new Date().toLocaleString('zh-TW')}*
 `;
   };
 
@@ -263,7 +269,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GEO 優化分析報告</title>
+    <title>${t('optimization.report.title')}</title>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -358,71 +364,71 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
 </head>
 <body>
     <div class="header">
-        <h1>GEO 優化分析報告</h1>
-        <p><strong>網站</strong>: ${reportData.websiteUrl || reportData.website}</p>
-        <p><strong>生成時間</strong>: ${new Date(reportData.generatedAt).toLocaleString('zh-TW')}</p>
+        <h1>${t('optimization.report.title')}</h1>
+        <p><strong>${t('optimization.report.website')}</strong>: ${reportData.websiteUrl || reportData.website}</p>
+        <p><strong>${t('optimization.report.generatedAt')}</strong>: ${new Date(reportData.generatedAt).toLocaleString('zh-TW')}</p>
     </div>
 
     <div class="score-grid">
         <div class="score-card">
-            <h3>GEO 評分</h3>
+            <h3>${t('optimization.results.scores.geo')}</h3>
             <div class="score-value">${reportData.geoScore}/100</div>
         </div>
         <div class="score-card">
-            <h3>技術健康</h3>
+            <h3>${t('optimization.results.scores.technical')}</h3>
             <div class="score-value">${reportData.analysisDetails.technicalHealth}/100</div>
         </div>
         <div class="score-card">
-            <h3>內容品質</h3>
+            <h3>${t('optimization.results.scores.content')}</h3>
             <div class="score-value">${reportData.analysisDetails.contentQuality}/100</div>
         </div>
         <div class="score-card">
-            <h3>AI 可見度</h3>
+            <h3>${t('optimization.results.scores.aiVisibility')}</h3>
             <div class="score-value">${reportData.analysisDetails.aiVisibility}/100</div>
         </div>
     </div>
 
-    <h2>改善潛力</h2>
-    <p>當前分數: ${reportData.improvements.current}/100</p>
+    <h2>${t('optimization.results.improvement.title')}</h2>
+    <p>${t('optimization.results.improvement.currentScore')}: ${reportData.improvements.current}/100</p>
     <div class="improvement-bar">
         <div class="improvement-fill" style="width: ${reportData.improvements.current}%"></div>
     </div>
-    <p>優化後預期: ${reportData.improvements.potential}/100</p>
+    <p>${t('optimization.results.improvement.expectedAfter')}: ${reportData.improvements.potential}/100</p>
     <div class="improvement-bar">
         <div class="improvement-fill" style="width: ${reportData.improvements.potential}%"></div>
     </div>
 
-    <h2>優化建議</h2>
+    <h2>${t('optimization.results.tabs.suggestions')}</h2>
     ${reportData.suggestions.map((suggestion: any, index: number) => `
         <div class="suggestion priority-${suggestion.priority}">
-            <h3>${index + 1}. ${suggestion.type.replace('_', ' ')} 優化 (${suggestion.priority.toUpperCase()})</h3>
-            <p><strong>問題描述</strong>: ${expandPerformanceMetrics(suggestion.reason)}</p>
-            <h4>目前狀況:</h4>
-            <div class="code-block">${expandPerformanceMetrics(suggestion.current).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-            <h4>建議改善:</h4>
-            <div class="code-block">${expandPerformanceMetrics(suggestion.suggested).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
-            <h4>實施步驟:</h4>
+            <h3>${index + 1}. ${t(`optimization.suggestions.types.${suggestion.type}`, { defaultValue: suggestion.type.replace('_', ' ') + ' 優化' })} (${suggestion.priority.toUpperCase()})</h3>
+            <p><strong>${t('optimization.report.problemDescription')}</strong>: ${expandPerformanceMetrics(suggestion.reason, t)}</p>
+            <h4>${t('optimization.results.suggestion.currentSituation')}:</h4>
+            <div class="code-block">${expandPerformanceMetrics(suggestion.current, t).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            <h4>${t('optimization.results.suggestion.suggestedImprovement')}:</h4>
+            <div class="code-block">${expandPerformanceMetrics(suggestion.suggested, t).replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            <h4>${t('optimization.results.suggestion.implementationSteps')}:</h4>
             <ol>
                 ${suggestion.implementation.map((step: string) => `<li>${step.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`).join('')}
             </ol>
         </div>
     `).join('')}
 
-    <h2>執行計劃</h2>
+    <h2>${t('optimization.results.tabs.executionPlan')}</h2>
     ${reportData.executionPlan.map((phase: any, index: number) => `
         <div class="suggestion">
-            <h3>階段 ${index + 1}: ${phase.phase}</h3>
-            <p><strong>預計時間</strong>: ${phase.duration}</p>
-            <h4>執行項目:</h4>
+            <h3>${t('optimization.report.phase')} ${index + 1}: ${phase.phase}</h3>
+            <p><strong>${t('optimization.results.executionPlan.estimatedTime')}</strong>: ${phase.duration}</p>
+            <h4>${t('optimization.results.executionPlan.tasks')}:</h4>
             <ul>
                 ${phase.actions.map((action: string) => `<li>${action.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</li>`).join('')}
             </ul>
-            <p><strong>預期成果</strong>: ${phase.expectedResults.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+            <p><strong>${t('optimization.results.executionPlan.expectedResults')}</strong>: ${phase.expectedResults.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
         </div>
     `).join('')}
 
     <footer style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #6b7280;">
-        <p>報告生成時間: ${new Date().toLocaleString('zh-TW')}</p>
+        <p>${t('optimization.report.generatedAt')}: ${new Date().toLocaleString('zh-TW')}</p>
     </footer>
 </body>
 </html>`;
@@ -585,7 +591,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
         pdf.setFontSize(9);
         pdf.text('Description:', margin + 3, currentY);
         currentY += 4;
-        const descLines = pdf.splitTextToSize(expandPerformanceMetrics(suggestion.reason), contentWidth - 10);
+        const descLines = pdf.splitTextToSize(expandPerformanceMetrics(suggestion.reason, t), contentWidth - 10);
         descLines.forEach((line: string, lineIndex: number) => {
           pdf.text(line, margin + 6, currentY);
           currentY += 4;
@@ -599,7 +605,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
           pdf.text('Current Issue:', margin + 3, currentY);
           currentY += 4;
           pdf.setTextColor(75, 85, 99);
-          const currentLines = pdf.splitTextToSize(expandPerformanceMetrics(suggestion.current), contentWidth - 10);
+          const currentLines = pdf.splitTextToSize(expandPerformanceMetrics(suggestion.current, t), contentWidth - 10);
           currentLines.slice(0, 4).forEach((line: string) => {
             pdf.text(line, margin + 6, currentY);
             currentY += 4;
@@ -614,7 +620,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
           pdf.text('Suggested Improvement:', margin + 3, currentY);
           currentY += 4;
           pdf.setTextColor(75, 85, 99);
-          const suggestedLines = pdf.splitTextToSize(expandPerformanceMetrics(suggestion.suggested), contentWidth - 10);
+          const suggestedLines = pdf.splitTextToSize(expandPerformanceMetrics(suggestion.suggested, t), contentWidth - 10);
           suggestedLines.slice(0, 4).forEach((line: string) => {
             pdf.text(line, margin + 6, currentY);
             currentY += 4;
@@ -752,7 +758,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
       <div className="bg-background border rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-border">
           <div>
-            <h2 className="text-2xl font-bold text-foreground">GEO 優化分析結果</h2>
+            <h2 className="text-2xl font-bold text-foreground">{t('optimization.results.title')}</h2>
             <p className="text-muted-foreground mt-1">{data.websiteUrl || data.websiteInfo.url || data.websiteInfo.title}</p>
           </div>
           <div className="flex items-center space-x-4">
@@ -760,22 +766,22 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
                   <Download className="w-4 h-4 mr-2" />
-                  下載報告
+                  {t('optimization.results.downloadReport')}
                   <ChevronDown className="w-4 h-4 ml-2" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => downloadReport('json')}>
                   <FileText className="w-4 h-4 mr-2" />
-                  JSON 格式
+                  {t('optimization.results.downloadFormats.json')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => downloadReport('markdown')}>
                   <FileText className="w-4 h-4 mr-2" />
-                  Markdown 格式
+                  {t('optimization.results.downloadFormats.markdown')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => downloadReport('pdf')}>
                   <FileText className="w-4 h-4 mr-2" />
-                  PDF 格式
+                  {t('optimization.results.downloadFormats.pdf')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -798,7 +804,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">GEO 評分</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('optimization.results.scores.geo')}</p>
                       <p className={`text-2xl font-bold ${getScoreColor(data.geoScore)}`}>
                         {data.geoScore}/100
                       </p>
@@ -812,7 +818,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">技術健康</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('optimization.results.scores.technical')}</p>
                       <p className={`text-xl font-bold ${getScoreColor(data.analysisDetails.technicalHealth)}`}>
                         {data.analysisDetails.technicalHealth}/100
                       </p>
@@ -826,7 +832,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">內容品質</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('optimization.results.scores.content')}</p>
                       <p className={`text-xl font-bold ${getScoreColor(data.analysisDetails.contentQuality)}`}>
                         {data.analysisDetails.contentQuality}/100
                       </p>
@@ -840,7 +846,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">AI 可見度</p>
+                      <p className="text-sm font-medium text-muted-foreground">{t('optimization.results.scores.aiVisibility')}</p>
                       <p className={`text-xl font-bold ${getScoreColor(data.analysisDetails.aiVisibility)}`}>
                         {data.analysisDetails.aiVisibility}/100
                       </p>
@@ -856,27 +862,27 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="w-5 h-5 mr-2" />
-                  改善潛力
+                  {t('optimization.results.improvement.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
                     <div className="flex justify-between mb-2">
-                      <span>當前分數</span>
+                      <span>{t('optimization.results.improvement.currentScore')}</span>
                       <span className="font-semibold">{data.improvements.current}/100</span>
                     </div>
                     <Progress value={data.improvements.current} className="h-2" />
                   </div>
                   <div>
                     <div className="flex justify-between mb-2">
-                      <span>優化後預期</span>
+                      <span>{t('optimization.results.improvement.expectedAfter')}</span>
                       <span className="font-semibold text-green-600">{data.improvements.potential}/100</span>
                     </div>
                     <Progress value={data.improvements.potential} className="h-2" />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    透過實施建議的優化，您的 GEO 分數預計可提升 {data.improvements.potential - data.improvements.current} 分
+                    {t('optimization.results.improvement.description', { improvement: data.improvements.potential - data.improvements.current })}
                   </p>
                 </div>
               </CardContent>
@@ -887,7 +893,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Globe className="w-5 h-5 mr-2" />
-                  網站概況
+                  {t('optimization.results.websiteOverview.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -895,22 +901,22 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                   <div className="text-center p-3 bg-muted/50 rounded">
                     <FileText className="w-6 h-6 mx-auto mb-1 text-blue-500" />
                     <p className="text-lg font-semibold">{data.websiteInfo.wordCount}</p>
-                    <p className="text-xs text-muted-foreground">字數</p>
+                    <p className="text-xs text-muted-foreground">{t('optimization.results.websiteOverview.wordCount')}</p>
                   </div>
                   <div className="text-center p-3 bg-muted/50 rounded">
                     <Image className="w-6 h-6 mx-auto mb-1 text-green-500" />
                     <p className="text-lg font-semibold">{data.websiteInfo.imagesCount}</p>
-                    <p className="text-xs text-muted-foreground">圖片</p>
+                    <p className="text-xs text-muted-foreground">{t('optimization.results.websiteOverview.images')}</p>
                   </div>
                   <div className="text-center p-3 bg-muted/50 rounded">
                     <Target className="w-6 h-6 mx-auto mb-1 text-purple-500" />
                     <p className="text-lg font-semibold">{data.websiteInfo.structuredDataCount}</p>
-                    <p className="text-xs text-muted-foreground">結構化資料</p>
+                    <p className="text-xs text-muted-foreground">{t('optimization.results.websiteOverview.structuredData')}</p>
                   </div>
                   <div className="text-center p-3 bg-muted/50 rounded">
                     <Clock className="w-6 h-6 mx-auto mb-1 text-orange-500" />
                     <p className="text-lg font-semibold">{data.websiteInfo.responseTime}ms</p>
-                    <p className="text-xs text-muted-foreground">響應時間</p>
+                    <p className="text-xs text-muted-foreground">{t('optimization.results.websiteOverview.responseTime')}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4 mt-4">
@@ -927,8 +933,8 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
             {/* 詳細分析 */}
             <Tabs defaultValue="suggestions" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="suggestions">優化建議</TabsTrigger>
-                <TabsTrigger value="execution">執行計劃</TabsTrigger>
+                <TabsTrigger value="suggestions">{t('optimization.results.tabs.suggestions')}</TabsTrigger>
+                <TabsTrigger value="execution">{t('optimization.results.tabs.executionPlan')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="suggestions" className="space-y-4">
@@ -940,7 +946,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                           <CardTitle className="flex items-center text-lg">
                             {getSuggestionIcon(suggestion.type)}
                             <span className="ml-2 capitalize">
-                              {suggestion.type.replace('_', ' ')} 優化
+                              {t(`optimization.suggestions.types.${suggestion.type}`, { defaultValue: suggestion.type.replace('_', ' ') + ' 優化' })}
                             </span>
                           </CardTitle>
                           <Badge variant={getPriorityColor(suggestion.priority)}>
@@ -948,19 +954,19 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                             <span className="ml-1">{suggestion.priority.toUpperCase()}</span>
                           </Badge>
                         </div>
-                        <CardDescription>{expandPerformanceMetrics(suggestion.reason)}</CardDescription>
+                        <CardDescription>{expandPerformanceMetrics(suggestion.reason, t)}</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
-                          <h4 className="font-semibold text-sm mb-2">目前狀況:</h4>
+                          <h4 className="font-semibold text-sm mb-2">{t('optimization.results.suggestion.currentSituation')}:</h4>
                           <div className="bg-destructive/10 border-destructive/20 p-3 rounded border">
-                            <p className="text-sm">{expandPerformanceMetrics(suggestion.current)}</p>
+                            <p className="text-sm">{expandPerformanceMetrics(suggestion.current, t)}</p>
                           </div>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-sm mb-2">建議改善:</h4>
+                          <h4 className="font-semibold text-sm mb-2">{t('optimization.results.suggestion.suggestedImprovement')}:</h4>
                           <div className="bg-green-500/10 border-green-500/20 p-3 rounded border relative">
-                            <pre className="text-sm whitespace-pre-wrap font-mono">{expandPerformanceMetrics(suggestion.suggested)}</pre>
+                            <pre className="text-sm whitespace-pre-wrap font-mono">{expandPerformanceMetrics(suggestion.suggested, t)}</pre>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -972,7 +978,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                           </div>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-sm mb-2">實施步驟:</h4>
+                          <h4 className="font-semibold text-sm mb-2">{t('optimization.results.suggestion.implementationSteps')}:</h4>
                           <ul className="space-y-1">
                             {suggestion.implementation.map((step, stepIndex) => (
                               <li key={stepIndex} className="flex items-center text-sm">
@@ -997,11 +1003,11 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                           <Clock className="w-5 h-5 mr-2" />
                           {phase.phase}
                         </CardTitle>
-                        <CardDescription>預計時間: {phase.duration}</CardDescription>
+                        <CardDescription>{t('optimization.results.executionPlan.estimatedTime')}: {phase.duration}</CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
-                          <h4 className="font-semibold text-sm mb-2">執行項目:</h4>
+                          <h4 className="font-semibold text-sm mb-2">{t('optimization.results.executionPlan.tasks')}:</h4>
                           <ul className="space-y-1">
                             {phase.actions.map((action, actionIndex) => (
                               <li key={actionIndex} className="flex items-center text-sm">
@@ -1012,7 +1018,7 @@ ${phase.actions.map((action: string, i: number) => `- ${action}`).join('\n')}
                           </ul>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-sm mb-2">預期成果:</h4>
+                          <h4 className="font-semibold text-sm mb-2">{t('optimization.results.executionPlan.expectedResults')}:</h4>
                           <p className="text-sm text-muted-foreground">{phase.expectedResults}</p>
                         </div>
                       </CardContent>

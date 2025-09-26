@@ -239,8 +239,8 @@ export class ContentController {
         organizationId,
         title,
         url,
-        type: type || '其他',
-        traffic: traffic || '中',
+        type: type || 'other',
+        traffic: traffic || 'medium',
         analysisStatus: 'pending'
       });
 

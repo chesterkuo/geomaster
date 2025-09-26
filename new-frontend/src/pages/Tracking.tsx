@@ -14,32 +14,34 @@ import { useToast } from "@/hooks/use-toast";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { useAuth } from "@/hooks/use-auth";
 import OptimizationResults from "@/components/OptimizationResults";
+import { useTranslation } from "react-i18next";
 
-// Web 性能指標完整說明映射
-const PERFORMANCE_METRICS = {
-  LCP: "Largest Contentful Paint (最大內容繪製)",
-  FCP: "First Contentful Paint (首次內容繪製)", 
-  CLS: "Cumulative Layout Shift (累積版面位移)",
-  FID: "First Input Delay (首次輸入延遲)",
-  TTI: "Time to Interactive (可交互時間)",
-  TTFB: "Time to First Byte (首位元組時間)"
-};
+// Web 性能指標完整說明映射 - 使用 i18n 翻譯
+const getPerformanceMetrics = (t: any) => ({
+  LCP: t('diagnosis.performanceMetrics.LCP'),
+  FCP: t('diagnosis.performanceMetrics.FCP'),
+  CLS: t('diagnosis.performanceMetrics.CLS'),
+  FID: t('diagnosis.performanceMetrics.FID'),
+  TTI: t('diagnosis.performanceMetrics.TTI'),
+  TTFB: t('diagnosis.performanceMetrics.TTFB')
+});
 
 // 擴展性能指標顯示文本的工具函數
-const expandPerformanceMetrics = (text: string): string => {
+const expandPerformanceMetrics = (text: string, t: any): string => {
   let expandedText = text;
-  
+  const PERFORMANCE_METRICS = getPerformanceMetrics(t);
+
   // 替換常見的性能指標縮寫
   Object.entries(PERFORMANCE_METRICS).forEach(([abbr, fullName]) => {
     // 匹配模式：縮寫後跟冒號和數值 (如: "LCP: 3.5s")
     const regex = new RegExp(`\\b${abbr}:\\s*([0-9.]+[a-z]*|[0-9.]+)`, 'gi');
     expandedText = expandedText.replace(regex, `${fullName} (${abbr}): $1`);
-    
+
     // 也處理只有縮寫的情況 (如: "LCP 3.5s")
     const regexSpace = new RegExp(`\\b${abbr}\\s+([0-9.]+[a-z]*|[0-9.]+)`, 'gi');
     expandedText = expandedText.replace(regexSpace, `${fullName} (${abbr}) $1`);
   });
-  
+
   return expandedText;
 };
 
@@ -54,127 +56,9 @@ function isDetailedScanResults(results: ScanResults): results is DetailedScanRes
   return 'technicalHealth' in results;
 }
 
-// 生成模擬基礎掃描結果
-const generateMockBasicResults = (url: string): BasicScanResults => {
-  const domain = new URL(url).hostname;
-  const score = Math.floor(Math.random() * 40) + 45; // 45-85 分
-  
-  return {
-    score,
-    summary: {
-      status: score > 70 ? 'good' : score > 50 ? 'warning' : 'critical',
-      message: score > 70 
-        ? `${domain} 在 AI 搜索中表現良好，但仍有優化空間。`
-        : score > 50 
-        ? `${domain} 存在一些影響 AI 可見度的問題需要改善。`
-        : `${domain} 在 AI 搜索中可見度較低，建議進行全面優化。`,
-      keyIssues: [
-        "Schema 標記覆蓋率不足 (僅 40%)",
-        "內容更新頻率偏低", 
-        "缺乏結構化FAQ內容",
-        "頁面載入速度需要改善 - Largest Contentful Paint (LCP): 3.5s, First Contentful Paint (FCP): 2.5s",
-        "Core Web Vitals 需要優化 - Cumulative Layout Shift (CLS): 0.15 (建議 < 0.1)"
-      ]
-    },
-    preview: {
-      technicalHealth: Math.floor(Math.random() * 30) + 60,
-      contentQuality: Math.floor(Math.random() * 35) + 50,
-      aiVisibility: Math.floor(Math.random() * 25) + 40
-    },
-    upgradeReasons: [
-      "獲得 30+ 項技術指標詳細分析",
-      "查看具體競爭對手表現比較",
-      "獲得個人化優化執行計劃",
-      "追蹤改善進度和成效監控"
-    ]
-  };
-};
-
-// 生成模擬詳細掃描結果
-const generateMockDetailedResults = (url: string): DetailedScanResults => {
-  const domain = new URL(url).hostname;
-  const score = Math.floor(Math.random() * 35) + 55; // 55-90 分
-  
-  return {
-    score,
-    technicalHealth: {
-      weight: 40,
-      score: Math.floor(Math.random() * 25) + 65,
-      items: [
-        { name: "robots.txt 配置", status: "good", detail: "已允許 AI 爬蟲存取" },
-        { name: "Schema 標記", status: "warning", detail: "覆蓋率 60%（建議 85%+）" },
-        { name: "網站速度", status: "warning", detail: "Performance分數: 65/100, Largest Contentful Paint (LCP): 3.5s" },
-        { name: "Core Web Vitals", status: "warning", detail: "Cumulative Layout Shift (CLS): 0.15, First Contentful Paint (FCP): 2.5s" },
-        { name: "JavaScript 渲染", status: "critical", detail: "SSR 支援不足" },
-        { name: "SSL 憑證", status: "good", detail: "有效 HTTPS 配置" }
-      ]
-    },
-    contentQuality: {
-      weight: 30,
-      score: Math.floor(Math.random() * 30) + 55,
-      items: [
-        { name: "平均內容長度", status: "warning", detail: "1,245 字（建議 1,500+）" },
-        { name: "FAQ 覆蓋率", status: "warning", detail: "35%（建議 70%+）" },
-        { name: "更新頻率", status: "critical", detail: "每月 1 次（建議每週）" },
-        { name: "引用資料", status: "warning", detail: "部分頁面缺乏權威引用" },
-        { name: "內容結構", status: "good", detail: "標題層級結構清晰" }
-      ]
-    },
-    aiVisibility: {
-      weight: 30,
-      score: Math.floor(Math.random() * 20) + 50,
-      items: [
-        { name: "ChatGPT 提及", status: "warning", detail: "12 次/100 查詢" },
-        { name: "Gemini 引用", status: "critical", detail: "8 次/100 查詢" },
-        { name: "Perplexity 出現", status: "good", detail: "15 次/100 查詢" },
-        { name: "Claude 可見度", status: "warning", detail: "10 次/100 查詢" },
-        { name: "品牌識別度", status: "warning", detail: "中等水準" }
-      ]
-    },
-    competitors: {
-      averageScore: 72,
-      ranking: Math.floor(Math.random() * 3) + 3, // 3-5 名
-      totalCompetitors: 10,
-      details: [
-        { name: "競爭對手 A", score: 85, strengths: ["內容深度", "技術 SEO", "更新頻率"] },
-        { name: "競爭對手 B", score: 78, strengths: ["品牌權威", "社群互動", "多媒體內容"] },
-        { name: "競爭對手 C", score: 73, strengths: ["頁面速度", "行動體驗", "本地化內容"] }
-      ]
-    },
-    optimization: {
-      potentialTrafficGain: Math.floor(Math.random() * 30) + 35, // 35-65%
-      potentialConversionGain: Math.floor(Math.random() * 20) + 15, // 15-35%
-      priorityActions: [
-        { action: "完善 Schema 標記", impact: "high", difficulty: "medium", timeframe: "2-3週" },
-        { action: "增加FAQ內容", impact: "high", difficulty: "easy", timeframe: "1週" },
-        { action: "提高更新頻率", impact: "medium", difficulty: "medium", timeframe: "持續" },
-        { action: "改善頁面速度", impact: "medium", difficulty: "hard", timeframe: "4-6週" }
-      ],
-      roadmap: [
-        {
-          phase: "第一階段：快速優化",
-          duration: "2-3週",
-          actions: ["新增FAQ內容", "完善Meta描述", "優化圖片Alt文字"],
-          expectedResults: "AI可見度提升15-20%"
-        },
-        {
-          phase: "第二階段：技術改善",
-          duration: "4-6週",
-          actions: ["實施完整Schema標記", "改善頁面載入速度", "增強行動裝置體驗"],
-          expectedResults: "技術分數提升至80+"
-        },
-        {
-          phase: "第三階段：內容深化",
-          duration: "2-3個月",
-          actions: ["建立內容更新計劃", "加強權威引用", "擴充主題覆蓋範圍"],
-          expectedResults: "整體分數提升至85+"
-        }
-      ]
-    }
-  };
-};
 
 const Tracking = () => {
+  const { t } = useTranslation();
   const [url, setUrl] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
@@ -207,7 +91,7 @@ const Tracking = () => {
         setScanHistory(response.data);
       }
     } catch (error) {
-      console.error('載入掃描歷史記錄失敗:', error);
+      console.error('Failed to load scan history:', error);
     } finally {
       setIsLoadingHistory(false);
     }
@@ -227,8 +111,8 @@ const Tracking = () => {
     // 檢查認證狀態 - 如果正在載入或未認證則阻止請求
     if (isLoading || !isAuthenticated) {
       toast({
-        title: "需要登入",
-        description: "請先登入以使用優化功能",
+        title: t("tracking.needLogin"),
+        description: t("tracking.pleaseLoginToUseOptimization"),
         variant: "destructive",
       });
       setShowAuthModal(true);
@@ -249,10 +133,10 @@ const Tracking = () => {
     
     if (!optimizationUrl) {
       toast({
-        title: "需要網站 URL", 
-        description: currentScan ? 
-          `當前掃描缺少URL資訊，請重新掃描或手動輸入URL` : 
-          "請先進行一次掃描，或在上方輸入網站 URL",
+        title: t("tracking.needWebsiteUrl"),
+        description: currentScan ?
+          t("tracking.scanLacksUrlInfo") :
+          t("tracking.performScanFirst"),
         variant: "destructive",
       });
       return;
@@ -263,8 +147,8 @@ const Tracking = () => {
       new URL(optimizationUrl);
     } catch (error) {
       toast({
-        title: "URL 格式錯誤",
-        description: `請輸入有效的網站 URL，例如：https://example.com\n當前輸入：${optimizationUrl}`,
+        title: t("tracking.urlFormatError"),
+        description: `${t("tracking.enterValidUrl")}\n${t("tracking.currentInput", { url: optimizationUrl })}`,
         variant: "destructive",
       });
       return;
@@ -272,8 +156,8 @@ const Tracking = () => {
 
     try {
       toast({
-        title: "開始優化分析",
-        description: "正在分析您的網站並生成優化建議...",
+        title: t("tracking.startOptimizationAnalysis"),
+        description: t("tracking.analyzingWebsite"),
       });
 
       // 準備優化請求數據（符合後端API格式）
@@ -300,19 +184,19 @@ const Tracking = () => {
         setShowOptimizationResults(true);
         
         toast({
-          title: "優化分析完成",
-          description: `發現 ${response.data.suggestions.length} 項優化建議，GEO 分數：${response.data.geoScore}/100`,
+          title: t("tracking.optimizationAnalysisComplete"),
+          description: t("tracking.foundOptimizationSuggestions", { count: response.data.suggestions.length, score: response.data.geoScore }),
         });
 
         console.log('Optimization analysis completed:', response.data);
       } else {
-        throw new Error(response.message || '優化分析失敗');
+        throw new Error(response.message || 'Optimization analysis failed');
       }
     } catch (error: any) {
-      console.error('優化分析錯誤:', error);
+      console.error('Optimization analysis error:', error);
       toast({
-        title: "優化分析失敗",
-        description: error.response?.data?.message || error.message || '請稍後重試',
+        title: t("tracking.optimizationAnalysisFailed"),
+        description: error.response?.data?.message || error.message || t("common.retry"),
         variant: "destructive",
       });
     }
@@ -323,8 +207,8 @@ const Tracking = () => {
     const scanUrl = targetUrl || url;
     if (!scanUrl) {
       toast({
-        title: "錯誤",
-        description: "請輸入網站 URL",
+        title: t("common.error"),
+        description: t("tracking.enterWebsiteUrlPrompt"),
         variant: "destructive",
       });
       return;
@@ -335,8 +219,8 @@ const Tracking = () => {
       new URL(scanUrl);
     } catch {
       toast({
-        title: "錯誤",
-        description: "請輸入有效的網站 URL (例如: https://example.com)",
+        title: t("common.error"),
+        description: t("tracking.enterValidWebsiteUrl"),
         variant: "destructive",
       });
       return;
@@ -345,8 +229,8 @@ const Tracking = () => {
     // 檢查權限
     if (requestedScanType === 'detailed' && !isAuthenticated) {
       toast({
-        title: "需要註冊",
-        description: "深度分析功能需要註冊帳號",
+        title: t("tracking.needRegistration"),
+        description: t("tracking.deepAnalysisRequiresRegistration"),
         variant: "destructive",
       });
       return;
@@ -361,55 +245,18 @@ const Tracking = () => {
 
     try {
       let response;
-      let useFallback = false;
-      
-      try {
-        // 根據用戶認證狀態選擇API端點
-        if (isAuthenticated) {
-          // 已登入用戶 - 使用認證掃描端點，獲得完整詳細結果
-          response = await scanService.startWebsiteScan(scanUrl, 'standard');
-        } else {
-          // 未登入用戶 - 使用匿名掃描，僅獲得基本結果
-          response = await scanService.startAnonymousScan(scanUrl);
-        }
-        
-        if (!response.success) {
-          throw new Error(response.message || '掃描啟動失敗');
-        }
-      } catch (apiError) {
-        console.warn('API 不可用，使用模擬數據:', apiError);
-        useFallback = true;
+
+      // 根據用戶認證狀態選擇API端點
+      if (isAuthenticated) {
+        // 已登入用戶 - 使用認證掃描端點，獲得完整詳細結果
+        response = await scanService.startWebsiteScan(scanUrl, 'standard');
+      } else {
+        // 未登入用戶 - 使用匿名掃描，僅獲得基本結果
+        response = await scanService.startAnonymousScan(scanUrl);
       }
 
-      if (useFallback) {
-        // 使用模擬數據的 fallback 流程
-        const progressInterval = setInterval(() => {
-          setScanProgress(prev => {
-            if (prev >= 100) {
-              clearInterval(progressInterval);
-              setIsScanning(false);
-              
-              // 根據掃描類型生成對應的模擬結果
-              const mockResults = requestedScanType === 'basic' ? 
-                generateMockBasicResults(scanUrl) : generateMockDetailedResults(scanUrl);
-              
-              setScanResults(mockResults);
-              setTimeout(() => {
-                setShowResults(true);
-                toast({
-                  title: "掃描完成",
-                  description: requestedScanType === 'basic' 
-                    ? "免費 AI 可見度診斷完成！這是演示結果。" 
-                    : "深度分析完成！這是演示結果。",
-                });
-              }, 500);
-              
-              return 100;
-            }
-            return prev + Math.random() * 12 + 3;
-          });
-        }, 400);
-        return;
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to start scan');
       }
 
       const scan = response.data;
@@ -459,10 +306,10 @@ const Tracking = () => {
               
               setTimeout(() => {
                 toast({
-                  title: "掃描完成",
+                  title: t("tracking.scanComplete"),
                   description: isAuthenticated
-                    ? "完整 AI 可見度分析報告已生成！" 
-                    : "免費 AI 可見度診斷完成！註冊獲得完整分析報告。",
+                    ? "Complete AI visibility analysis report generated!"
+                    : "Free AI visibility diagnosis completed! Register to get full analysis report.",
                 });
               }, 0);
             } else {
@@ -474,7 +321,7 @@ const Tracking = () => {
                   setShowResults(true);
                 }
               } catch (reportError) {
-                console.error('獲取報告失敗:', reportError);
+                console.error('Failed to get report:', reportError);
               }
             }
           }
@@ -484,18 +331,18 @@ const Tracking = () => {
             clearInterval(pollInterval);
             clearInterval(progressInterval);
             setIsScanning(false);
-            setError(updatedScan.error || '掃描過程中發生錯誤');
+            setError(updatedScan.error || 'Error occurred during scanning');
             
             setTimeout(() => {
               toast({
-                title: "掃描失敗",
-                description: updatedScan.error || '掃描過程中發生錯誤',
+                title: t("tracking.scanFailed"),
+                description: updatedScan.error || 'Error occurred during scanning',
                 variant: "destructive",
               });
             }, 0);
           }
         } catch (pollError) {
-          console.error('輪詢錯誤:', pollError);
+          console.error('Polling error:', pollError);
         }
       }, 3000);
 
@@ -505,19 +352,53 @@ const Tracking = () => {
         clearInterval(progressInterval);
         if (isScanning) {
           setIsScanning(false);
-          setError('掃描超時，請稍後重試');
+          setError('Scan timeout, please try again later');
         }
       }, 60000);
 
     } catch (err: any) {
-      console.error('掃描錯誤:', err);
+      console.error('Scan error:', err);
       setIsScanning(false);
-      setError(err.response?.data?.message || err.message || '掃描失敗，請稍後重試');
-      
+
+      // Handle different types of errors
+      let errorMessage = 'Scan failed, please try again later';
+      let errorTitle = t("common.error");
+
+      if (err.response) {
+        // API returned an error response
+        const status = err.response.status;
+        const data = err.response.data;
+
+        if (status === 401) {
+          errorTitle = t("tracking.authenticationRequired");
+          errorMessage = t("tracking.pleaseLoginToStartScan");
+        } else if (status === 403) {
+          errorTitle = t("tracking.accessDenied");
+          errorMessage = t("tracking.noPermissionForScanType");
+        } else if (status === 429) {
+          errorTitle = t("tracking.rateLimitExceeded");
+          errorMessage = t("tracking.tooManyRequests");
+        } else if (status >= 500) {
+          errorTitle = t("tracking.serverError");
+          errorMessage = t("tracking.serverTemporarilyUnavailable");
+        } else {
+          errorMessage = data?.message || err.message || errorMessage;
+        }
+      } else if (err.request) {
+        // Network error - no response received
+        errorTitle = t("tracking.connectionError");
+        errorMessage = t("tracking.unableToConnectToServer");
+      } else {
+        // Other error
+        errorMessage = err.message || errorMessage;
+      }
+
+      setError(errorMessage);
+
       setTimeout(() => {
         toast({
-          title: "錯誤",
-          description: err.response?.data?.message || err.message || '掃描失敗，請稍後重試',
+          title: errorTitle,
+          description: errorMessage,
           variant: "destructive",
         });
       }, 0);
@@ -532,8 +413,8 @@ const Tracking = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-xl">AI 可見度分數</CardTitle>
-              <CardDescription>基礎診斷結果</CardDescription>
+              <CardTitle className="text-xl">{t("dashboard.aiVisibilityScore")}</CardTitle>
+              <CardDescription>{t("tracking.freeDiagnosis")} {t("common.success")}</CardDescription>
             </div>
             <div className="text-right">
               <div className="text-4xl font-bold text-primary">{results.score}</div>
@@ -550,18 +431,18 @@ const Tracking = () => {
             {results.summary.status === "good" && <CheckCircle className="h-5 w-5 text-green-500 mr-2" />}
             {results.summary.status === "warning" && <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2" />}
             {results.summary.status === "critical" && <X className="h-5 w-5 text-red-500 mr-2" />}
-            診斷摘要
+            {t("optimization.results.tabs.suggestions")} {t("common.summary", "Summary")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">{results.summary.message}</p>
           <div className="space-y-2">
-            <h4 className="font-medium">主要發現：</h4>
+            <h4 className="font-medium">{t("analytics.keyFindings", "Key Findings:")} </h4>
             <ul className="space-y-1">
               {results.summary.keyIssues.map((issue, index) => (
                 <li key={index} className="flex items-start">
                   <AlertTriangle className="h-4 w-4 text-yellow-500 mr-2 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">{expandPerformanceMetrics(issue)}</span>
+                  <span className="text-sm">{expandPerformanceMetrics(issue, t)}</span>
                 </li>
               ))}
             </ul>
@@ -572,15 +453,15 @@ const Tracking = () => {
       {/* 分數預覽 */}
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle>分析預覽</CardTitle>
-          <CardDescription>註冊後可查看詳細分析</CardDescription>
+          <CardTitle>{t("analytics.analysisPreview", "Analysis Preview")}</CardTitle>
+          <CardDescription>{t("auth.registerToViewDetails", "Register to view detailed analysis")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-gradient-subtle rounded-lg">
               <div className="flex items-center">
                 <Globe className="h-4 w-4 text-blue-500 mr-3" />
-                <span className="font-medium">技術健康度</span>
+                <span className="font-medium">{t("tracking.technicalHealth")}</span>
               </div>
               <div className="flex items-center">
                 <span className="font-bold text-blue-600">{results.preview.technicalHealth}/100</span>
@@ -590,7 +471,7 @@ const Tracking = () => {
             <div className="flex items-center justify-between p-3 bg-gradient-subtle rounded-lg">
               <div className="flex items-center">
                 <Target className="h-4 w-4 text-green-500 mr-3" />
-                <span className="font-medium">內容品質</span>
+                <span className="font-medium">{t("tracking.contentQuality")}</span>
               </div>
               <div className="flex items-center">
                 <span className="font-bold text-green-600">{results.preview.contentQuality}/100</span>
@@ -600,7 +481,7 @@ const Tracking = () => {
             <div className="flex items-center justify-between p-3 bg-gradient-subtle rounded-lg">
               <div className="flex items-center">
                 <Search className="h-4 w-4 text-purple-500 mr-3" />
-                <span className="font-medium">AI 可見度</span>
+                <span className="font-medium">{t("tracking.aiVisibility")}</span>
               </div>
               <div className="flex items-center">
                 <span className="font-bold text-purple-600">{results.preview.aiVisibility}/100</span>
@@ -618,9 +499,9 @@ const Tracking = () => {
             <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
               <Star className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold">解鎖完整分析報告</h3>
+            <h3 className="text-xl font-semibold">{t("tracking.unlockFullAnalysis")}</h3>
             <p className="text-muted-foreground">
-              註冊即可獲得深度分析，包含具體優化建議和競爭對手比較
+              {t("tracking.registerToGetDeepAnalysis")}
             </p>
             <div className="space-y-2">
               {results.upgradeReasons.map((reason, index) => (
@@ -637,7 +518,7 @@ const Tracking = () => {
                 onClick={() => setShowAuthModal(true)}
               >
                 <Zap className="mr-2 h-4 w-4" />
-                免費註冊解鎖
+                {t("tracking.freeRegisterUnlock")}
               </Button>
               <Button 
                 variant="outline" 
@@ -651,7 +532,7 @@ const Tracking = () => {
                   setScanProgress(0);
                 }}
               >
-                重新掃描
+                {t("tracking.rescanWebsite")}
               </Button>
             </div>
           </div>
@@ -661,39 +542,39 @@ const Tracking = () => {
       {/* 功能預覽 */}
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle>深度分析功能 (註冊後可用)</CardTitle>
-          <CardDescription>完整的 GEO 優化分析</CardDescription>
+          <CardTitle>{t("tracking.deepAnalysisFeatures")}</CardTitle>
+          <CardDescription>{t("tracking.completeGeoOptimization")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="p-4 border border-border rounded-lg bg-gradient-subtle opacity-60 relative">
               <Globe className="h-8 w-8 text-primary mb-2" />
-              <h4 className="font-medium mb-1">技術架構分析</h4>
-              <p className="text-sm text-muted-foreground">網站技術結構深度檢測</p>
+              <h4 className="font-medium mb-1">{t("tracking.technicalArchitectureAnalysis")}</h4>
+              <p className="text-sm text-muted-foreground">{t("tracking.websiteTechnicalStructureDetection")}</p>
               <Lock className="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
             </div>
             <div className="p-4 border border-border rounded-lg bg-gradient-subtle opacity-60 relative">
               <Target className="h-8 w-8 text-primary mb-2" />
-              <h4 className="font-medium mb-1">內容品質評估</h4>
-              <p className="text-sm text-muted-foreground">AI 友善內容分析</p>
+              <h4 className="font-medium mb-1">{t("tracking.contentQualityAssessment")}</h4>
+              <p className="text-sm text-muted-foreground">{t("tracking.aiFriendlyContentAnalysis")}</p>
               <Lock className="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
             </div>
             <div className="p-4 border border-border rounded-lg bg-gradient-subtle opacity-60 relative">
               <Search className="h-8 w-8 text-primary mb-2" />
-              <h4 className="font-medium mb-1">AI 平台可見度檢測</h4>
-              <p className="text-sm text-muted-foreground">多平台 AI 搜尋表現</p>
+              <h4 className="font-medium mb-1">{t("tracking.aiPlatformVisibilityDetection")}</h4>
+              <p className="text-sm text-muted-foreground">{t("tracking.multiPlatformAiSearchPerformance")}</p>
               <Lock className="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
             </div>
             <div className="p-4 border border-border rounded-lg bg-gradient-subtle opacity-60 relative">
               <Users className="h-8 w-8 text-primary mb-2" />
-              <h4 className="font-medium mb-1">競爭對手對比分析</h4>
-              <p className="text-sm text-muted-foreground">詳細競爭力分析</p>
+              <h4 className="font-medium mb-1">{t("tracking.competitorBenchmarkAnalysis")}</h4>
+              <p className="text-sm text-muted-foreground">{t("tracking.detailedCompetitiveAnalysis")}</p>
               <Lock className="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
             </div>
             <div className="p-4 border border-border rounded-lg bg-gradient-subtle opacity-60 relative">
               <TrendingUp className="h-8 w-8 text-primary mb-2" />
-              <h4 className="font-medium mb-1">優化機會識別</h4>
-              <p className="text-sm text-muted-foreground">具體改善建議</p>
+              <h4 className="font-medium mb-1">{t("tracking.optimizationOpportunityIdentification")}</h4>
+              <p className="text-sm text-muted-foreground">{t("tracking.specificImprovementSuggestions")}</p>
               <Lock className="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
             </div>
           </div>
@@ -710,8 +591,8 @@ const Tracking = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-xl">AI 可見度分數</CardTitle>
-              <CardDescription>基於多項 GEO 指標的綜合評估</CardDescription>
+              <CardTitle className="text-xl">{t("dashboard.aiVisibilityScore")}</CardTitle>
+              <CardDescription>{t("tracking.basedOnGeoIndicators")}</CardDescription>
             </div>
             <div className="text-right">
               <div className="text-4xl font-bold text-primary">{results.score}</div>
@@ -728,7 +609,7 @@ const Tracking = () => {
           <Card className="bg-gradient-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                技術健康度
+                {t("tracking.technicalHealth")}
                 <Badge variant="secondary">{results.technicalHealth.weight}%</Badge>
               </CardTitle>
             </CardHeader>
@@ -742,7 +623,7 @@ const Tracking = () => {
                       {item.status === "critical" && <X className="h-4 w-4 text-red-500 mr-3 flex-shrink-0" />}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate">{item.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail)}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail, t)}</div>
                       </div>
                     </div>
                   </div>
@@ -755,7 +636,7 @@ const Tracking = () => {
           <Card className="bg-gradient-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                內容品質
+                {t("tracking.contentQuality")}
                 <Badge variant="secondary">{results.contentQuality.weight}%</Badge>
               </CardTitle>
             </CardHeader>
@@ -769,7 +650,7 @@ const Tracking = () => {
                       {item.status === "critical" && <X className="h-4 w-4 text-red-500 mr-3 flex-shrink-0" />}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate">{item.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail)}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail, t)}</div>
                       </div>
                     </div>
                   </div>
@@ -782,7 +663,7 @@ const Tracking = () => {
           <Card className="bg-gradient-card border-border">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                AI 可見度
+                {t("tracking.aiVisibility")}
                 <Badge variant="secondary">{results.aiVisibility.weight}%</Badge>
               </CardTitle>
             </CardHeader>
@@ -796,7 +677,7 @@ const Tracking = () => {
                       {item.status === "critical" && <X className="h-4 w-4 text-red-500 mr-3 flex-shrink-0" />}
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate">{item.name}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail)}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{expandPerformanceMetrics(item.detail, t)}</div>
                       </div>
                     </div>
                   </div>
@@ -812,28 +693,28 @@ const Tracking = () => {
             {results.competitors && (
               <Card className="bg-gradient-card border-border">
                 <CardHeader>
-                  <CardTitle>競爭對手比較</CardTitle>
+                  <CardTitle>{t("tracking.competitorBenchmarkAnalysis")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">您的網站</span>
+                      <span className="text-sm">{t("tracking.yourWebsite")}</span>
                       <span className="font-bold text-primary">{results.score}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm">產業平均</span>
+                      <span className="text-sm">{t("tracking.industryAverage")}</span>
                       <span className="text-muted-foreground">{results.competitors.averageScore}</span>
                     </div>
                     <div className="pt-2">
                       <Badge variant="secondary" className="text-xs">
-                        排名: 第 {results.competitors.ranking} 位 / {results.competitors.totalCompetitors} 家競爭對手
+                        {t("tracking.ranking")}: #{results.competitors.ranking} / {results.competitors.totalCompetitors} {t("tracking.topCompetitors")}
                       </Badge>
                     </div>
                     
                     {/* 競爭對手詳情 */}
                     {results.competitors.details && results.competitors.details.length > 0 && (
                       <div className="pt-4">
-                        <h4 className="font-medium mb-3">主要競爭對手：</h4>
+                        <h4 className="font-medium mb-3">{t("tracking.mainCompetitors")}</h4>
                         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                           {results.competitors.details.map((competitor, index) => (
                           <div key={index} className="p-3 bg-gradient-subtle rounded-lg">
@@ -842,7 +723,7 @@ const Tracking = () => {
                               <span className="text-sm text-primary">{competitor.score}/100</span>
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              優勢: {competitor.strengths.join(', ')}
+                              {t("tracking.strengths")}: {competitor.strengths.join(', ')}
                             </div>
                           </div>
                           ))}
@@ -859,21 +740,21 @@ const Tracking = () => {
               <>
                 <Card className="bg-gradient-card border-border">
                   <CardHeader>
-                    <CardTitle>優化潛力</CardTitle>
+                    <CardTitle>{t("tracking.optimizationPotential")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <TrendingUp className="h-4 w-4 text-green-500 mr-2" />
-                          <span className="text-sm">預估可提升流量</span>
+                          <span className="text-sm">{t("tracking.estimatedTrafficIncrease")}</span>
                         </div>
                         <span className="font-bold text-green-600">+{results.optimization.potentialTrafficGain}%</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center">
                           <Target className="h-4 w-4 text-blue-500 mr-2" />
-                          <span className="text-sm">預估轉換率提升</span>
+                          <span className="text-sm">{t("tracking.estimatedConversionIncrease")}</span>
                         </div>
                         <span className="font-bold text-blue-600">+{results.optimization.potentialConversionGain}%</span>
                       </div>
@@ -885,7 +766,7 @@ const Tracking = () => {
                 {results.optimization.roadmap && results.optimization.roadmap.length > 0 && (
                   <Card className="bg-gradient-card border-border">
                     <CardHeader>
-                      <CardTitle>優化路線圖</CardTitle>
+                      <CardTitle>{t("tracking.optimizationRoadmap")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
@@ -897,7 +778,7 @@ const Tracking = () => {
                             </div>
                             <p className="text-sm text-muted-foreground mb-2">{phase.expectedResults}</p>
                             <div className="text-xs">
-                              <span className="font-medium">行動項目: </span>
+                              <span className="font-medium">{t("tracking.actionItems")} </span>
                               {phase.actions.join(', ')}
                             </div>
                           </div>
@@ -919,17 +800,17 @@ const Tracking = () => {
           <div className="text-center space-y-4">
             <h3 className="text-lg font-semibold">
               {currentScan?.website?.url ? 
-                `為 ${(() => {
+                t("tracking.generateOptimizationFor", { domain: (() => {
                   try { return new URL(currentScan.website.url).hostname; }
                   catch { return currentScan.website.url; }
-                })()} 生成優化建議` : 
-                "準備開始優化？"
+                })() }) :
+                t("tracking.readyToOptimize")
               }
             </h3>
             <p className="text-muted-foreground">
               {currentScan?.website?.url ? 
-                `基於掃描結果為您生成專業的 GEO 優化建議` :
-                "使用我們的 AI 優化工具，快速提升您的網站在 AI 搜索中的可見度"
+                t("tracking.basedOnScanResults") :
+                t("tracking.useAiOptimizationTool")
               }
             </p>
             <div className="flex gap-4 justify-center">
@@ -937,13 +818,13 @@ const Tracking = () => {
                 className="bg-primary text-primary-foreground"
                 disabled={(!currentScan?.website?.url && !url) || isLoading}
                 onClick={() => handleOptimization()}
-                title={(!currentScan?.website?.url && !url) ? "請先進行一次掃描或輸入網站 URL" : 
+                title={(!currentScan?.website?.url && !url) ? t("tracking.scanFirstOrEnterUrl") :
                   currentScan?.website?.url ? (() => {
-                    try { return `為 ${new URL(currentScan.website.url).hostname} 生成優化建議`; }
-                    catch { return "生成優化建議"; }
+                    try { return t("tracking.generateOptimizationFor", { domain: new URL(currentScan.website.url).hostname }); }
+                    catch { return t("tracking.startOptimization"); }
                   })() : ""}
               >
-                開始優化
+                {t("tracking.startOptimization")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button 
@@ -951,7 +832,7 @@ const Tracking = () => {
                 className="border-border"
                 onClick={() => handleScan('detailed', currentScan?.website?.url || url)}
               >
-                重新深度掃描
+                {t("tracking.rerunDeepScan")}
               </Button>
             </div>
           </div>
@@ -965,18 +846,18 @@ const Tracking = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">AI 可見度診斷</h1>
-            <p className="text-muted-foreground">免費診斷 → 註冊試用 → 深度分析</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t("tracking.freeAIDiagnosis")}</h1>
+            <p className="text-muted-foreground">{t("tracking.freeDiagnosisSteps")}</p>
           </div>
           <Button 
             variant="outline" 
             className="border-border"
             disabled={!isAuthenticated}
-            title={!isAuthenticated ? "請先登入" : ""}
+            title={!isAuthenticated ? t("tracking.pleaseLoginFirst") : ""}
             onClick={() => setShowScanHistory(!showScanHistory)}
           >
             <Search className="mr-2 h-4 w-4" />
-            掃描紀錄 {scanHistory.length > 0 && `(${scanHistory.length})`}
+            {t("tracking.scanRecord")} {scanHistory.length > 0 && `(${scanHistory.length})`}
           </Button>
         </div>
 
@@ -986,9 +867,9 @@ const Tracking = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>掃描歷史記錄</CardTitle>
+                  <CardTitle>{t("tracking.scanHistoryTitle")}</CardTitle>
                   <CardDescription>
-                    查看您之前的掃描結果
+                    {t("tracking.scanHistoryDesc")}
                   </CardDescription>
                 </div>
                 <Button 
@@ -1004,13 +885,13 @@ const Tracking = () => {
               {isLoadingHistory ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                  <span>載入掃描歷史記錄中...</span>
+                  <span>{t("tracking.loadingScanHistory")}</span>
                 </div>
               ) : scanHistory.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>尚無掃描記錄</p>
-                  <p className="text-sm">開始您的第一次網站掃描</p>
+                  <p>{t("tracking.noScanRecords")}</p>
+                  <p className="text-sm">{t("tracking.startFirstScan")}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -1026,22 +907,22 @@ const Tracking = () => {
                         <div className="min-w-0 flex-1">
                           <p className="font-medium truncate">
                             {/* Display website name/domain if available, otherwise scan ID */}
-                            {scan.website ? scan.website.name || scan.website.domain || scan.website.url : `掃描 ${scan.id.substring(0, 8)}`}
+                            {scan.website ? scan.website.name || scan.website.domain || scan.website.url : `${t("tracking.scanning")} ${scan.id.substring(0, 8)}`}
                           </p>
                           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                            <span>類型: {
-                              scan.scanType === 'quick' ? '快速' :
-                              scan.scanType === 'standard' ? '標準' :
-                              scan.scanType === 'comprehensive' ? '深度' : scan.scanType
+                            <span>{t("tracking.scanType")}: {
+                              scan.scanType === 'quick' ? t('tracking.quickScan') :
+                              scan.scanType === 'standard' ? t('tracking.standardScan') :
+                              scan.scanType === 'comprehensive' ? t('tracking.comprehensiveScan') : scan.scanType
                             }</span>
-                            <span>狀態: {
-                              scan.status === 'completed' ? '已完成' :
-                              scan.status === 'failed' ? '失敗' :
-                              scan.status === 'running' ? '進行中' :
-                              '等待中'
+                            <span>{t("tracking.status")}: {
+                              scan.status === 'completed' ? t('tracking.completed') :
+                              scan.status === 'failed' ? t('tracking.failed') :
+                              scan.status === 'running' ? t('tracking.running') :
+                              t('tracking.waiting')
                             }</span>
                             {scan.completedAt && (
-                              <span>完成: {new Date(scan.completedAt).toLocaleDateString('zh-TW')}</span>
+                              <span>{t('tracking.completedAt')}: {new Date(scan.completedAt).toLocaleDateString()}</span>
                             )}
                           </div>
                         </div>
@@ -1055,8 +936,8 @@ const Tracking = () => {
                               try {
                                 // 顯示載入狀態
                                 toast({
-                                  title: "載入中",
-                                  description: "正在獲取掃描結果...",
+                                  title: t("tracking.loadingResults"),
+                                  description: t("tracking.gettingScanResults"),
                                 });
 
                                 // 調用 API 獲取掃描結果（使用現有的 getScan 端點）
@@ -1077,30 +958,30 @@ const Tracking = () => {
                                     setShowScanHistory(false);
                                     
                                     toast({
-                                      title: "載入成功",
-                                      description: "掃描結果已顯示",
+                                      title: t("tracking.loadSuccess"),
+                                      description: t("tracking.scanResultsDisplayed"),
                                     });
                                   } else {
                                     toast({
-                                      title: "無結果",
-                                      description: "該掃描還沒有結果，請稍後再試",
+                                      title: t("tracking.noResults"),
+                                      description: t("tracking.scanNoResultsYet"),
                                       variant: "destructive",
                                     });
                                   }
                                 } else {
-                                  throw new Error('無法獲取掃描結果');
+                                  throw new Error('Unable to get scan results');
                                 }
                               } catch (error: any) {
-                                console.error('載入掃描結果失敗:', error);
+                                console.error('Failed to load scan results:', error);
                                 toast({
-                                  title: "載入失敗",
-                                  description: error.response?.data?.message || error.message || '無法載入掃描結果，請稍後重試',
+                                  title: t("tracking.loadFailed"),
+                                  description: error.response?.data?.message || error.message || t("tracking.unableToLoadResults"),
                                   variant: "destructive",
                                 });
                               }
                             }}
                           >
-                            查看結果
+                            {t('tracking.viewResult')}
                           </Button>
                         )}
                         {(scan.status === 'failed' || scan.status === 'completed') && (
@@ -1125,8 +1006,8 @@ const Tracking = () => {
                                   setScanResults(null);
                                   
                                   toast({
-                                    title: "開始重新掃描",
-                                    description: `正在進行${scan.scanType === 'comprehensive' ? '深度' : scan.scanType === 'standard' ? '標準' : '快速'}掃描...`,
+                                    title: t("tracking.startRescan"),
+                                    description: `${t('tracking.rescanInProgress', { scanType: scan.scanType === 'comprehensive' ? t('tracking.comprehensiveScan') : scan.scanType === 'standard' ? t('tracking.standardScan') : t('tracking.quickScan') })}`,
                                   });
                                   
                                   // 開始輪詢狀態
@@ -1151,8 +1032,8 @@ const Tracking = () => {
                                           loadScanHistory(); // 重新載入掃描歷史
                                           
                                           toast({
-                                            title: "重新掃描完成",
-                                            description: "掃描結果已更新！",
+                                            title: t("tracking.rescanComplete"),
+                                            description: t("tracking.scanResultsUpdated"),
                                           });
                                         }
                                       }
@@ -1161,13 +1042,13 @@ const Tracking = () => {
                                         clearInterval(pollInterval);
                                         setIsScanning(false);
                                         toast({
-                                          title: "掃描失敗",
-                                          description: updatedScan.error || '掃描過程中發生錯誤',
+                                          title: t("tracking.scanFailed"),
+                                          description: updatedScan.error || 'Error occurred during scanning',
                                           variant: "destructive",
                                         });
                                       }
                                     } catch (pollError) {
-                                      console.error('輪詢錯誤:', pollError);
+                                      console.error('Polling error:', pollError);
                                     }
                                   }, 3000);
                                   
@@ -1177,24 +1058,24 @@ const Tracking = () => {
                                     if (isScanning) {
                                       setIsScanning(false);
                                       toast({
-                                        title: "掃描超時",
-                                        description: "請稍後重試",
+                                        title: t("tracking.scanTimeout"),
+                                        description: t("tracking.pleaseRetryLater"),
                                         variant: "destructive",
                                       });
                                     }
                                   }, 60000);
                                 }
                               } catch (error: any) {
-                                console.error('重新掃描錯誤:', error);
+                                console.error('Rescan error:', error);
                                 toast({
-                                  title: "重新掃描失敗",
-                                  description: error.response?.data?.message || error.message || '請稍後重試',
+                                  title: t("tracking.rescanFailed"),
+                                  description: error.response?.data?.message || error.message || t("tracking.pleaseRetryLater"),
                                   variant: "destructive",
                                 });
                               }
                             }}
                           >
-                            重新掃描
+                            {t('tracking.rescan')}
                           </Button>
                         )}
                       </div>
@@ -1210,10 +1091,10 @@ const Tracking = () => {
                       {isLoadingHistory ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          載入中...
+                          {t("common.loading")}
                         </>
                       ) : (
-                        '重新載入'
+                        t("tracking.reloadHistory")
                       )}
                     </Button>
                   </div>
@@ -1229,16 +1110,16 @@ const Tracking = () => {
               <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
                 <Scan className="h-8 w-8 text-primary" />
               </div>
-              <CardTitle className="text-2xl">免費 AI 可見度診斷</CardTitle>
+              <CardTitle className="text-2xl">{t("tracking.freeAIDiagnosis")}</CardTitle>
               <CardDescription>
-                輸入您的網站網址，獲得免費 AI 可見度診斷
+                {t("tracking.enterWebsiteUrl")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="max-w-md mx-auto space-y-4">
                 <div className="flex space-x-2">
                   <Input
-                    placeholder="https://your-website.com"
+                    placeholder={t("tracking.urlPlaceholder")}
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     className="flex-1"
@@ -1252,10 +1133,10 @@ const Tracking = () => {
                     {isScanning ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        掃描中
+                        {t("tracking.scanning")}
                       </>
                     ) : (
-                      "免費診斷"
+                      t("tracking.freeDiagnosis")
                     )}
                   </Button>
                 </div>
@@ -1270,7 +1151,7 @@ const Tracking = () => {
                       className="border-primary text-primary hover:bg-primary/10"
                     >
                       <Zap className="mr-2 h-4 w-4" />
-                      深度分析 (3-5分鐘)
+                      {t("tracking.deepAnalysisTime")}
                     </Button>
                   </div>
                 )}
@@ -1278,14 +1159,14 @@ const Tracking = () => {
                 {isScanning && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>掃描進度</span>
+                      <span>{t("tracking.scanProgress")}</span>
                       <span>{Math.round(scanProgress)}%</span>
                     </div>
                     <Progress value={scanProgress} className="w-full" />
                     <p className="text-sm text-muted-foreground text-center">
                       {scanType === 'basic' 
-                        ? '正在進行免費診斷...' 
-                        : '正在進行深度分析，請稍候...'}
+                        ? t("tracking.performingFreeDiagnosis")
+                        : t("tracking.performingDeepAnalysis")}
                     </p>
                   </div>
                 )}
@@ -1304,24 +1185,24 @@ const Tracking = () => {
                   <div className="p-4 border border-border rounded-lg">
                     <h3 className="font-medium mb-2 flex items-center">
                       <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                      免費診斷
+                      {t("tracking.freeDiagnosisBasics")}
                     </h3>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• 基礎 AI 可見度分數</li>
-                      <li>• 主要問題識別</li>
-                      <li>• 簡易改善建議</li>
+                      <li>{t("tracking.basicAiVisibilityScore")}</li>
+                      <li>{t("tracking.mainIssueIdentification")}</li>
+                      <li>{t("tracking.simpleImprovementSuggestions")}</li>
                     </ul>
                   </div>
                   <div className="p-4 border border-primary/50 rounded-lg bg-primary/5">
                     <h3 className="font-medium mb-2 flex items-center">
                       <Star className="h-4 w-4 text-primary mr-2" />
-                      深度分析 {!isAuthenticated && "(需註冊)"}
+                      {t("tracking.deepAnalysisAdvanced")} {!isAuthenticated && t("tracking.requiresRegistration")}
                     </h3>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• 完整技術架構分析</li>
-                      <li>• 競爭對手詳細比較</li>
-                      <li>• 具體優化路線圖</li>
-                      <li>• 個人化改善建議</li>
+                      <li>{t("tracking.completeTechnicalArchitectureAnalysis")}</li>
+                      <li>{t("tracking.detailedCompetitorComparison")}</li>
+                      <li>{t("tracking.specificOptimizationRoadmap")}</li>
+                      <li>{t("tracking.personalizedImprovementSuggestions")}</li>
                     </ul>
                   </div>
                 </div>
@@ -1344,12 +1225,12 @@ const Tracking = () => {
         onClose={() => setShowAuthModal(false)}
         defaultTab="register"
         onSuccess={() => {
-          // 註冊/登入成功後重新檢查認證狀態
+          // Check authentication status again after successful registration/login
           checkAuthStatus();
           setShowAuthModal(false);
           toast({
-            title: "歡迎！",
-            description: "現在您可以使用完整的掃描功能了！",
+            title: t("tracking.welcome"),
+            description: t("tracking.canUseFullScanFeatures"),
           });
         }}
       />

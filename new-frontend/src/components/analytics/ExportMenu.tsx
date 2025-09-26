@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Download, FileText, Image, Table, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
@@ -13,59 +14,63 @@ interface ExportMenuProps {
   size?: "default" | "sm" | "lg";
 }
 
-const exportFormats = [
+const getExportFormats = (t: any) => [
   {
     format: 'pdf' as ExportFormat,
-    label: 'PDF 報告',
-    description: '完整的分析報告',
+    label: t('analytics.export.formats.pdfReport'),
+    description: t('analytics.export.formats.pdfDescription'),
     icon: FileText,
   },
   {
     format: 'excel' as ExportFormat,
-    label: 'Excel 檔案',
-    description: '可編輯的數據表格',
+    label: t('analytics.export.formats.excelFile'),
+    description: t('analytics.export.formats.excelDescription'),
     icon: Table,
   },
   {
     format: 'csv' as ExportFormat,
-    label: 'CSV 檔案',
-    description: '純數據格式',
+    label: t('analytics.export.formats.csvFile'),
+    description: t('analytics.export.formats.csvDescription'),
     icon: Table,
   },
   {
     format: 'png' as ExportFormat,
-    label: 'PNG 圖片',
-    description: '圖表截圖',
+    label: t('analytics.export.formats.pngImage'),
+    description: t('analytics.export.formats.pngDescription'),
     icon: Image,
   }
 ];
 
-const exportTypes = [
+const getExportTypes = (t: any) => [
   {
     type: 'dashboard' as ExportType,
-    label: '總覽數據',
+    label: t('analytics.export.types.dashboard'),
   },
   {
     type: 'trends' as ExportType,
-    label: '趨勢分析',
+    label: t('analytics.export.types.trends'),
   },
   {
     type: 'sources' as ExportType,
-    label: '流量來源',
+    label: t('analytics.export.types.sources'),
   },
   {
     type: 'devices' as ExportType,
-    label: '裝置分析',
+    label: t('analytics.export.types.devices'),
   },
   {
     type: 'pages' as ExportType,
-    label: '頁面效能',
+    label: t('analytics.export.types.pages'),
   }
 ];
 
 export const ExportMenu = ({ onExport, disabled, size = "default" }: ExportMenuProps) => {
+  const { t } = useTranslation();
   const [isExporting, setIsExporting] = useState(false);
   const [exportingItem, setExportingItem] = useState<string | null>(null);
+
+  const exportFormats = getExportFormats(t);
+  const exportTypes = getExportTypes(t);
 
   const handleExport = async (format: ExportFormat, type: ExportType) => {
     const exportKey = `${format}-${type}`;
@@ -74,10 +79,10 @@ export const ExportMenu = ({ onExport, disabled, size = "default" }: ExportMenuP
 
     try {
       await onExport(format, type);
-      toast.success(`已成功匯出 ${exportFormats.find(f => f.format === format)?.label}`, {
-        description: `${exportTypes.find(t => t.type === type)?.label} 數據已下載`,
+      toast.success(t('analytics.export.messages.successExport', { format: exportFormats.find(f => f.format === format)?.label }), {
+        description: t('analytics.export.messages.dataDownloaded', { type: exportTypes.find(et => et.type === type)?.label }),
         action: {
-          label: '查看下載',
+          label: t('analytics.export.actions.viewDownload'),
           onClick: () => {
             // Open downloads folder or show notification
           }
@@ -85,10 +90,10 @@ export const ExportMenu = ({ onExport, disabled, size = "default" }: ExportMenuP
       });
     } catch (error) {
       console.error('Export failed:', error);
-      toast.error('匯出失敗', {
-        description: error instanceof Error ? error.message : '請稍後重試或聯繫支援',
+      toast.error(t('analytics.export.messages.exportFailed'), {
+        description: error instanceof Error ? error.message : t('analytics.export.messages.tryAgainOrContact'),
         action: {
-          label: '重試',
+          label: t('analytics.export.actions.retry'),
           onClick: () => handleExport(format, type)
         }
       });
@@ -99,9 +104,9 @@ export const ExportMenu = ({ onExport, disabled, size = "default" }: ExportMenuP
   };
 
   const quickExports = [
-    { format: 'pdf' as ExportFormat, type: 'dashboard' as ExportType, label: '完整報告 (PDF)' },
-    { format: 'excel' as ExportFormat, type: 'dashboard' as ExportType, label: '數據表格 (Excel)' },
-    { format: 'png' as ExportFormat, type: 'trends' as ExportType, label: '趨勢圖表 (PNG)' }
+    { format: 'pdf' as ExportFormat, type: 'dashboard' as ExportType, label: t('analytics.export.quick.fullReport') },
+    { format: 'excel' as ExportFormat, type: 'dashboard' as ExportType, label: t('analytics.export.quick.dataTable') },
+    { format: 'png' as ExportFormat, type: 'trends' as ExportType, label: t('analytics.export.quick.trendsChart') }
   ];
 
   return (
@@ -118,12 +123,12 @@ export const ExportMenu = ({ onExport, disabled, size = "default" }: ExportMenuP
           ) : (
             <Download className="h-4 w-4" />
           )}
-          {isExporting ? '匯出中...' : '匯出'}
+          {isExporting ? t('analytics.export.exporting') : t('analytics.export.export')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <div className="px-3 py-2 text-sm font-medium text-foreground border-b">
-          快速匯出
+{t('analytics.export.quickExport')}
         </div>
         {quickExports.map((item, index) => {
           const exportKey = `${item.format}-${item.type}`;
@@ -149,7 +154,7 @@ export const ExportMenu = ({ onExport, disabled, size = "default" }: ExportMenuP
         <DropdownMenuSeparator />
         
         <div className="px-3 py-2 text-sm font-medium text-foreground border-b">
-          自定義匯出
+{t('analytics.export.customExport')}
         </div>
         
         {exportFormats.map((format) => (
@@ -188,7 +193,7 @@ export const ExportMenu = ({ onExport, disabled, size = "default" }: ExportMenuP
         <DropdownMenuSeparator />
         
         <div className="px-3 py-2 text-xs text-muted-foreground">
-          匯出的檔案將會自動下載到您的電腦
+{t('analytics.export.downloadNote')}
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -217,14 +222,16 @@ export const useAnalyticsExport = () => {
         downloadFile(jsonContent, `analytics-${type}.json`, 'application/json');
       } else if (format === 'pdf') {
         // Handle PDF export - would integrate with PDF library
-        toast.info('PDF 匯出功能開發中', {
-          description: '此功能即將推出，請使用其他格式'
+        // Note: This would need t() function passed from parent component
+        toast.info('PDF export under development', {
+          description: 'This feature is coming soon, please use other formats'
         });
         throw new Error('PDF export not implemented');
       } else if (format === 'png') {
         // Handle image export - would use chart screenshot
-        toast.info('圖片匯出功能開發中', {
-          description: '此功能即將推出，請使用其他格式'
+        // Note: This would need t() function passed from parent component
+        toast.info('Image export under development', {
+          description: 'This feature is coming soon, please use other formats'
         });
         throw new Error('PNG export not implemented');
       }

@@ -86,16 +86,16 @@ function convertToBasicScanResults(realResults: any): BasicScanResults {
     score,
     summary: {
       status: score > 70 ? 'good' : score > 50 ? 'warning' : 'critical',
-      message: score > 70 
-        ? `${domain} 在 AI 搜索中表現良好，但仍有優化空間。`
-        : score > 50 
-        ? `${domain} 存在一些影響 AI 可見度的問題需要改善。`
-        : `${domain} 在 AI 搜索中可見度較低，建議進行全面優化。`,
+      message: score > 70
+        ? `${domain} performs well in AI search but has room for optimization.`
+        : score > 50
+        ? `${domain} has some issues affecting AI visibility that need improvement.`
+        : `${domain} has low visibility in AI search, comprehensive optimization recommended.`,
       keyIssues: realResults.summary?.keyIssues || [
-        "Schema 標記覆蓋率不足",
-        "內容更新頻率偏低",
-        "缺乏結構化FAQ內容",
-        "頁面載入速度需要改善"
+        "Insufficient Schema markup coverage",
+        "Content update frequency too low",
+        "Lacks structured FAQ content",
+        "Page loading speed needs improvement"
       ]
     },
     preview: {
@@ -104,10 +104,10 @@ function convertToBasicScanResults(realResults: any): BasicScanResults {
       aiVisibility: realResults.aiVisibility?.score || Math.floor(Math.random() * 25) + 40
     },
     upgradeReasons: [
-      "獲得 30+ 項技術指標詳細分析",
-      "查看具體競爭對手表現比較",
-      "獲得個人化優化執行計劃",
-      "追蹤改善進度和成效監控"
+      "Get detailed analysis of 30+ technical metrics",
+      "View specific competitor performance comparison",
+      "Get personalized optimization execution plan",
+      "Track improvement progress and performance monitoring"
     ]
   };
 }
@@ -115,22 +115,22 @@ function convertToBasicScanResults(realResults: any): BasicScanResults {
 // Generate fallback scan results when real scanning fails
 function generateFallbackScanResults(url: string, scanType: string): BasicScanResults | DetailedScanResults {
   const domain = new URL(url).hostname;
-  const score = Math.floor(Math.random() * 35) + 55; // 55-90 分
+  const score = Math.floor(Math.random() * 35) + 55; // 55-90 score
   
   const basicResults: BasicScanResults = {
     score,
     summary: {
       status: score > 70 ? 'good' : score > 50 ? 'warning' : 'critical',
-      message: score > 70 
-        ? `${domain} 在 AI 搜索中表現良好，但仍有優化空間。`
-        : score > 50 
-        ? `${domain} 存在一些影響 AI 可見度的問題需要改善。`
-        : `${domain} 在 AI 搜索中可見度較低，建議進行全面優化。`,
+      message: score > 70
+        ? `${domain} performs well in AI search but has room for optimization.`
+        : score > 50
+        ? `${domain} has some issues affecting AI visibility that need improvement.`
+        : `${domain} has low visibility in AI search, comprehensive optimization recommended.`,
       keyIssues: [
-        "Schema 標記覆蓋率不足 (僅 40%)",
-        "內容更新頻率偏低",
-        "缺乏結構化FAQ內容",
-        "頁面載入速度需要改善"
+        "Insufficient Schema markup coverage (only 40%)",
+        "Content update frequency too low",
+        "Lacks structured FAQ content",
+        "Page loading speed needs improvement"
       ]
     },
     preview: {
@@ -139,10 +139,10 @@ function generateFallbackScanResults(url: string, scanType: string): BasicScanRe
       aiVisibility: Math.floor(Math.random() * 25) + 40
     },
     upgradeReasons: [
-      "獲得 30+ 項技術指標詳細分析",
-      "查看具體競爭對手表現比較",
-      "獲得個人化優化執行計劃",
-      "追蹤改善進度和成效監控"
+      "Get detailed analysis of 30+ technical metrics",
+      "View specific competitor performance comparison",
+      "Get personalized optimization execution plan",
+      "Track improvement progress and performance monitoring"
     ]
   };
 
@@ -157,33 +157,33 @@ function generateFallbackScanResults(url: string, scanType: string): BasicScanRe
       weight: 40,
       score: Math.floor(Math.random() * 25) + 65,
       items: [
-        { name: "robots.txt 配置", status: "good", detail: "已允許 AI 爬蟲存取" },
-        { name: "Schema 標記", status: "warning", detail: "覆蓋率 60%（建議 85%+）" },
-        { name: "網站速度", status: "good", detail: "LCP 2.1秒（良好）" },
-        { name: "JavaScript 渲染", status: "critical", detail: "SSR 支援不足" },
-        { name: "SSL 憑證", status: "good", detail: "有效 HTTPS 配置" }
+        { name: "robots.txt Configuration", status: "good", detail: "AI crawler access allowed" },
+        { name: "Schema Markup", status: "warning", detail: "60% coverage (recommended 85%+)" },
+        { name: "Website Speed", status: "good", detail: "LCP 2.1s (good)" },
+        { name: "JavaScript Rendering", status: "critical", detail: "Insufficient SSR support" },
+        { name: "SSL Certificate", status: "good", detail: "Valid HTTPS configuration" }
       ]
     },
     contentQuality: {
       weight: 30,
       score: Math.floor(Math.random() * 30) + 55,
       items: [
-        { name: "平均內容長度", status: "warning", detail: "1,245 字（建議 1,500+）" },
-        { name: "FAQ 覆蓋率", status: "warning", detail: "35%（建議 70%+）" },
-        { name: "更新頻率", status: "critical", detail: "每月 1 次（建議每週）" },
-        { name: "引用資料", status: "warning", detail: "部分頁面缺乏權威引用" },
-        { name: "內容結構", status: "good", detail: "標題層級結構清晰" }
+        { name: "Average Content Length", status: "warning", detail: "1,245 words (recommended 1,500+)" },
+        { name: "FAQ Coverage", status: "warning", detail: "35% (recommended 70%+)" },
+        { name: "Update Frequency", status: "critical", detail: "Monthly (recommended weekly)" },
+        { name: "Citations", status: "warning", detail: "Some pages lack authoritative references" },
+        { name: "Content Structure", status: "good", detail: "Clear heading hierarchy" }
       ]
     },
     aiVisibility: {
       weight: 30,
       score: Math.floor(Math.random() * 20) + 50,
       items: [
-        { name: "ChatGPT 提及", status: "warning", detail: "12 次/100 查詢" },
-        { name: "Gemini 引用", status: "critical", detail: "8 次/100 查詢" },
-        { name: "Perplexity 出現", status: "good", detail: "15 次/100 查詢" },
-        { name: "Claude 可見度", status: "warning", detail: "10 次/100 查詢" },
-        { name: "品牌識別度", status: "warning", detail: "中等水準" }
+        { name: "ChatGPT Mentions", status: "warning", detail: "12 times/100 queries" },
+        { name: "Gemini Citations", status: "critical", detail: "8 times/100 queries" },
+        { name: "Perplexity Appearances", status: "good", detail: "15 times/100 queries" },
+        { name: "Claude Visibility", status: "warning", detail: "10 times/100 queries" },
+        { name: "Brand Recognition", status: "warning", detail: "Medium level" }
       ]
     },
     competitors: {
@@ -191,38 +191,38 @@ function generateFallbackScanResults(url: string, scanType: string): BasicScanRe
       ranking: Math.floor(Math.random() * 3) + 3,
       totalCompetitors: 10,
       details: [
-        { name: "競爭對手 A", score: 85, strengths: ["內容深度", "技術 SEO", "更新頻率"] },
-        { name: "競爭對手 B", score: 78, strengths: ["品牌權威", "社群互動", "多媒體內容"] },
-        { name: "競爭對手 C", score: 73, strengths: ["頁面速度", "行動體驗", "本地化內容"] }
+        { name: "Competitor A", score: 85, strengths: ["Content depth", "Technical SEO", "Update frequency"] },
+        { name: "Competitor B", score: 78, strengths: ["Brand authority", "Social engagement", "Multimedia content"] },
+        { name: "Competitor C", score: 73, strengths: ["Page speed", "Mobile experience", "Localized content"] }
       ]
     },
     optimization: {
       potentialTrafficGain: Math.floor(Math.random() * 30) + 35,
       potentialConversionGain: Math.floor(Math.random() * 20) + 15,
       priorityActions: [
-        { action: "完善 Schema 標記", impact: "high", difficulty: "medium", timeframe: "2-3週" },
-        { action: "增加FAQ內容", impact: "high", difficulty: "easy", timeframe: "1週" },
-        { action: "提高更新頻率", impact: "medium", difficulty: "medium", timeframe: "持續" },
-        { action: "改善頁面速度", impact: "medium", difficulty: "hard", timeframe: "4-6週" }
+        { action: "Improve Schema markup", impact: "high", difficulty: "medium", timeframe: "2-3 weeks" },
+        { action: "Add FAQ content", impact: "high", difficulty: "easy", timeframe: "1 week" },
+        { action: "Increase update frequency", impact: "medium", difficulty: "medium", timeframe: "Ongoing" },
+        { action: "Improve page speed", impact: "medium", difficulty: "hard", timeframe: "4-6 weeks" }
       ],
       roadmap: [
         {
-          phase: "第一階段：快速優化",
-          duration: "2-3週",
-          actions: ["新增FAQ內容", "完善Meta描述", "優化圖片Alt文字"],
-          expectedResults: "AI可見度提升15-20%"
+          phase: "Phase 1: Quick optimizations",
+          duration: "2-3 weeks",
+          actions: ["Add FAQ content", "Improve Meta descriptions", "Optimize image Alt text"],
+          expectedResults: "AI visibility improvement 15-20%"
         },
         {
-          phase: "第二階段：技術改善",
-          duration: "4-6週",
-          actions: ["實施完整Schema標記", "改善頁面載入速度", "增強行動裝置體驗"],
-          expectedResults: "技術分數提升至80+"
+          phase: "Phase 2: Technical improvements",
+          duration: "4-6 weeks",
+          actions: ["Implement complete Schema markup", "Improve page loading speed", "Enhance mobile device experience"],
+          expectedResults: "Technical score improvement to 80+"
         },
         {
-          phase: "第三階段：內容深化",
-          duration: "2-3個月",
-          actions: ["建立內容更新計劃", "加強權威引用", "擴充主題覆蓋範圍"],
-          expectedResults: "整體分數提升至85+"
+          phase: "Phase 3: Content enhancement",
+          duration: "2-3 months",
+          actions: ["Establish content update plan", "Strengthen authoritative citations", "Expand topic coverage"],
+          expectedResults: "Overall score improvement to 85+"
         }
       ]
     }

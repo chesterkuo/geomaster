@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useTranslation } from 'react-i18next';
 import { AuthModal } from "@/components/auth/AuthModal";
 import { ReportTemplateBuilder } from "@/components/reports/ReportTemplateBuilder";
 import { ReportScheduler } from "@/components/reports/ReportScheduler";
@@ -34,30 +35,31 @@ import {
 
 const Reporting = () => {
   const { isAuthenticated } = useAuth();
+  const { t } = useTranslation();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const regularReports = [
     {
-      title: "每週摘要",
-      description: "自動發送的週度 GEO 表現報告",
-      frequency: "每週一",
+      title: t('reporting.regularReports.weeklySummary.title'),
+      description: t('reporting.regularReports.weeklySummary.description'),
+      frequency: t('reporting.regularReports.weeklySummary.frequency'),
       status: "active",
       lastSent: "2024-03-18",
       recipients: 3
     },
     {
-      title: "月度分析報告",
-      description: "深度月度分析與趨勢洞察",
-      frequency: "每月1日",
+      title: t('reporting.regularReports.monthlyAnalysis.title'),
+      description: t('reporting.regularReports.monthlyAnalysis.description'),
+      frequency: t('reporting.regularReports.monthlyAnalysis.frequency'),
       status: "active",
       lastSent: "2024-03-01",
       recipients: 5
     },
     {
-      title: "季度競爭分析",
-      description: "競爭對手 GEO 表現比較分析",
-      frequency: "每季",
+      title: t('reporting.regularReports.quarterlyCompetitive.title'),
+      description: t('reporting.regularReports.quarterlyCompetitive.description'),
+      frequency: t('reporting.regularReports.quarterlyCompetitive.frequency'),
       status: "scheduled",
       lastSent: "2024-01-01",
       recipients: 2
@@ -65,12 +67,12 @@ const Reporting = () => {
   ];
 
   const customReportMetrics = [
-    { id: "ai-visibility", label: "AI 可見度分數", category: "核心指標" },
-    { id: "content-quality", label: "內容品質評分", category: "內容" },
-    { id: "technical-health", label: "技術健康度", category: "技術" },
-    { id: "competitor-ranking", label: "競爭對手排名", category: "競爭分析" },
-    { id: "traffic-potential", label: "流量提升潛力", category: "預測" },
-    { id: "conversion-rate", label: "轉換率優化", category: "轉換" }
+    { id: "ai-visibility", label: t('reporting.metrics.aiVisibility'), category: t('reporting.categories.core') },
+    { id: "content-quality", label: t('reporting.metrics.contentQuality'), category: t('reporting.categories.content') },
+    { id: "technical-health", label: t('reporting.metrics.technicalHealth'), category: t('reporting.categories.technical') },
+    { id: "competitor-ranking", label: t('reporting.metrics.competitorRanking'), category: t('reporting.categories.competitive') },
+    { id: "traffic-potential", label: t('reporting.metrics.trafficPotential'), category: t('reporting.categories.prediction') },
+    { id: "conversion-rate", label: t('reporting.metrics.conversionRate'), category: t('reporting.categories.conversion') }
   ];
 
   return (
@@ -78,22 +80,22 @@ const Reporting = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">報告中心</h1>
-            <p className="text-muted-foreground">自動化報告與白標客製化</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t('reporting.title')}</h1>
+            <p className="text-muted-foreground">{t('reporting.description')}</p>
           </div>
           <Button className="bg-primary text-primary-foreground">
             <Plus className="mr-2 h-4 w-4" />
-            建立新報告
+            {t('reporting.createNewReport')}
           </Button>
         </div>
 
         <Tabs defaultValue="library" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="library">報告庫</TabsTrigger>
-            <TabsTrigger value="templates">模板管理</TabsTrigger>
-            <TabsTrigger value="scheduled">排程報告</TabsTrigger>
-            <TabsTrigger value="builder">模板建構器</TabsTrigger>
-            <TabsTrigger value="white-label">白標報告</TabsTrigger>
+            <TabsTrigger value="library">{t('reporting.tabs.library')}</TabsTrigger>
+            <TabsTrigger value="templates">{t('reporting.tabs.templateManagement')}</TabsTrigger>
+            <TabsTrigger value="scheduled">{t('reporting.tabs.scheduledReports')}</TabsTrigger>
+            <TabsTrigger value="builder">{t('reporting.tabs.templateBuilder')}</TabsTrigger>
+            <TabsTrigger value="white-label">{t('reporting.tabs.whiteLabel')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="library" className="space-y-6">
@@ -106,12 +108,12 @@ const Reporting = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用報告庫</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可瀏覽和管理您的報告</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('reporting.auth.libraryRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('reporting.auth.libraryDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('reporting.auth.loginNow')}
                     </Button>
                   </div>
                 </div>
@@ -131,20 +133,20 @@ const Reporting = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理模板</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可建立和編輯報告模板</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('reporting.auth.templatesRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('reporting.auth.templatesDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('reporting.auth.loginNow')}
                     </Button>
                   </div>
                 </div>
               </div>
             ) : (
               <div>
-                <h3 className="text-lg font-medium mb-4">報告模板管理</h3>
-                <p className="text-muted-foreground">此功能即將推出，敬請期待！</p>
+                <h3 className="text-lg font-medium mb-4">{t('reporting.templateManagement.title')}</h3>
+                <p className="text-muted-foreground">{t('reporting.templateManagement.comingSoon')}</p>
               </div>
             )}
           </TabsContent>
@@ -159,12 +161,12 @@ const Reporting = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用排程報告</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可設定自動化報告排程</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('reporting.auth.scheduledRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('reporting.auth.scheduledDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('reporting.auth.loginNow')}
                     </Button>
                   </div>
                 </div>
@@ -184,12 +186,12 @@ const Reporting = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用模板建構器</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可建立自訂報告模板</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('reporting.auth.builderRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('reporting.auth.builderDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('reporting.auth.loginNow')}
                     </Button>
                   </div>
                 </div>
@@ -214,12 +216,12 @@ const Reporting = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用白牌報告</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可建立品牌化報告</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('reporting.auth.whiteLabelRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('reporting.auth.whiteLabelDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('reporting.auth.loginNow')}
                     </Button>
                   </div>
                 </div>
@@ -230,36 +232,36 @@ const Reporting = () => {
                   {/* 白標設定 */}
                   <Card className="bg-gradient-card border-border">
                     <CardHeader>
-                      <CardTitle>白標客製化</CardTitle>
-                      <CardDescription>為代理商客戶提供品牌化報告</CardDescription>
+                      <CardTitle>{t('reporting.whiteLabel.title')}</CardTitle>
+                      <CardDescription>{t('reporting.whiteLabel.description')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="space-y-4">
                         <div>
-                          <Label htmlFor="company-logo">公司 Logo</Label>
+                          <Label htmlFor="company-logo">{t('reporting.whiteLabel.companyLogo')}</Label>
                           <div className="mt-2 border-2 border-dashed border-border rounded-lg p-6 text-center">
                             <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
                             <div className="mt-2">
-                              <Button variant="outline" size="sm">上傳 Logo</Button>
+                              <Button variant="outline" size="sm">{t('reporting.whiteLabel.uploadLogo')}</Button>
                             </div>
                             <p className="text-xs text-muted-foreground mt-2">
-                              建議尺寸: 200x80px, PNG/JPG
+                              {t('reporting.whiteLabel.logoSizeHint')}
                             </p>
                           </div>
                         </div>
 
                         <div>
-                          <Label htmlFor="brand-colors">品牌顏色</Label>
+                          <Label htmlFor="brand-colors">{t('reporting.whiteLabel.brandColors')}</Label>
                           <div className="mt-2 grid grid-cols-2 gap-4">
                             <div>
-                              <Label className="text-sm text-muted-foreground">主色調</Label>
+                              <Label className="text-sm text-muted-foreground">{t('reporting.whiteLabel.primaryColor')}</Label>
                               <div className="flex items-center space-x-2 mt-1">
                                 <Input type="color" className="w-12 h-8 p-0 border-0" defaultValue="#3b82f6" />
                                 <Input type="text" placeholder="#3b82f6" className="flex-1" />
                               </div>
                             </div>
                             <div>
-                              <Label className="text-sm text-muted-foreground">輔助色</Label>
+                              <Label className="text-sm text-muted-foreground">{t('reporting.whiteLabel.secondaryColor')}</Label>
                               <div className="flex items-center space-x-2 mt-1">
                                 <Input type="color" className="w-12 h-8 p-0 border-0" defaultValue="#64748b" />
                                 <Input type="text" placeholder="#64748b" className="flex-1" />
@@ -269,21 +271,21 @@ const Reporting = () => {
                         </div>
 
                         <div>
-                          <Label htmlFor="custom-domain">自訂網域</Label>
+                          <Label htmlFor="custom-domain">{t('reporting.whiteLabel.customDomain')}</Label>
                           <Input 
                             id="custom-domain" 
                             placeholder="reports.youragency.com" 
                             className="mt-1"
                           />
                           <p className="text-xs text-muted-foreground mt-1">
-                            設定後客戶將在您的網域下查看報告
+                            {t('reporting.whiteLabel.customDomainHint')}
                           </p>
                         </div>
                       </div>
 
                       <Button className="w-full bg-primary text-primary-foreground">
                         <Palette className="mr-2 h-4 w-4" />
-                        套用白標設定
+                        {t('reporting.whiteLabel.applySettings')}
                       </Button>
                     </CardContent>
                   </Card>
@@ -291,8 +293,8 @@ const Reporting = () => {
                   {/* 預覽 */}
                   <Card className="bg-gradient-card border-border">
                     <CardHeader>
-                      <CardTitle>報告預覽</CardTitle>
-                      <CardDescription>白標報告樣式預覽</CardDescription>
+                      <CardTitle>{t('reporting.whiteLabel.preview.title')}</CardTitle>
+                      <CardDescription>{t('reporting.whiteLabel.preview.description')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="border border-border rounded-lg p-4 bg-background">
@@ -301,15 +303,15 @@ const Reporting = () => {
                             <div className="w-8 h-8 bg-primary rounded"></div>
                             <span className="font-semibold">Your Agency</span>
                           </div>
-                          <Badge variant="outline">GEO 報告</Badge>
+                          <Badge variant="outline">{t('reporting.whiteLabel.preview.geoReport')}</Badge>
                         </div>
 
                         <div className="space-y-4">
                           <div>
-                            <h4 className="font-medium">AI 可見度分析</h4>
+                            <h4 className="font-medium">{t('reporting.whiteLabel.preview.aiVisibilityAnalysis')}</h4>
                             <div className="mt-2 bg-gradient-subtle rounded p-3">
                               <div className="flex justify-between items-center">
-                                <span className="text-sm">整體分數</span>
+                                <span className="text-sm">{t('reporting.whiteLabel.preview.overallScore')}</span>
                                 <span className="font-bold text-primary">74</span>
                               </div>
                             </div>
@@ -319,12 +321,12 @@ const Reporting = () => {
                             <div className="text-center p-2 bg-gradient-subtle rounded">
                               <TrendingUp className="mx-auto h-4 w-4 text-green-500 mb-1" />
                               <div className="font-medium">+23%</div>
-                              <div className="text-xs text-muted-foreground">流量提升</div>
+                              <div className="text-xs text-muted-foreground">{t('reporting.whiteLabel.preview.trafficIncrease')}</div>
                             </div>
                             <div className="text-center p-2 bg-gradient-subtle rounded">
                               <Target className="mx-auto h-4 w-4 text-blue-500 mb-1" />
                               <div className="font-medium">85%</div>
-                              <div className="text-xs text-muted-foreground">技術分數</div>
+                              <div className="text-xs text-muted-foreground">{t('reporting.whiteLabel.preview.technicalScore')}</div>
                             </div>
                           </div>
                         </div>

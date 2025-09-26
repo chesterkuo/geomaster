@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Alerts from "./pages/Alerts";
 import InviteAccept from "./pages/InviteAccept";
 import NotFound from "./pages/NotFound";
+import { I18nDemo } from "./components/demo/I18nDemo";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/team" element={<Team />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/alerts" element={<Alerts />} />
+            <Route path="/i18n-demo" element={<I18nDemo />} />
             <Route path="/invite/:token" element={<InviteAccept />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

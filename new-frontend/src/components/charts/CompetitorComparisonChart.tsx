@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
 import { CompetitorMetrics } from '@/lib/api/competitors';
+import { useTranslation } from 'react-i18next';
 
 interface CompetitorComparisonChartProps {
   data: (CompetitorMetrics & { isYourBrand?: boolean; marketShare?: number; })[];
@@ -39,11 +40,12 @@ const chartConfig: ChartConfig = {
 
 export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps> = ({
   data,
-  title = "競爭對手比較",
-  description = "與競爭對手的綜合表現對比",
+  title,
+  description,
   className,
   chartType = 'bar',
 }) => {
+  const { t } = useTranslation();
   // Prepare data for bar chart
   const barChartData = data.map(competitor => ({
     name: competitor.name.length > 12 ? competitor.name.substring(0, 12) + '...' : competitor.name,
@@ -196,15 +198,15 @@ export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              {title}
+              {title || t('aiSearch.charts.competitorComparison.title')}
               {topPerformer && (
                 <Badge variant="outline" className="text-xs">
                   <Trophy className="w-3 h-3 mr-1" />
-                  領先: {topPerformer.name}
+                  {t('common.leading')}: {topPerformer.name}
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>{description}</CardDescription>
+            <CardDescription>{description || t('aiSearch.charts.competitorComparison.description')}</CardDescription>
           </div>
           
           {/* Performance indicators */}
@@ -237,8 +239,8 @@ export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps>
       <CardContent>
         <Tabs defaultValue="bar" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="bar">柱狀圖</TabsTrigger>
-            <TabsTrigger value="radar">雷達圖</TabsTrigger>
+            <TabsTrigger value="bar">{t('aiSearch.charts.competitorComparison.barChart')}</TabsTrigger>
+            <TabsTrigger value="radar">{t('aiSearch.charts.competitorComparison.radarChart')}</TabsTrigger>
           </TabsList>
           <TabsContent value="bar" className="mt-6">
             <BarChartView />
@@ -252,23 +254,23 @@ export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps>
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-gradient-subtle rounded-lg border border-border">
             <div className="text-lg font-bold">{data.length}</div>
-            <div className="text-xs text-muted-foreground">競爭對手</div>
+            <div className="text-xs text-muted-foreground">{t('aiSearch.charts.competitorComparison.competitors')}</div>
           </div>
           <div className="text-center p-3 bg-gradient-subtle rounded-lg border border-border">
             <div className="text-lg font-bold">
               {Math.round(data.reduce((sum, c) => sum + c.metrics.geoScore, 0) / data.length)}
             </div>
-            <div className="text-xs text-muted-foreground">平均 GEO 分數</div>
+            <div className="text-xs text-muted-foreground">{t('aiSearch.charts.competitorComparison.averageGeoScore')}</div>
           </div>
           <div className="text-center p-3 bg-gradient-subtle rounded-lg border border-border">
             <div className="text-lg font-bold">{topPerformer.metrics.geoScore}</div>
-            <div className="text-xs text-muted-foreground">最高分數</div>
+            <div className="text-xs text-muted-foreground">{t('aiSearch.charts.competitorComparison.highestScore')}</div>
           </div>
           <div className="text-center p-3 bg-gradient-subtle rounded-lg border border-border">
             <div className="text-lg font-bold">
               {data.find(c => c.isYourBrand)?.metrics.geoScore || 'N/A'}
             </div>
-            <div className="text-xs text-muted-foreground">您的分數</div>
+            <div className="text-xs text-muted-foreground">{t('aiSearch.charts.competitorComparison.yourScore')}</div>
           </div>
         </div>
       </CardContent>

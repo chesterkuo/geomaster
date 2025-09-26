@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { dashboardService, DashboardStats } from "@/lib/api/dashboard";
 import { MobileMetricCard, MobileMetricsGrid, useBreakpoint } from "@/components/mobile";
+import { useTranslation } from "react-i18next";
 
 interface MetricCardProps {
   title: string;
@@ -54,6 +55,7 @@ export const MetricsGrid = ({ isAuthenticated = false }: MetricsGridProps) => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(false);
   const { isMobile } = useBreakpoint();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -77,33 +79,33 @@ export const MetricsGrid = ({ isAuthenticated = false }: MetricsGridProps) => {
 
   const metrics = [
     {
-      title: "AI 可見度分數",
+      title: t("dashboard.aiVisibilityScore"),
       value: isAuthenticated ? (loading ? "..." : dashboardData?.overview.averageGeoScore?.toString() || "---") : "---",
-      change: isAuthenticated ? (loading ? "載入中..." : "↑ 12% 本週提升") : "需要登入查看",
+      change: isAuthenticated ? (loading ? t("common.loading") : t("dashboard.weeklyIncrease", "↑ 12% this week")) : t("dashboard.loginRequired"),
       trend: "up" as const,
       icon: BarChart3,
       color: "bg-geo-purple"
     },
     {
-      title: "品牌曝及次數",
+      title: t("dashboard.brandMentions"),
       value: isAuthenticated ? (loading ? "..." : dashboardData?.overview.totalMentions?.toLocaleString() || "---") : "---",
-      change: isAuthenticated ? (loading ? "載入中..." : "↑ 8.3% 較上月") : "需要登入查看",
+      change: isAuthenticated ? (loading ? t("common.loading") : t("dashboard.monthlyIncrease", "↑ 8.3% vs last month")) : t("dashboard.loginRequired"),
       trend: "up" as const,
       icon: Globe,
       color: "bg-geo-blue"
     },
     {
-      title: "網站總數",
+      title: t("dashboard.totalWebsites"),
       value: isAuthenticated ? (loading ? "..." : dashboardData?.overview.totalWebsites?.toString() || "---") : "---",
-      change: isAuthenticated ? (loading ? "載入中..." : "↑ 上升趨勢") : "需要登入查看",
+      change: isAuthenticated ? (loading ? t("common.loading") : t("dashboard.upwardTrend", "↑ Upward trend")) : t("dashboard.loginRequired"),
       trend: "up" as const,
       icon: Hash,
       color: "bg-geo-green"
     },
     {
-      title: "總掃描次數",
+      title: t("dashboard.totalScans"),
       value: isAuthenticated ? (loading ? "..." : dashboardData?.overview.totalScans?.toString() || "---") : "---",
-      change: isAuthenticated ? (loading ? "載入中..." : "↓ 穩定成長") : "需要登入查看",
+      change: isAuthenticated ? (loading ? t("common.loading") : t("dashboard.steadyGrowth", "↑ Steady growth")) : t("dashboard.loginRequired"),
       trend: "up" as const,
       icon: Users,
       color: "bg-geo-orange"

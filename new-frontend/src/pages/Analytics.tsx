@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  Eye, 
-  Clock, 
+import {
+  BarChart3,
+  TrendingUp,
+  Users,
+  Eye,
+  Clock,
   MousePointer,
   Smartphone,
   Monitor,
@@ -33,8 +33,10 @@ import PerformanceChart from "@/components/charts/PerformanceChart";
 import { analyticsService } from "@/lib/api/analytics";
 import { websiteService, Website } from "@/lib/api/websites";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 const Analytics = () => {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -115,41 +117,41 @@ const Analytics = () => {
     if (total === 0) return [];
     
     return [
-      { 
-        source: "自然搜尋", 
-        percentage: (sources.organic / total) * 100, 
-        visitors: sources.organic.toLocaleString(), 
-        color: "bg-blue-500" 
+      {
+        source: t("analytics.organicSearch"),
+        percentage: (sources.organic / total) * 100,
+        visitors: sources.organic.toLocaleString(),
+        color: "bg-blue-500"
       },
-      { 
-        source: "直接流量", 
-        percentage: (sources.direct / total) * 100, 
-        visitors: sources.direct.toLocaleString(), 
-        color: "bg-green-500" 
+      {
+        source: t("analytics.directTraffic"),
+        percentage: (sources.direct / total) * 100,
+        visitors: sources.direct.toLocaleString(),
+        color: "bg-green-500"
       },
-      { 
-        source: "社群媒體", 
-        percentage: (sources.social / total) * 100, 
-        visitors: sources.social.toLocaleString(), 
-        color: "bg-purple-500" 
+      {
+        source: t("analytics.socialMedia"),
+        percentage: (sources.social / total) * 100,
+        visitors: sources.social.toLocaleString(),
+        color: "bg-purple-500"
       },
-      { 
-        source: "推薦流量", 
-        percentage: (sources.referral / total) * 100, 
-        visitors: sources.referral.toLocaleString(), 
-        color: "bg-yellow-500" 
+      {
+        source: t("analytics.referralTraffic"),
+        percentage: (sources.referral / total) * 100,
+        visitors: sources.referral.toLocaleString(),
+        color: "bg-yellow-500"
       },
-      { 
-        source: "Email", 
-        percentage: (sources.email / total) * 100, 
-        visitors: sources.email.toLocaleString(), 
-        color: "bg-indigo-500" 
+      {
+        source: t("analytics.emailMarketing"),
+        percentage: (sources.email / total) * 100,
+        visitors: sources.email.toLocaleString(),
+        color: "bg-indigo-500"
       },
-      { 
-        source: "付費廣告", 
-        percentage: (sources.paid / total) * 100, 
-        visitors: sources.paid.toLocaleString(), 
-        color: "bg-orange-500" 
+      {
+        source: t("analytics.paidAdvertising"),
+        percentage: (sources.paid / total) * 100,
+        visitors: sources.paid.toLocaleString(),
+        color: "bg-orange-500"
       }
     ].filter(source => source.percentage > 0);
   };
@@ -173,20 +175,20 @@ const Analytics = () => {
     if (total === 0) return [];
     
     return [
-      { 
-        device: "桌面電腦", 
-        percentage: (devices.desktop / total) * 100, 
-        icon: Monitor 
+      {
+        device: t("analytics.desktop"),
+        percentage: (devices.desktop / total) * 100,
+        icon: Monitor
       },
-      { 
-        device: "手機", 
-        percentage: (devices.mobile / total) * 100, 
-        icon: Smartphone 
+      {
+        device: t("analytics.mobile"),
+        percentage: (devices.mobile / total) * 100,
+        icon: Smartphone
       },
-      { 
-        device: "平板", 
-        percentage: (devices.tablet / total) * 100, 
-        icon: Smartphone 
+      {
+        device: t("analytics.tablet"),
+        percentage: (devices.tablet / total) * 100,
+        icon: Smartphone
       }
     ].filter(device => device.percentage > 0);
   };
@@ -198,28 +200,28 @@ const Analytics = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">數據分析</h1>
-            <p className="text-muted-foreground">深入了解您的網站表現和用戶行為</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t("analytics.title")}</h1>
+            <p className="text-muted-foreground">{t("analytics.description")}</p>
           </div>
           <div className="flex space-x-2">
             <Button variant="outline">
               <Download className="mr-2 h-4 w-4" />
-              匯出報告
+              {t("common.export")} {t("reporting.reports")}
             </Button>
             <Button className="bg-primary text-primary-foreground shadow-glow">
               <Calendar className="mr-2 h-4 w-4" />
-              排程報告
+              {t("reporting.schedule")} {t("reporting.reports")}
             </Button>
           </div>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">總覽</TabsTrigger>
-            <TabsTrigger value="traffic">流量分析</TabsTrigger>
-            <TabsTrigger value="behavior">用戶行為</TabsTrigger>
-            <TabsTrigger value="conversion">轉換分析</TabsTrigger>
-            <TabsTrigger value="reports">報告中心</TabsTrigger>
+            <TabsTrigger value="overview">{t("dashboard.overview")}</TabsTrigger>
+            <TabsTrigger value="traffic">{t("analytics.trafficSources")}</TabsTrigger>
+            <TabsTrigger value="behavior">{t("analytics.userBehavior")}</TabsTrigger>
+            <TabsTrigger value="conversion">{t("analytics.conversion")}</TabsTrigger>
+            <TabsTrigger value="reports">{t("reporting.title")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -236,12 +238,12 @@ const Analytics = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看數據總覽</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看詳細的網站分析數據和關鍵指標</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("analytics.auth.overviewRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("analytics.auth.overviewDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("auth.login")}
                     </Button>
                   </div>
                 </div>
@@ -251,7 +253,7 @@ const Analytics = () => {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card className="bg-gradient-card border-border">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">總訪客數</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t("analytics.overview.totalVisitors")}</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -264,14 +266,14 @@ const Analytics = () => {
                     ) : (
                       <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
                     )}
-                    {analyticsData?.overview?.growth?.visitors >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.visitors || 0}% 較上週
+                    {analyticsData?.overview?.growth?.visitors >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.visitors || 0}% {t("analytics.overview.comparedToLastWeek")}
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-card border-border">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">頁面瀏覽</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t("analytics.overview.pageViews")}</CardTitle>
                   <Eye className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -284,14 +286,14 @@ const Analytics = () => {
                     ) : (
                       <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
                     )}
-                    {analyticsData?.overview?.growth?.views >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.views || 0}% 較上週
+                    {analyticsData?.overview?.growth?.views >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.views || 0}% {t("analytics.overview.comparedToLastWeek")}
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-card border-border">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">平均停留時間</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t("analytics.overview.averageSessionDuration")}</CardTitle>
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -304,14 +306,14 @@ const Analytics = () => {
                     ) : (
                       <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
                     )}
-                    {analyticsData?.overview?.growth?.sessionDuration >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.sessionDuration || 0}% 較上週
+                    {analyticsData?.overview?.growth?.sessionDuration >= 0 ? '+' : ''}{analyticsData?.overview?.growth?.sessionDuration || 0}% {t("analytics.overview.comparedToLastWeek")}
                   </div>
                 </CardContent>
               </Card>
 
               <Card className="bg-gradient-card border-border">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">跳出率</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t("analytics.overview.bounceRate")}</CardTitle>
                   <MousePointer className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -324,7 +326,7 @@ const Analytics = () => {
                     ) : (
                       <TrendingUp className="mr-1 h-3 w-3 text-red-600" />
                     )}
-                    {analyticsData?.overview?.growth?.bounceRate || 0}% 較上週
+                    {analyticsData?.overview?.growth?.bounceRate || 0}% {t("analytics.overview.comparedToLastWeek")}
                   </div>
                 </CardContent>
               </Card>
@@ -333,8 +335,8 @@ const Analytics = () => {
             <div className="grid gap-6 md:grid-cols-2">
               <Card className="bg-gradient-card border-border">
                 <CardHeader>
-                  <CardTitle>流量來源</CardTitle>
-                  <CardDescription>訪客來源分析</CardDescription>
+                  <CardTitle>{t("analytics.trafficSources.title")}</CardTitle>
+                  <CardDescription>{t("analytics.trafficSources.description")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -359,8 +361,8 @@ const Analytics = () => {
 
               <Card className="bg-gradient-card border-border">
                 <CardHeader>
-                  <CardTitle>裝置類型</CardTitle>
-                  <CardDescription>用戶使用裝置分布</CardDescription>
+                  <CardTitle>{t("analytics.deviceBreakdown.title")}</CardTitle>
+                  <CardDescription>{t("analytics.deviceBreakdown.description")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -385,8 +387,8 @@ const Analytics = () => {
 
             <Card className="bg-gradient-card border-border">
               <CardHeader>
-                <CardTitle>熱門頁面</CardTitle>
-                <CardDescription>最受歡迎的頁面統計</CardDescription>
+                <CardTitle>{t("analytics.popularPages.title")}</CardTitle>
+                <CardDescription>{t("analytics.popularPages.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -397,14 +399,14 @@ const Analytics = () => {
                         <div>
                           <span className="font-medium">{page.page}</span>
                           <div className="flex items-center space-x-4 mt-1">
-                            <span className="text-xs text-muted-foreground">瀏覽: {page.views}</span>
-                            <span className="text-xs text-muted-foreground">跳出率: {page.bounce}</span>
-                            <span className="text-xs text-muted-foreground">停留: {page.avgTime}</span>
+                            <span className="text-xs text-muted-foreground">{t("analytics.popularPages.views")}: {page.views}</span>
+                            <span className="text-xs text-muted-foreground">{t("analytics.popularPages.bounceRate")}: {page.bounce}</span>
+                            <span className="text-xs text-muted-foreground">{t("analytics.popularPages.avgTime")}: {page.avgTime}</span>
                           </div>
                         </div>
                       </div>
                       <Button variant="outline" size="sm">
-                        查看詳情
+                        {t("analytics.popularPages.viewDetails")}
                       </Button>
                     </div>
                   ))}
@@ -425,12 +427,12 @@ const Analytics = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看即時數據</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可監控網站的即時訪客活動</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("analytics.auth.realtimeRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("analytics.auth.realtimeDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("auth.login")}
                     </Button>
                   </div>
                 </div>
@@ -457,12 +459,12 @@ const Analytics = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看流量分析</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看詳細的流量趨勢和來源分析</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("analytics.auth.trafficRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("analytics.auth.trafficDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("auth.login")}
                     </Button>
                   </div>
                 </div>
@@ -501,12 +503,12 @@ const Analytics = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看用戶行為</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可分析用戶在網站上的互動模式</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("analytics.auth.behaviorRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("analytics.auth.behaviorDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("auth.login")}
                     </Button>
                   </div>
                 </div>
@@ -540,12 +542,12 @@ const Analytics = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看轉換分析</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可追蹤和分析關鍵轉換指標</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("analytics.auth.conversionRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("analytics.auth.conversionDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("auth.login")}
                     </Button>
                   </div>
                 </div>
@@ -553,8 +555,8 @@ const Analytics = () => {
             ) : (
               <Card className="bg-gradient-card border-border">
               <CardHeader>
-                <CardTitle>轉換率分析</CardTitle>
-                <CardDescription>追蹤和分析關鍵轉換指標</CardDescription>
+                <CardTitle>{t("analytics.conversion.title")}</CardTitle>
+                <CardDescription>{t("analytics.conversion.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-3">
@@ -563,42 +565,42 @@ const Analytics = () => {
                       {analyticsData?.conversion?.conversionRate ? 
                         `${analyticsData.conversion.conversionRate.toFixed(1)}%` : '0.0%'}
                     </div>
-                    <p className="text-sm text-muted-foreground">整體轉換率</p>
+                    <p className="text-sm text-muted-foreground">{t("analytics.conversion.overallRate")}</p>
                     <div className="flex items-center justify-center text-xs text-muted-foreground mt-1">
                       {(analyticsData?.conversion?.growth?.conversionRate || 0) >= 0 ? (
                         <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                       ) : (
                         <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
                       )}
-                      {analyticsData?.conversion?.growth?.conversionRate >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.conversionRate || 0}% 較上週
+                      {analyticsData?.conversion?.growth?.conversionRate >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.conversionRate || 0}% {t("analytics.overview.comparedToLastWeek")}
                     </div>
                   </div>
                   <div className="p-4 border border-border rounded-lg bg-gradient-subtle text-center">
                     <div className="text-2xl font-bold text-primary">
                       {analyticsData?.conversion?.totalConversions?.toLocaleString() || '0'}
                     </div>
-                    <p className="text-sm text-muted-foreground">本月轉換數</p>
+                    <p className="text-sm text-muted-foreground">{t("analytics.conversion.monthlyConversions")}</p>
                     <div className="flex items-center justify-center text-xs text-muted-foreground mt-1">
                       {(analyticsData?.conversion?.growth?.totalConversions || 0) >= 0 ? (
                         <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                       ) : (
                         <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
                       )}
-                      {analyticsData?.conversion?.growth?.totalConversions >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.totalConversions || 0}% 較上週
+                      {analyticsData?.conversion?.growth?.totalConversions >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.totalConversions || 0}% {t("analytics.overview.comparedToLastWeek")}
                     </div>
                   </div>
                   <div className="p-4 border border-border rounded-lg bg-gradient-subtle text-center">
                     <div className="text-2xl font-bold text-primary">
                       ${analyticsData?.conversion?.conversionValue?.toLocaleString() || '0'}
                     </div>
-                    <p className="text-sm text-muted-foreground">轉換價值</p>
+                    <p className="text-sm text-muted-foreground">{t("analytics.conversion.conversionValue")}</p>
                     <div className="flex items-center justify-center text-xs text-muted-foreground mt-1">
                       {(analyticsData?.conversion?.growth?.conversionValue || 0) >= 0 ? (
                         <TrendingUp className="mr-1 h-3 w-3 text-green-500" />
                       ) : (
                         <TrendingUp className="mr-1 h-3 w-3 text-red-500 rotate-180" />
                       )}
-                      {analyticsData?.conversion?.growth?.conversionValue >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.conversionValue || 0}% 較上週
+                      {analyticsData?.conversion?.growth?.conversionValue >= 0 ? '+' : ''}{analyticsData?.conversion?.growth?.conversionValue || 0}% {t("analytics.overview.comparedToLastWeek")}
                     </div>
                   </div>
                 </div>
@@ -617,12 +619,12 @@ const Analytics = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用報告中心</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可設定和管理分析報告</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("analytics.auth.reportsRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("analytics.auth.reportsDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("auth.login")}
                     </Button>
                   </div>
                 </div>

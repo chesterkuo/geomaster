@@ -14,6 +14,7 @@ import {
   Play
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
 
 interface RealTimeData {
   activeUsers: number;
@@ -54,6 +55,7 @@ const RealTimeStats = ({
   isPaused = false 
 }: RealTimeStatsProps) => {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!isPaused && connected) {
@@ -66,11 +68,11 @@ const RealTimeStats = ({
 
   const formatTimeAgo = (date: Date) => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    if (seconds < 60) return `${seconds}秒前`;
+    if (seconds < 60) return t('realTimeStats.timeAgo.seconds', { count: seconds });
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}分鐘前`;
+    if (minutes < 60) return t('realTimeStats.timeAgo.minutes', { count: minutes });
     const hours = Math.floor(minutes / 60);
-    return `${hours}小時前`;
+    return t('realTimeStats.timeAgo.hours', { count: hours });
   };
 
   const getEventTypeColor = (type: string) => {
@@ -89,11 +91,11 @@ const RealTimeStats = ({
   const getEventTypeName = (type: string) => {
     switch (type) {
       case 'pageview':
-        return '頁面瀏覽';
+        return t('realTimeStats.events.pageview');
       case 'session_start':
-        return '新工作階段';
+        return t('realTimeStats.events.sessionStart');
       case 'conversion':
-        return '轉換事件';
+        return t('realTimeStats.events.conversion');
       default:
         return type;
     }
@@ -104,8 +106,8 @@ const RealTimeStats = ({
       <div className="space-y-6">
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle>即時數據</CardTitle>
-            <CardDescription>正在載入即時統計數據...</CardDescription>
+            <CardTitle>{t('realTimeStats.title')}</CardTitle>
+            <CardDescription>{t('realTimeStats.loading')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-64 w-full bg-muted animate-pulse rounded-lg" />
@@ -123,7 +125,7 @@ const RealTimeStats = ({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                即時數據
+                {t('realTimeStats.title')}
                 <div className={cn(
                   "w-2 h-2 rounded-full",
                   connected && !isPaused ? "bg-green-500 animate-pulse" : "bg-red-500"
@@ -131,24 +133,24 @@ const RealTimeStats = ({
               </CardTitle>
               <CardDescription>
                 {connected ? (
-                  isPaused ? "數據更新已暫停" : "即時監控網站活動"
+                  isPaused ? t('realTimeStats.paused') : t('realTimeStats.monitoring')
                 ) : (
-                  "連接中斷"
+                  t('realTimeStats.disconnected')
                 )}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={connected ? "default" : "destructive"} className="gap-1">
                 {connected ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-                {connected ? "已連接" : "離線"}
+                {connected ? t('realTimeStats.connected') : t('realTimeStats.offline')}
               </Badge>
               <Button variant="outline" size="sm" onClick={onTogglePause} disabled={!connected}>
                 {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-                {isPaused ? "繼續" : "暫停"}
+                {isPaused ? t('realTimeStats.continue') : t('realTimeStats.pause')}
               </Button>
               <Button variant="outline" size="sm" onClick={onRefresh} disabled={!connected}>
                 <RefreshCw className="w-4 h-4" />
-                重新整理
+                {t('realTimeStats.refresh')}
               </Button>
             </div>
           </div>
@@ -161,7 +163,7 @@ const RealTimeStats = ({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">線上用戶</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('realTimeStats.metrics.activeUsers')}</p>
                 <div className="text-2xl font-bold text-primary flex items-center gap-2">
                   {data.activeUsers}
                   <Users className="w-5 h-5" />
@@ -178,7 +180,7 @@ const RealTimeStats = ({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">頁面/秒</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('realTimeStats.metrics.pagesPerSecond')}</p>
                 <div className="text-2xl font-bold text-primary">
                   {data.pagesPerSecond.toFixed(1)}
                 </div>
@@ -194,7 +196,7 @@ const RealTimeStats = ({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">跳出率</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('realTimeStats.metrics.bounceRate')}</p>
                 <div className="text-2xl font-bold text-primary">
                   {data.bounceRate.toFixed(1)}%
                 </div>
@@ -210,7 +212,7 @@ const RealTimeStats = ({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">平均停留</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('realTimeStats.metrics.avgDuration')}</p>
                 <div className="text-2xl font-bold text-primary">
                   {data.avgSessionDuration}
                 </div>
@@ -227,8 +229,8 @@ const RealTimeStats = ({
         {/* Top Pages */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle>熱門頁面</CardTitle>
-            <CardDescription>目前最多人瀏覽的頁面</CardDescription>
+            <CardTitle>{t('realTimeStats.sections.topPages')}</CardTitle>
+            <CardDescription>{t('realTimeStats.sections.topPagesDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -252,8 +254,8 @@ const RealTimeStats = ({
         {/* Top Countries */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
-            <CardTitle>訪客地區</CardTitle>
-            <CardDescription>目前線上用戶的地理分布</CardDescription>
+            <CardTitle>{t('realTimeStats.sections.topCountries')}</CardTitle>
+            <CardDescription>{t('realTimeStats.sections.topCountriesDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -279,9 +281,9 @@ const RealTimeStats = ({
       {/* Recent Activity */}
       <Card className="bg-gradient-card border-border">
         <CardHeader>
-          <CardTitle>即時活動</CardTitle>
+          <CardTitle>{t('realTimeStats.sections.recentActivity')}</CardTitle>
           <CardDescription>
-            最近的用戶活動 • 更新於 {formatTimeAgo(lastUpdate)}
+            {t('realTimeStats.sections.recentActivityDesc', { timeAgo: formatTimeAgo(lastUpdate) })}
           </CardDescription>
         </CardHeader>
         <CardContent>

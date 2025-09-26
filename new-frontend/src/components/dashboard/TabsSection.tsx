@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Lock, User, Globe, TrendingUp, FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import { dashboardService, DashboardStats } from "@/lib/api/dashboard";
+import { useTranslation } from "react-i18next";
 
 interface TabsSectionProps {
   isAuthenticated?: boolean;
@@ -13,6 +14,7 @@ interface TabsSectionProps {
 export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSectionProps) => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -40,19 +42,19 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
         <div className="flex items-center justify-between mb-6">
           <TabsList className="bg-background/50">
             <TabsTrigger value="tracking" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              精緻網站
+              {t("dashboard.trackedWebsites")}
             </TabsTrigger>
             <TabsTrigger value="optimization" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              優化內容
+              {t("dashboard.contentOptimization")}
             </TabsTrigger>
             <TabsTrigger value="generation" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              生成報告
+              {t("dashboard.reportGeneration")}
             </TabsTrigger>
           </TabsList>
           
           <Button size="sm" className="bg-primary text-primary-foreground">
             <Plus className="h-4 w-4 mr-2" />
-            新增專案
+            {t("dashboard.addProject")}
           </Button>
         </div>
 
@@ -68,21 +70,21 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
                     <Lock className="h-3 w-3 text-primary-foreground" />
                   </div>
                 </div>
-                <h4 className="text-lg font-medium text-foreground mb-2">需要登入才能開始追蹤</h4>
-                <p className="text-sm mb-4">登入後即可添加網站 URL 開始監控 AI 平台可見度</p>
+                <h4 className="text-lg font-medium text-foreground mb-2">{t("dashboard.loginToStartTracking")}</h4>
+                <p className="text-sm mb-4">{t("dashboard.loginToViewTrackingDetails")}</p>
                 <Button onClick={onShowAuth} className="bg-primary text-primary-foreground">
                   <User className="mr-2 h-4 w-4" />
-                  立即登入
+                  {t("dashboard.loginNow")}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               {loading ? (
-                <div className="text-center py-8 text-muted-foreground">載入中...</div>
+                <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
               ) : dashboardData?.topPerforming.length ? (
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3">表現優異的網站</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">{t("dashboard.topPerformingSites")}</h4>
                   {dashboardData.topPerforming.map((website, index) => (
                     <div key={index} className="flex items-center justify-between p-3 bg-background/50 rounded-lg border">
                       <div className="flex items-center space-x-3">
@@ -96,7 +98,7 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">{website.geoScore}</p>
-                        <p className="text-xs text-muted-foreground">{website.mentions} 提及</p>
+                        <p className="text-xs text-muted-foreground">{website.mentions} {t("dashboard.mentions")}</p>
                       </div>
                     </div>
                   ))}
@@ -106,10 +108,10 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
                   <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
                     <Plus className="h-8 w-8" />
                   </div>
-                  <h4 className="text-lg font-medium text-foreground mb-2">開始追蹤您的網站</h4>
-                  <p className="text-sm text-muted-foreground mb-4">添加網站 URL 開始監控 AI 平台可見度</p>
+                  <h4 className="text-lg font-medium text-foreground mb-2">{t("dashboard.startTrackingWebsites")}</h4>
+                  <p className="text-sm text-muted-foreground mb-4">{t("dashboard.addWebsiteUrlToMonitor")}</p>
                   <Button className="bg-primary text-primary-foreground">
-                    新增網站
+                    {t("dashboard.addWebsite")}
                   </Button>
                 </div>
               )}
@@ -129,21 +131,21 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
                     <Lock className="h-3 w-3 text-primary-foreground" />
                   </div>
                 </div>
-                <h4 className="text-lg font-medium text-foreground mb-2">需要登入才能開始優化</h4>
-                <p className="text-sm mb-4">登入後 AI 就能分析您的內容並提供優化建議</p>
+                <h4 className="text-lg font-medium text-foreground mb-2">{t("dashboard.loginToStartOptimization")}</h4>
+                <p className="text-sm mb-4">{t("dashboard.aiAnalyzeContent")}</p>
                 <Button onClick={onShowAuth} className="bg-primary text-primary-foreground">
                   <User className="mr-2 h-4 w-4" />
-                  立即登入
+                  {t("dashboard.loginNow")}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               {loading ? (
-                <div className="text-center py-8 text-muted-foreground">載入中...</div>
+                <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
               ) : dashboardData?.recentActivity.length ? (
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3">最近的活動</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">{t("dashboard.recentActivity")}</h4>
                   {dashboardData.recentActivity.slice(0, 3).map((activity, index) => (
                     <div key={index} className="flex items-center space-x-3 p-3 bg-background/50 rounded-lg border">
                       <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
@@ -163,10 +165,10 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
                   <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
                     <Plus className="h-8 w-8" />
                   </div>
-                  <h4 className="text-lg font-medium text-foreground mb-2">內容優化建議</h4>
-                  <p className="text-sm text-muted-foreground mb-4">AI 分析您的內容並提供優化建議</p>
+                  <h4 className="text-lg font-medium text-foreground mb-2">{t("dashboard.contentOptimizationSuggestions")}</h4>
+                  <p className="text-sm text-muted-foreground mb-4">{t("dashboard.aiAnalyzeContentOptimize")}</p>
                   <Button className="bg-primary text-primary-foreground">
-                    開始優化
+                    {t("dashboard.startOptimization")}
                   </Button>
                 </div>
               )}
@@ -186,21 +188,21 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
                     <Lock className="h-3 w-3 text-primary-foreground" />
                   </div>
                 </div>
-                <h4 className="text-lg font-medium text-foreground mb-2">需要登入才能生成報告</h4>
-                <p className="text-sm mb-4">登入後即可生成詳細的 AI 優化報告和行動計劃</p>
+                <h4 className="text-lg font-medium text-foreground mb-2">{t("dashboard.loginToGenerateReports")}</h4>
+                <p className="text-sm mb-4">{t("dashboard.generateDetailedReports")}</p>
                 <Button onClick={onShowAuth} className="bg-primary text-primary-foreground">
                   <User className="mr-2 h-4 w-4" />
-                  立即登入
+                  {t("dashboard.loginNow")}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               {loading ? (
-                <div className="text-center py-8 text-muted-foreground">載入中...</div>
+                <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
               ) : dashboardData?.alerts.length ? (
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-3">警報與通知</h4>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-3">{t("dashboard.alertsAndNotifications")}</h4>
                   {dashboardData.alerts.map((alert, index) => (
                     <div key={index} className="flex items-center space-x-3 p-3 bg-background/50 rounded-lg border">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -219,7 +221,7 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
                       <div className={`text-xs px-2 py-1 rounded-full ${
                         alert.severity === 'medium' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'
                       }`}>
-                        {alert.severity === 'medium' ? '中等' : '低'}
+                        {alert.severity === 'medium' ? t("dashboard.medium") : t("dashboard.low")}
                       </div>
                     </div>
                   ))}
@@ -229,10 +231,10 @@ export const TabsSection = ({ isAuthenticated = false, onShowAuth }: TabsSection
                   <div className="w-16 h-16 mx-auto mb-4 bg-muted rounded-full flex items-center justify-center">
                     <Plus className="h-8 w-8" />
                   </div>
-                  <h4 className="text-lg font-medium text-foreground mb-2">AI 優化建議</h4>
-                  <p className="text-sm text-muted-foreground mb-4">生成詳細的優化報告和行動計劃</p>
+                  <h4 className="text-lg font-medium text-foreground mb-2">{t("dashboard.aiOptimizationSuggestions")}</h4>
+                  <p className="text-sm text-muted-foreground mb-4">{t("dashboard.generateDetailedOptimizationReports")}</p>
                   <Button className="bg-primary text-primary-foreground">
-                    生成報告
+                    {t("dashboard.generateReport")}
                   </Button>
                 </div>
               )}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,14 +9,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Eye, 
-  EyeOff, 
-  Key, 
-  CheckCircle, 
-  XCircle, 
-  Loader2, 
-  Info, 
+import {
+  Eye,
+  EyeOff,
+  Key,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Info,
   ExternalLink,
   Trash2,
   Settings
@@ -66,6 +67,7 @@ const PLATFORM_COLORS = {
 };
 
 export function ApiKeySettings() {
+  const { t } = useTranslation();
   const [platforms, setPlatforms] = useState<PlatformSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -124,8 +126,8 @@ export function ApiKeySettings() {
     } catch (error: any) {
       console.error('Error loading platform settings:', error);
       toast({
-        title: "載入失敗",
-        description: error.response?.data?.message || "無法載入平台設定",
+        title: t('settings.apiKeys.messages.loadFailed'),
+        description: error.response?.data?.message || t('settings.apiKeys.messages.loadFailedDescription'),
         variant: "destructive",
       });
     } finally {
@@ -170,7 +172,7 @@ export function ApiKeySettings() {
         throw new Error(response.data.message);
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || '驗證失敗';
+      const errorMessage = error.response?.data?.message || error.message || t('settings.apiKeys.validation.failed');
       setValidationResult({
         isValid: false,
         error: errorMessage
@@ -194,8 +196,10 @@ export function ApiKeySettings() {
 
       if (response.data.success) {
         toast({
-          title: "儲存成功",
-          description: `${PLATFORM_LABELS[selectedPlatform as keyof typeof PLATFORM_LABELS]} API Key 已儲存並啟用`,
+          title: t('settings.apiKeys.messages.saveSuccess'),
+          description: t('settings.apiKeys.messages.saveSuccessDescription', {
+            platform: t(`settings.apiKeys.platforms.${selectedPlatform}`)
+          }),
         });
         
         // 直接更新本地狀態，避免重新載入的延遲
@@ -238,8 +242,8 @@ export function ApiKeySettings() {
     } catch (error: any) {
       console.error('Error saving API key:', error);
       toast({
-        title: "儲存失敗",
-        description: error.response?.data?.message || "無法儲存 API Key",
+        title: t('settings.apiKeys.messages.saveFailed'),
+        description: error.response?.data?.message || t('settings.apiKeys.messages.saveFailedDescription'),
         variant: "destructive",
       });
     } finally {
@@ -248,7 +252,9 @@ export function ApiKeySettings() {
   };
 
   const removeApiKey = async (platform: string) => {
-    if (!confirm(`確定要移除 ${PLATFORM_LABELS[platform as keyof typeof PLATFORM_LABELS]} 的 API Key 嗎？`)) {
+    if (!confirm(t('settings.apiKeys.messages.removeConfirm', {
+      platform: t(`settings.apiKeys.platforms.${platform}`)
+    }))) {
       return;
     }
 
@@ -257,8 +263,10 @@ export function ApiKeySettings() {
       
       if (response.data.success) {
         toast({
-          title: "移除成功",
-          description: `${PLATFORM_LABELS[platform as keyof typeof PLATFORM_LABELS]} API Key 已移除`,
+          title: t('settings.apiKeys.messages.removeSuccess'),
+          description: t('settings.apiKeys.messages.removeSuccessDescription', {
+            platform: t(`settings.apiKeys.platforms.${platform}`)
+          }),
         });
         
         // 直接更新本地狀態
@@ -286,8 +294,8 @@ export function ApiKeySettings() {
     } catch (error: any) {
       console.error('Error removing API key:', error);
       toast({
-        title: "移除失敗",
-        description: error.response?.data?.message || "無法移除 API Key",
+        title: t('settings.apiKeys.messages.removeFailed'),
+        description: error.response?.data?.message || t('settings.apiKeys.messages.removeFailedDescription'),
         variant: "destructive",
       });
     }
@@ -300,9 +308,12 @@ export function ApiKeySettings() {
       });
       
       if (response.data.success) {
+        const statusKey = enabled ? 'enabled' : 'disabled';
         toast({
-          title: enabled ? "平台已啟用" : "平台已停用",
-          description: `${PLATFORM_LABELS[platform as keyof typeof PLATFORM_LABELS]} 已${enabled ? '啟用' : '停用'}`,
+          title: t(`settings.apiKeys.messages.toggleSuccess`, {
+            platform: t(`settings.apiKeys.platforms.${platform}`),
+            status: t(`settings.apiKeys.status.${statusKey}`)
+          }),
         });
         
         // 直接更新本地狀態
@@ -328,8 +339,8 @@ export function ApiKeySettings() {
     } catch (error: any) {
       console.error('Error toggling platform:', error);
       toast({
-        title: "操作失敗",
-        description: error.response?.data?.message || "無法切換平台狀態",
+        title: t('settings.apiKeys.messages.toggleFailed'),
+        description: error.response?.data?.message || t('settings.apiKeys.messages.toggleFailedDescription'),
         variant: "destructive",
       });
     }
@@ -341,16 +352,16 @@ export function ApiKeySettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            AI API Key 管理
+            {t('settings.apiKeys.title')}
           </CardTitle>
           <CardDescription>
-            管理各個 AI 平台的 API Key 設定
+            {t('settings.apiKeys.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="ml-2">載入中...</span>
+            <span className="ml-2">{t('settings.apiKeys.loading')}</span>
           </div>
         </CardContent>
       </Card>
@@ -363,14 +374,14 @@ export function ApiKeySettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" />
-            AI API Key 管理
+            {t('settings.apiKeys.title')}
           </CardTitle>
           <CardDescription>
-            管理各個 AI 平台的 API Key 設定。您可以新增、編輯或移除 API Key，系統會自動驗證其有效性。
+            {t('settings.apiKeys.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {Object.entries(PLATFORM_LABELS).map(([platform, label]) => {
+          {Object.keys(PLATFORM_LABELS).map((platform) => {
             const setting = platforms.find(p => p.platform === platform);
             const hasApiKey = setting?.hasApiKey || false;
             const isEnabled = setting?.enabled || false;
@@ -380,12 +391,12 @@ export function ApiKeySettings() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Badge className={PLATFORM_COLORS[platform as keyof typeof PLATFORM_COLORS]}>
-                      {label}
+                      {t(`settings.apiKeys.platforms.${platform}`)}
                     </Badge>
                     {hasApiKey ? (
                       <div className="flex items-center space-x-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-sm text-green-600">API Key 已設定</span>
+                        <span className="text-sm text-green-600">{t('settings.apiKeys.status.configured')}</span>
                         {setting?.apiKeyMasked && (
                           <span className="text-xs text-gray-500 font-mono">
                             {normalizeApiKeyDisplay(setting.apiKeyMasked)}
@@ -395,7 +406,7 @@ export function ApiKeySettings() {
                     ) : (
                       <div className="flex items-center space-x-2">
                         <XCircle className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-500">未設定 API Key</span>
+                        <span className="text-sm text-gray-500">{t('settings.apiKeys.status.notConfigured')}</span>
                       </div>
                     )}
                   </div>
@@ -404,7 +415,7 @@ export function ApiKeySettings() {
                     {hasApiKey && (
                       <div className="flex items-center space-x-2">
                         <Label htmlFor={`${platform}-enabled`} className="text-sm">
-                          啟用
+                          {t('settings.apiKeys.status.enabled')}
                         </Label>
                         <Switch
                           id={`${platform}-enabled`}
@@ -420,7 +431,7 @@ export function ApiKeySettings() {
                       onClick={() => openApiKeyDialog(platform)}
                     >
                       <Settings className="h-4 w-4 mr-1" />
-                      {hasApiKey ? '編輯' : '設定'}
+                      {hasApiKey ? t('settings.apiKeys.actions.edit') : t('settings.apiKeys.actions.setup')}
                     </Button>
                     
                     {hasApiKey && (
@@ -443,15 +454,16 @@ export function ApiKeySettings() {
         </CardContent>
       </Card>
 
-      {/* API Key 設定對話框 */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              設定 {selectedPlatform && PLATFORM_LABELS[selectedPlatform as keyof typeof PLATFORM_LABELS]} API Key
+              {selectedPlatform && t('settings.apiKeys.dialog.title', {
+                platform: t(`settings.apiKeys.platforms.${selectedPlatform}`)
+              })}
             </DialogTitle>
             <DialogDescription>
-              請輸入您的 API Key，系統會自動驗證其有效性後再儲存。
+              {t('settings.apiKeys.dialog.description')}
             </DialogDescription>
           </DialogHeader>
 
@@ -461,16 +473,16 @@ export function ApiKeySettings() {
                 <Info className="h-4 w-4" />
                 <AlertDescription>
                   <div className="space-y-2">
-                    <p><strong>格式要求：</strong>{requirements.format}</p>
-                    <p><strong>範例：</strong><code className="text-xs">{requirements.example}</code></p>
+                    <p><strong>{t('settings.apiKeys.requirements.format')}</strong>{requirements.format}</p>
+                    <p><strong>{t('settings.apiKeys.requirements.example')}</strong><code className="text-xs">{requirements.example}</code></p>
                     {requirements.documentation && (
-                      <a 
-                        href={requirements.documentation} 
-                        target="_blank" 
+                      <a
+                        href={requirements.documentation}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm"
                       >
-                        查看官方文檔 <ExternalLink className="h-3 w-3 ml-1" />
+                        {t('settings.apiKeys.requirements.documentation')} <ExternalLink className="h-3 w-3 ml-1" />
                       </a>
                     )}
                   </div>
@@ -479,12 +491,12 @@ export function ApiKeySettings() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="api-key">API Key</Label>
+              <Label htmlFor="api-key">{t('settings.apiKeys.dialog.apiKeyLabel')}</Label>
               <div className="relative">
                 <Input
                   id="api-key"
                   type={showApiKey ? "text" : "password"}
-                  placeholder="輸入您的 API Key"
+                  placeholder={t('settings.apiKeys.dialog.apiKeyPlaceholder')}
                   value={apiKey}
                   onChange={(e) => {
                     setApiKey(e.target.value);
@@ -519,12 +531,12 @@ export function ApiKeySettings() {
                 {validating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    驗證中...
+                    {t('settings.apiKeys.dialog.validating')}
                   </>
                 ) : (
                   <>
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    驗證 API Key
+                    {t('settings.apiKeys.dialog.validate')}
                   </>
                 )}
               </Button>
@@ -540,12 +552,12 @@ export function ApiKeySettings() {
                 <AlertDescription>
                   {validationResult.isValid ? (
                     <div>
-                      <p className="text-green-700 font-medium">驗證成功！</p>
+                      <p className="text-green-700 font-medium">{t('settings.apiKeys.validation.success')}</p>
                       {validationResult.providerInfo && (
                         <div className="mt-2 text-sm text-green-600">
-                          <p>提供商: {validationResult.providerInfo.name}</p>
+                          <p>{t('settings.apiKeys.validation.provider')}: {validationResult.providerInfo.name}</p>
                           {validationResult.providerInfo.model && (
-                            <p>模型: {validationResult.providerInfo.model}</p>
+                            <p>{t('settings.apiKeys.validation.model')}: {validationResult.providerInfo.model}</p>
                           )}
                         </div>
                       )}
@@ -560,7 +572,7 @@ export function ApiKeySettings() {
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              取消
+              {t('settings.apiKeys.dialog.cancel')}
             </Button>
             <Button
               onClick={saveApiKey}
@@ -569,10 +581,10 @@ export function ApiKeySettings() {
               {saving ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  儲存中...
+                  {t('settings.apiKeys.dialog.saving')}
                 </>
               ) : (
-                '儲存 API Key'
+                t('settings.apiKeys.dialog.save')
               )}
             </Button>
           </DialogFooter>

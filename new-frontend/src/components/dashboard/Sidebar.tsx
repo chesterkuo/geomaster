@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { 
-  LayoutDashboard, 
-  Globe, 
-  BarChart3, 
-  Search, 
-  Settings, 
-  Users, 
+import {
+  LayoutDashboard,
+  Globe,
+  BarChart3,
+  Search,
+  Settings,
+  Users,
   Map,
   Brain,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Bell
 } from "lucide-react";
 
 interface SidebarProps {
@@ -27,43 +29,50 @@ interface NavItem {
   path: string;
 }
 
-// Check if SEO features are enabled
-const enableSeoFeatures = import.meta.env.VITE_ENABLE_SEO_FEATURES === 'true';
+export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-const menuSections = [
-  {
-    title: "主要功能",
-    items: [
-      { id: "tracking", label: "網站掃描", icon: Globe, path: "/" },
-      { id: "dashboard", label: "儀表板", icon: LayoutDashboard, path: "/dashboard" },
-      { id: "optimization", label: "內容優化", icon: BarChart3, path: "/optimization" },
-      { id: "ai-search", label: "AI 可見度追蹤", icon: Brain, path: "/ai-search" },
-    ]
-  },
-  // Only include SEO features if enabled
-  ...(enableSeoFeatures ? [{
-    title: "分析工具", 
-    items: [
-      { id: "analytics", label: "競爭分析", icon: BarChart3, path: "/analytics" },
-      { id: "research", label: "關鍵字研究", icon: Search, path: "/research" },
-      { id: "reporting", label: "報告中心", icon: Map, path: "/reporting" },
-    ]
+  // Check if SEO features are enabled
+  const enableSeoFeatures = import.meta.env.VITE_ENABLE_SEO_FEATURES === 'true';
+
+  // Check if Alerts feature is enabled
+  const enableAlerts = import.meta.env.VITE_ENABLE_ALERTS === 'true';
+
+  const menuSections = [
+    {
+      title: t("nav.main.title"),
+      items: [
+        { id: "tracking", label: t("nav.main.tracking"), icon: Globe, path: "/" },
+        { id: "dashboard", label: t("nav.main.dashboard"), icon: LayoutDashboard, path: "/dashboard" },
+        { id: "optimization", label: t("nav.main.optimization"), icon: BarChart3, path: "/optimization" },
+        { id: "ai-search", label: t("nav.main.aiSearch"), icon: Brain, path: "/ai-search" },
+      ]
+    },
+    // Only include SEO features if enabled
+    ...(enableSeoFeatures ? [{
+      title: t("nav.analytics.title"),
+      items: [
+        { id: "analytics", label: t("nav.analytics.analytics"), icon: BarChart3, path: "/analytics" },
+        { id: "research", label: t("nav.analytics.research"), icon: Search, path: "/research" },
+        { id: "reporting", label: t("nav.analytics.reporting"), icon: Map, path: "/reporting" },
+      ]
   }] : []),
   {
-    title: "設定功能",
+    title: t("nav.management.title"),
     items: [
-      { id: "team", label: "團隊管理", icon: Users, path: "/team" },
-      { id: "settings", label: "系統設定", icon: Settings, path: "/settings" },
+      { id: "team", label: t("nav.management.team"), icon: Users, path: "/team" },
+      // Only include alerts if enabled
+      ...(enableAlerts ? [{ id: "alerts", label: t("nav.management.alerts"), icon: Bell, path: "/alerts" }] : []),
+      { id: "settings", label: t("nav.management.settings"), icon: Settings, path: "/settings" },
     ]
   }
-];
+  ];
 
-// Get all items for finding active item
-const allNavItems = menuSections.flatMap(section => section.items);
-
-export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
-  const location = useLocation();
-  const navigate = useNavigate();
+  // Get all items for finding active item
+  const allNavItems = menuSections.flatMap(section => section.items);
   
   const getActiveItem = () => {
     const currentItem = allNavItems.find(item => item.path === location.pathname);
@@ -138,10 +147,10 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
           "bg-gradient-card rounded-lg p-3 text-center border border-border",
           collapsed && "hidden"
         )}>
-          <div className="text-sm font-medium text-foreground mb-1">升級方案</div>
-          <div className="text-xs text-muted-foreground mb-2">解鎖更多功能</div>
+          <div className="text-sm font-medium text-foreground mb-1">{t('nav.upgrade.title')}</div>
+          <div className="text-xs text-muted-foreground mb-2">{t('nav.upgrade.description')}</div>
           <Button size="sm" className="w-full bg-primary text-primary-foreground">
-            立即升級
+            {t('nav.upgrade.button')}
           </Button>
         </div>
       </div>

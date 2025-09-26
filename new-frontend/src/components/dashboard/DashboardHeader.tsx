@@ -1,12 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { Bell, Search, User, Settings, LogOut, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { authService } from "@/lib/api/auth";
+import { useTranslation } from "react-i18next";
 
 interface DashboardHeaderProps {
   onShowAuth?: () => void;
@@ -15,9 +17,10 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
+  const { t } = useTranslation();
 
   const handleNotificationsClick = () => {
-    toast("通知功能開發中...");
+    toast(t("common.loading"));
   };
 
   const handleSettingsClick = () => {
@@ -41,7 +44,7 @@ export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
         console.warn("Server logout failed, but local logout successful:", error);
       }
       
-      toast.success("已成功登出");
+      toast.success(t("auth.logoutSuccess"));
       
       // Small delay to ensure state updates
       setTimeout(() => {
@@ -50,7 +53,7 @@ export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
       
     } catch (error) {
       console.error("Logout error:", error);
-      toast.error("登出失敗，請稍後再試");
+      toast.error(t("errors.tryAgain"));
     }
   };
 
@@ -61,13 +64,14 @@ export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
         <div className="relative flex-1 max-w-lg">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="搜尋功能、關鍵字或報告..."
+            placeholder={t("common.search")}
             className="pl-10 bg-background/50 border-border focus:border-primary transition-colors"
           />
         </div>
 
         {/* Actions */}
         <div className="flex items-center space-x-3">
+          <LanguageSwitcher />
           <Button
             variant="ghost"
             size="sm"
@@ -101,29 +105,29 @@ export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
                     <User className="h-3 w-3 text-white" />
                   </div>
                   <span className="text-sm font-medium">
-                    {user?.fullName || user?.email || "使用者"}
+                    {user?.fullName || user?.email || t("common.user")}
                   </span>
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <div className="px-2 py-1.5 text-sm">
-                  <div className="font-medium">{user?.fullName || "使用者"}</div>
+                  <div className="font-medium">{user?.fullName || t("common.user")}</div>
                   <div className="text-muted-foreground">{user?.email}</div>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleProfileClick}>
                   <User className="mr-2 h-4 w-4" />
-                  個人檔案
+                  {t("settings.profile")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSettingsClick}>
                   <Settings className="mr-2 h-4 w-4" />
-                  設定
+                  {t("settings.title")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
-                  登出
+                  {t("auth.logout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -137,7 +141,7 @@ export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
               <div className="w-6 h-6 bg-gradient-primary rounded-full flex items-center justify-center">
                 <User className="h-3 w-3 text-white" />
               </div>
-              <span className="text-sm font-medium">訪客</span>
+              <span className="text-sm font-medium">{t("common.guest")}</span>
             </Button>
           )}
         </div>

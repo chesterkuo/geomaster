@@ -6,8 +6,8 @@ interface PageAttributes {
   organizationId: string;
   title: string;
   url: string;
-  type: '產品頁' | '部落格' | 'FAQ' | '服務頁' | '其他';
-  traffic: '高' | '中' | '低';
+  type: 'product' | 'blog' | 'FAQ' | 'service' | 'other';
+  traffic: 'high' | 'medium' | 'low';
   geoScore?: number;
   lastAnalyzedAt?: Date;
   analysisStatus: 'pending' | 'analyzing' | 'completed' | 'failed';
@@ -24,8 +24,8 @@ class Page extends Model<PageAttributes, PageCreationAttributes> implements Page
   public organizationId!: string;
   public title!: string;
   public url!: string;
-  public type!: '產品頁' | '部落格' | 'FAQ' | '服務頁' | '其他';
-  public traffic!: '高' | '中' | '低';
+  public type!: 'product' | 'blog' | 'FAQ' | 'service' | 'other';
+  public traffic!: 'high' | 'medium' | 'low';
   public geoScore?: number;
   public lastAnalyzedAt?: Date;
   public analysisStatus!: 'pending' | 'analyzing' | 'completed' | 'failed';
@@ -59,14 +59,14 @@ Page.init(
       }
     },
     type: {
-      type: DataTypes.ENUM('產品頁', '部落格', 'FAQ', '服務頁', '其他'),
+      type: DataTypes.ENUM('product', 'blog', 'FAQ', 'service', 'other'),
       allowNull: false,
-      defaultValue: '其他'
+      defaultValue: 'other'
     },
     traffic: {
-      type: DataTypes.ENUM('高', '中', '低'),
+      type: DataTypes.ENUM('high', 'medium', 'low'),
       allowNull: false,
-      defaultValue: '中'
+      defaultValue: 'medium'
     },
     geoScore: {
       type: DataTypes.INTEGER,

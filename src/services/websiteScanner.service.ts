@@ -85,10 +85,10 @@ export class WebsiteScanner {
           aiVisibility: aiVisibility.score
         },
         upgradeReasons: [
-          "獲得 30+ 項技術指標詳細分析",
-          "查看具體競爭對手表現比較", 
-          "獲得個人化優化執行計劃",
-          "追蹤改善進度和成效監控"
+          "Get detailed analysis of 30+ technical metrics",
+          "View specific competitor performance comparison",
+          "Get personalized optimization execution plan",
+          "Track improvement progress and performance monitoring"
         ]
       };
       
@@ -166,11 +166,11 @@ export class WebsiteScanner {
       
       // Performance score
       const performanceItem: ScanItem = {
-        name: "頁面載入速度",
+        name: "Page Load Speed",
         status: pageSpeedData.performance >= 90 ? "good" : pageSpeedData.performance >= 50 ? "warning" : "critical",
-        detail: `Performance分數: ${pageSpeedData.performance}/100, LCP: ${(pageSpeedData.lcp / 1000).toFixed(1)}s`,
+        detail: `Performance score: ${pageSpeedData.performance}/100, LCP: ${(pageSpeedData.lcp / 1000).toFixed(1)}s`,
         score: pageSpeedData.performance,
-        recommendation: pageSpeedData.performance < 90 ? "建議優化圖片、減少JavaScript和CSS檔案大小" : undefined
+        recommendation: pageSpeedData.performance < 90 ? "Recommend optimizing images, reducing JavaScript and CSS file sizes" : undefined
       };
       items.push(performanceItem);
       totalScore += pageSpeedData.performance;
@@ -178,11 +178,11 @@ export class WebsiteScanner {
 
       // Accessibility score
       const accessibilityItem: ScanItem = {
-        name: "無障礙設計",
+        name: "Accessibility",
         status: pageSpeedData.accessibility >= 90 ? "good" : pageSpeedData.accessibility >= 70 ? "warning" : "critical",
-        detail: `Accessibility分數: ${pageSpeedData.accessibility}/100`,
+        detail: `Accessibility score: ${pageSpeedData.accessibility}/100`,
         score: pageSpeedData.accessibility,
-        recommendation: pageSpeedData.accessibility < 90 ? "改善顏色對比度、添加Alt文字、確保鍵盤導航" : undefined
+        recommendation: pageSpeedData.accessibility < 90 ? "Improve color contrast, add Alt text, ensure keyboard navigation" : undefined
       };
       items.push(accessibilityItem);
       totalScore += pageSpeedData.accessibility;
@@ -194,7 +194,7 @@ export class WebsiteScanner {
         status: pageSpeedData.cls <= 0.1 && pageSpeedData.lcp <= 2500 ? "good" : "warning",
         detail: `CLS: ${pageSpeedData.cls}, FCP: ${(pageSpeedData.fcp / 1000).toFixed(1)}s`,
         score: pageSpeedData.cls <= 0.1 && pageSpeedData.lcp <= 2500 ? 100 : 70,
-        recommendation: "優化布局穩定性和最大內容繪製時間"
+        recommendation: "Optimize layout stability and largest contentful paint time"
       };
       items.push(webVitalsItem);
       totalScore += webVitalsItem.score || 70;
@@ -204,11 +204,11 @@ export class WebsiteScanner {
       console.error('Page speed analysis failed:', error);
       // Add a fallback page speed item
       const fallbackSpeedItem: ScanItem = {
-        name: "頁面載入速度",
+        name: "Page Load Speed",
         status: "warning",
-        detail: "無法測量頁面速度（伺服器限制）",
+        detail: "Unable to measure page speed (server restrictions)",
         score: 65,
-        recommendation: "建議手動檢查頁面載入速度"
+        recommendation: "Recommend manual page load speed check"
       };
       items.push(fallbackSpeedItem);
       totalScore += 65;
@@ -235,27 +235,27 @@ export class WebsiteScanner {
       
       if (hasDisallowAll) {
         return {
-          name: "robots.txt 配置",
+          name: "robots.txt Configuration",
           status: "critical",
-          detail: "robots.txt 阻止搜尋引擎爬取",
+          detail: "robots.txt blocks search engine crawling",
           score: 20,
-          recommendation: "修改 robots.txt 允許搜尋引擎索引"
+          recommendation: "Modify robots.txt to allow search engine indexing"
         };
       } else {
         return {
-          name: "robots.txt 配置", 
+          name: "robots.txt Configuration", 
           status: "good",
-          detail: "已允許搜尋引擎爬取",
+          detail: "Search engine crawling allowed",
           score: 100
         };
       }
     } catch (error) {
       return {
-        name: "robots.txt 配置",
+        name: "robots.txt Configuration",
         status: "warning", 
-        detail: "未找到 robots.txt 檔案",
+        detail: "robots.txt file not found",
         score: 80,
-        recommendation: "建議新增 robots.txt 檔案"
+        recommendation: "Recommend adding robots.txt file"
       };
     }
   }
@@ -263,11 +263,11 @@ export class WebsiteScanner {
   private checkHTTPS(url: string): ScanItem {
     const isHttps = url.startsWith('https://');
     return {
-      name: "HTTPS 安全連線",
+      name: "HTTPS Security",
       status: isHttps ? "good" : "critical",
-      detail: isHttps ? "使用安全的 HTTPS 連線" : "使用不安全的 HTTP 連線",
+      detail: isHttps ? "Using secure HTTPS connection" : "Using insecure HTTP connection",
       score: isHttps ? 100 : 20,
-      recommendation: isHttps ? undefined : "請啟用 HTTPS 以提升安全性和SEO排名"
+      recommendation: isHttps ? undefined : "Please enable HTTPS to improve security and SEO ranking"
     };
   }
   
@@ -276,11 +276,11 @@ export class WebsiteScanner {
     const hasViewport = !!viewport;
     
     return {
-      name: "行動裝置優化",
+      name: "Mobile Optimization",
       status: hasViewport ? "good" : "critical", 
-      detail: hasViewport ? "已設定 viewport meta 標籤" : "缺少 viewport meta 標籤",
+      detail: hasViewport ? "Viewport meta tag configured" : "Missing viewport meta tag",
       score: hasViewport ? 100 : 20,
-      recommendation: hasViewport ? undefined : "加入 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+      recommendation: hasViewport ? undefined : "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
     };
   }
   
@@ -290,33 +290,33 @@ export class WebsiteScanner {
     
     if (!title) {
       return {
-        name: "頁面標題",
+        name: "Page Title",
         status: "critical",
-        detail: "缺少頁面標題",
+        detail: "Missing page title",
         score: 0,
-        recommendation: "加入描述性的頁面標題"
+        recommendation: "Add descriptive page title"
       };
     } else if (titleLength < 30) {
       return {
-        name: "頁面標題", 
+        name: "Page Title", 
         status: "warning",
-        detail: `標題過短 (${titleLength} 字元)`,
+        detail: `Title too short (${titleLength} characters)`,
         score: 60,
-        recommendation: "標題建議長度 30-60 字元"
+        recommendation: "Recommended title length 30-60 characters"
       };
     } else if (titleLength > 60) {
       return {
-        name: "頁面標題",
+        name: "Page Title",
         status: "warning", 
-        detail: `標題過長 (${titleLength} 字元)`,
+        detail: `Title too long (${titleLength} characters)`,
         score: 70,
-        recommendation: "標題建議長度 30-60 字元"
+        recommendation: "Recommended title length 30-60 characters"
       };
     } else {
       return {
-        name: "頁面標題",
+        name: "Page Title",
         status: "good",
-        detail: `標題長度適中 (${titleLength} 字元)`,
+        detail: `Title length appropriate (${titleLength} characters)`,
         score: 100
       };
     }
@@ -328,33 +328,33 @@ export class WebsiteScanner {
     
     if (!description) {
       return {
-        name: "Meta 描述",
+        name: "Meta Description",
         status: "critical",
-        detail: "缺少 Meta 描述標籤", 
+        detail: "Missing Meta description tag", 
         score: 0,
-        recommendation: "加入吸引人的 Meta 描述"
+        recommendation: "Add compelling Meta description"
       };
     } else if (descLength < 120) {
       return {
-        name: "Meta 描述",
+        name: "Meta Description",
         status: "warning",
-        detail: `描述過短 (${descLength} 字元)`,
+        detail: `Description too short (${descLength} characters)`,
         score: 60, 
-        recommendation: "描述建議長度 120-160 字元"
+        recommendation: "Recommended description length 120-160 characters"
       };
     } else if (descLength > 160) {
       return {
-        name: "Meta 描述",
+        name: "Meta Description",
         status: "warning",
-        detail: `描述過長 (${descLength} 字元)`, 
+        detail: `Description too long (${descLength} characters)`, 
         score: 70,
-        recommendation: "描述建議長度 120-160 字元"
+        recommendation: "Recommended description length 120-160 characters"
       };
     } else {
       return {
-        name: "Meta 描述",
+        name: "Meta Description",
         status: "good", 
-        detail: `描述長度適中 (${descLength} 字元)`,
+        detail: `Description length appropriate (${descLength} characters)`,
         score: 100
       };
     }
@@ -405,33 +405,33 @@ export class WebsiteScanner {
     
     if (h1Count === 0) {
       return {
-        name: "標題結構",
+        name: "Heading Structure",
         status: "critical",
-        detail: "缺少 H1 主標題",
+        detail: "Missing H1 main heading",
         score: 20,
-        recommendation: "每個頁面都應該有一個 H1 標題"
+        recommendation: "Each page should have one H1 heading"
       };
     } else if (h1Count > 1) {
       return {
-        name: "標題結構", 
+        name: "Heading Structure", 
         status: "warning",
-        detail: `有 ${h1Count} 個 H1 標題`,
+        detail: `Found ${h1Count} H1 headings`,
         score: 60,
-        recommendation: "每個頁面只應該有一個 H1 標題"
+        recommendation: "Each page should have only one H1 heading"
       };
     } else if (h2Count === 0) {
       return {
-        name: "標題結構",
+        name: "Heading Structure",
         status: "warning",
-        detail: "建議加入 H2 副標題改善結構",
+        detail: "Recommend adding H2 subheadings to improve structure",
         score: 75,
-        recommendation: "使用 H2 標題組織內容結構"
+        recommendation: "Use H2 headings to organize content structure"
       };
     } else {
       return {
-        name: "標題結構",
+        name: "Heading Structure",
         status: "good", 
-        detail: `良好的標題結構 (H1:${h1Count}, H2:${h2Count}, H3:${h3Count})`,
+        detail: `Good heading structure (H1:${h1Count}, H2:${h2Count}, H3:${h3Count})`,
         score: 100
       };
     }
@@ -445,25 +445,25 @@ export class WebsiteScanner {
     
     if (wordCount < 300) {
       return {
-        name: "內容長度",
+        name: "Content Length",
         status: "critical",
-        detail: `內容過短 (約 ${wordCount} 字)`, 
+        detail: `Content too short (about ${wordCount} words)`, 
         score: 30,
-        recommendation: "建議內容長度至少 300 字以上"
+        recommendation: "Recommend content length of at least 300 words"
       };
     } else if (wordCount < 600) {
       return {
-        name: "內容長度",
+        name: "Content Length",
         status: "warning",
-        detail: `內容偏短 (約 ${wordCount} 字)`,
+        detail: `Content somewhat short (about ${wordCount} words)`,
         score: 70,
-        recommendation: "建議增加更多有價值的內容"
+        recommendation: "Recommend adding more valuable content"
       };
     } else {
       return {
-        name: "內容長度",
+        name: "Content Length",
         status: "good",
-        detail: `內容充足 (約 ${wordCount} 字)`,
+        detail: `Sufficient content (about ${wordCount} words)`,
         score: 100
       };
     }
@@ -475,9 +475,9 @@ export class WebsiteScanner {
     
     if (totalImages === 0) {
       return {
-        name: "圖片優化",
+        name: "Image Optimization",
         status: "warning", 
-        detail: "頁面沒有圖片",
+        detail: "Page has no images",
         score: 80
       };
     }
@@ -494,26 +494,26 @@ export class WebsiteScanner {
     
     if (percentage === 100) {
       return {
-        name: "圖片優化",
+        name: "Image Optimization",
         status: "good",
-        detail: `所有圖片都有 Alt 文字 (${totalImages}/${totalImages})`,
+        detail: `All images have Alt text (${totalImages}/${totalImages})`,
         score: 100
       };
     } else if (percentage >= 80) {
       return {
-        name: "圖片優化",
+        name: "Image Optimization",
         status: "warning",
-        detail: `${percentage}% 圖片有 Alt 文字 (${imagesWithAlt}/${totalImages})`,
+        detail: `${percentage}% images have Alt text (${imagesWithAlt}/${totalImages})`,
         score: 80,
-        recommendation: "為所有圖片加入描述性的 Alt 文字"
+        recommendation: "Add descriptive Alt text for all images"
       };
     } else {
       return {
-        name: "圖片優化", 
+        name: "Image Optimization", 
         status: "critical",
-        detail: `只有 ${percentage}% 圖片有 Alt 文字 (${imagesWithAlt}/${totalImages})`,
+        detail: `Only ${percentage}% images have Alt text (${imagesWithAlt}/${totalImages})`,
         score: 40,
-        recommendation: "為所有圖片加入描述性的 Alt 文字"
+        recommendation: "Add descriptive Alt text for all images"
       };
     }
   }
@@ -524,25 +524,25 @@ export class WebsiteScanner {
     
     if (totalLinks === 0) {
       return {
-        name: "內部連結",
+        name: "Internal Links",
         status: "warning",
-        detail: "頁面沒有連結",
+        detail: "Page has no links",
         score: 60,
-        recommendation: "加入相關的內部連結"
+        recommendation: "Add relevant internal links"
       };
     } else if (totalLinks < 5) {
       return {
-        name: "內部連結", 
+        name: "Internal Links", 
         status: "warning",
-        detail: `連結較少 (${totalLinks} 個)`,
+        detail: `Few links (${totalLinks} links)`,
         score: 75,
-        recommendation: "增加更多相關的內部連結"
+        recommendation: "Add more relevant internal links"
       };
     } else {
       return {
-        name: "內部連結",
+        name: "Internal Links",
         status: "good",
-        detail: `有適量的連結 (${totalLinks} 個)`, 
+        detail: `Has adequate links (${totalLinks} links)`, 
         score: 100
       };
     }
@@ -593,25 +593,25 @@ export class WebsiteScanner {
     
     if (schemaCount === 0) {
       return {
-        name: "Schema 標記",
+        name: "Schema Markup",
         status: "critical",
-        detail: "未發現結構化資料標記",
+        detail: "No structured data markup found",
         score: 20,
-        recommendation: "加入 JSON-LD 結構化資料以提升 AI 可見度"
+        recommendation: "Add JSON-LD structured data to improve AI visibility"
       };
     } else if (schemaCount < 3) {
       return {
-        name: "Schema 標記",
+        name: "Schema Markup",
         status: "warning", 
-        detail: `發現 ${schemaCount} 個結構化資料`,
+        detail: `Found ${schemaCount} structured data items`,
         score: 60,
-        recommendation: "增加更多相關的結構化資料標記"
+        recommendation: "Add more relevant structured data markup"
       };
     } else {
       return {
-        name: "Schema 標記",
+        name: "Schema Markup",
         status: "good",
-        detail: `豐富的結構化資料 (${schemaCount} 個)`,
+        detail: `Rich structured data (${schemaCount} items)`,
         score: 100
       };
     }
@@ -623,25 +623,25 @@ export class WebsiteScanner {
     
     if (propertyCount === 0) {
       return {
-        name: "社群媒體標記",
+        name: "Social Media Tags",
         status: "warning",
-        detail: "缺少 Open Graph 和 Twitter 標記",
+        detail: "Missing Open Graph and Twitter tags",
         score: 40,
-        recommendation: "加入 Open Graph 和 Twitter Card 標記"
+        recommendation: "Add Open Graph and Twitter Card tags"
       };
     } else if (propertyCount < 4) {
       return {
-        name: "社群媒體標記",
+        name: "Social Media Tags",
         status: "warning",
-        detail: `部分社群標記 (${propertyCount} 個)`,
+        detail: `Partial social tags (${propertyCount} tags)`,
         score: 70,
-        recommendation: "完善 Open Graph 和 Twitter 標記"
+        recommendation: "Complete Open Graph and Twitter tags"
       };
     } else {
       return {
-        name: "社群媒體標記", 
+        name: "Social Media Tags", 
         status: "good",
-        detail: `完整的社群標記 (${propertyCount} 個)`,
+        detail: `Complete social tags (${propertyCount} tags)`,
         score: 100
       };
     }
@@ -650,25 +650,25 @@ export class WebsiteScanner {
   private checkFAQContent($: cheerio.CheerioAPI): ScanItem {
     const faqIndicators = $('*').filter((_, el) => {
       const text = $(el).text().toLowerCase();
-      return text.includes('faq') || text.includes('常見問題') || 
-             text.includes('問答') || text.includes('q&a');
+      return text.includes('faq') || text.includes('FAQ') ||
+             text.includes('Q&A') || text.includes('q&a');
     });
     
     const hasFAQ = faqIndicators.length > 0;
     
     if (!hasFAQ) {
       return {
-        name: "FAQ 內容",
+        name: "FAQ Content",
         status: "warning", 
-        detail: "未發現 FAQ 或問答內容",
+        detail: "No FAQ or Q&A content found",
         score: 50,
-        recommendation: "加入常見問題解答以提升 AI 查詢回應"
+        recommendation: "Add FAQ to improve AI query responses"
       };
     } else {
       return {
-        name: "FAQ 內容",
+        name: "FAQ Content",
         status: "good",
-        detail: "包含問答或 FAQ 內容",
+        detail: "Contains Q&A or FAQ content",
         score: 90
       };
     }
@@ -684,25 +684,25 @@ export class WebsiteScanner {
     
     if (avgWordsPerSentence > 25) {
       return {
-        name: "內容可讀性",
+        name: "Content Readability",
         status: "warning",
-        detail: `句子偏長 (平均 ${Math.round(avgWordsPerSentence)} 字/句)`,
+        detail: `Sentences too long (average ${Math.round(avgWordsPerSentence)} words/sentence)`,
         score: 60,
-        recommendation: "使用較短的句子提升可讀性"
+        recommendation: "Use shorter sentences to improve readability"
       };
     } else if (avgWordsPerSentence < 8) {
       return {
-        name: "內容可讀性",
+        name: "Content Readability",
         status: "warning", 
-        detail: `句子過短 (平均 ${Math.round(avgWordsPerSentence)} 字/句)`,
+        detail: `Sentences too short (average ${Math.round(avgWordsPerSentence)} words/sentence)`,
         score: 70,
-        recommendation: "適度增加句子內容深度"
+        recommendation: "Moderately increase sentence content depth"
       };
     } else {
       return {
-        name: "內容可讀性",
+        name: "Content Readability",
         status: "good",
-        detail: `句子長度適中 (平均 ${Math.round(avgWordsPerSentence)} 字/句)`,
+        detail: `Appropriate sentence length (average ${Math.round(avgWordsPerSentence)} words/sentence)`,
         score: 90
       };
     }
@@ -728,19 +728,19 @@ export class WebsiteScanner {
     
     if (overallScore >= 80) {
       status = 'good';
-      message = `${domain} 在 AI 搜索中表現良好，但仍有優化空間。`;
+      message = `${domain} performs well in AI search but has room for optimization.`;
     } else if (overallScore >= 60) {
       status = 'warning';
-      message = `${domain} 存在一些影響 AI 可見度的問題需要改善。`;
+      message = `${domain} has some issues affecting AI visibility that need improvement.`;
     } else {
       status = 'critical';
-      message = `${domain} 在 AI 搜索中可見度較低，建議進行全面優化。`;
+      message = `${domain} has low visibility in AI search, comprehensive optimization recommended.`;
     }
     
     return {
       status,
       message,
-      keyIssues: keyIssues.length > 0 ? keyIssues : ["網站整體表現良好"]
+      keyIssues: keyIssues.length > 0 ? keyIssues : ["Website overall performance is good"]
     };
   }
 

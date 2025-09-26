@@ -8,17 +8,19 @@ import { Search, TrendingUp, Target, Globe, BarChart3, Lock, User, Loader2 } fro
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { useTranslation } from "react-i18next";
 
 const Research = () => {
   const { isAuthenticated } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const keywordSuggestions = [
-    { keyword: "SEO優化", volume: "12,100", difficulty: "中等", trend: "+15%" },
-    { keyword: "關鍵字研究", volume: "8,900", difficulty: "低", trend: "+8%" },
-    { keyword: "內容行銷", volume: "15,600", difficulty: "高", trend: "+22%" },
-    { keyword: "數位行銷", volume: "9,800", difficulty: "中等", trend: "+12%" },
+    { keyword: t("research.keywords.seoOptimization"), volume: "12,100", difficulty: t("research.difficulty.medium"), trend: "+15%" },
+    { keyword: t("research.keywords.keywordResearch"), volume: "8,900", difficulty: t("research.difficulty.low"), trend: "+8%" },
+    { keyword: t("research.keywords.contentMarketing"), volume: "15,600", difficulty: t("research.difficulty.high"), trend: "+22%" },
+    { keyword: t("research.keywords.digitalMarketing"), volume: "9,800", difficulty: t("research.difficulty.medium"), trend: "+12%" },
   ];
 
   const competitors = [
@@ -31,16 +33,16 @@ const Research = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">關鍵字研究</h1>
-          <p className="text-muted-foreground">發現高價值關鍵字，提升SEO排名</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("research.title")}</h1>
+          <p className="text-muted-foreground">{t("research.description")}</p>
         </div>
 
         <Tabs defaultValue="research" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="research">關鍵字搜尋</TabsTrigger>
-            <TabsTrigger value="analysis">競爭分析</TabsTrigger>
-            <TabsTrigger value="tracking">排名追蹤</TabsTrigger>
-            <TabsTrigger value="opportunities">機會發現</TabsTrigger>
+            <TabsTrigger value="research">{t("research.tabs.keywordSearch")}</TabsTrigger>
+            <TabsTrigger value="analysis">{t("research.tabs.competitorAnalysis")}</TabsTrigger>
+            <TabsTrigger value="tracking">{t("research.tabs.rankingTracking")}</TabsTrigger>
+            <TabsTrigger value="opportunities">{t("research.tabs.opportunityDiscovery")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="research" className="space-y-6">
@@ -57,12 +59,12 @@ const Research = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用關鍵字搜尋</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可搜尋高價值關鍵字，提升SEO排名</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("research.auth.keywordSearchRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("research.auth.keywordSearchDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("common.loginNow")}
                     </Button>
                   </div>
                 </div>
@@ -72,33 +74,33 @@ const Research = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Search className="h-5 w-5" />
-                    關鍵字搜尋工具
+                    {t("research.keywordTool.title")}
                   </CardTitle>
-                  <CardDescription>輸入種子關鍵字，獲取相關建議</CardDescription>
+                  <CardDescription>{t("research.keywordTool.description")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex gap-2">
-                    <Input placeholder="輸入關鍵字..." className="flex-1" />
+                    <Input placeholder={t("research.keywordTool.placeholder")} className="flex-1" />
                     <Button>
                       <Search className="h-4 w-4 mr-2" />
-                      搜尋
+                      {t("common.search")}
                     </Button>
                   </div>
                   
                   <div className="space-y-3">
-                    <h4 className="font-medium">關鍵字建議</h4>
+                    <h4 className="font-medium">{t("research.keywordTool.suggestions")}</h4>
                     {keywordSuggestions.map((item, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
                         <div className="space-y-1">
                           <div className="font-medium">{item.keyword}</div>
-                          <div className="text-sm text-muted-foreground">月搜尋量: {item.volume}</div>
+                          <div className="text-sm text-muted-foreground">{t("research.keywordTool.monthlyVolume")}: {item.volume}</div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant={item.difficulty === "低" ? "default" : item.difficulty === "中等" ? "secondary" : "destructive"}>
                             {item.difficulty}
                           </Badge>
                           <div className="text-sm text-green-500">{item.trend}</div>
-                          <Button size="sm" variant="outline">加入</Button>
+                          <Button size="sm" variant="outline">{t("common.add")}</Button>
                         </div>
                       </div>
                     ))}
@@ -122,12 +124,12 @@ const Research = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用競爭分析</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可分析競爭對手的關鍵字策略</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("research.auth.competitorAnalysisRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("research.auth.competitorAnalysisDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("common.loginNow")}
                     </Button>
                   </div>
                 </div>
@@ -137,9 +139,9 @@ const Research = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="h-5 w-5" />
-                    競爭對手分析
+                    {t("research.competitorAnalysis.title")}
                   </CardTitle>
-                  <CardDescription>分析競爭對手的關鍵字策略</CardDescription>
+                  <CardDescription>{t("research.competitorAnalysis.description")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -149,16 +151,16 @@ const Research = () => {
                           <Globe className="h-8 w-8 text-muted-foreground" />
                           <div>
                             <div className="font-medium">{competitor.domain}</div>
-                            <div className="text-sm text-muted-foreground">關鍵字數量: {competitor.keywords}</div>
+                            <div className="text-sm text-muted-foreground">{t("research.competitorAnalysis.keywordCount")}: {competitor.keywords}</div>
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-center">
                             <div className="font-medium">{competitor.traffic}</div>
-                            <div className="text-xs text-muted-foreground">月流量</div>
+                            <div className="text-xs text-muted-foreground">{t("research.competitorAnalysis.monthlyTraffic")}</div>
                           </div>
                           <Badge variant="outline">{competitor.ranking}</Badge>
-                          <Button size="sm">分析</Button>
+                          <Button size="sm">{t("common.analyze")}</Button>
                         </div>
                       </div>
                     ))}
@@ -182,12 +184,12 @@ const Research = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用排名追蹤</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可監控關鍵字在搜尋引擎中的排名變化</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("research.auth.rankingTrackingRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("research.auth.rankingTrackingDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("common.loginNow")}
                     </Button>
                   </div>
                 </div>
@@ -197,16 +199,16 @@ const Research = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5" />
-                    排名追蹤
+                    {t("research.rankingTracking.title")}
                   </CardTitle>
-                  <CardDescription>監控關鍵字排名變化</CardDescription>
+                  <CardDescription>{t("research.rankingTracking.description")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12">
                     <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">開始追蹤關鍵字排名</h3>
-                    <p className="text-muted-foreground mb-4">添加關鍵字以監控其在搜尋引擎中的排名變化</p>
-                    <Button>新增追蹤</Button>
+                    <h3 className="text-lg font-medium mb-2">{t("research.rankingTracking.startTitle")}</h3>
+                    <p className="text-muted-foreground mb-4">{t("research.rankingTracking.startDescription")}</p>
+                    <Button>{t("research.rankingTracking.addTracking")}</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -227,12 +229,12 @@ const Research = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能使用機會發現</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可基於數據分析發現潛在的SEO優化機會</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("research.auth.opportunityDiscoveryRequired")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("research.auth.opportunityDiscoveryDescription")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("common.loginNow")}
                     </Button>
                   </div>
                 </div>
@@ -242,16 +244,16 @@ const Research = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="h-5 w-5" />
-                    機會發現
+                    {t("research.opportunityDiscovery.title")}
                   </CardTitle>
-                  <CardDescription>發現SEO優化機會</CardDescription>
+                  <CardDescription>{t("research.opportunityDiscovery.description")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-12">
                     <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">探索新機會</h3>
-                    <p className="text-muted-foreground mb-4">基於數據分析發現潛在的SEO優化機會</p>
-                    <Button>開始分析</Button>
+                    <h3 className="text-lg font-medium mb-2">{t("research.opportunityDiscovery.exploreTitle")}</h3>
+                    <p className="text-muted-foreground mb-4">{t("research.opportunityDiscovery.exploreDescription")}</p>
+                    <Button>{t("research.opportunityDiscovery.startAnalysis")}</Button>
                   </div>
                 </CardContent>
               </Card>

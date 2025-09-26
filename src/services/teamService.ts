@@ -78,34 +78,34 @@ export class TeamService {
   // Role definitions with permissions
   private roleDefinitions = {
     owner: {
-      displayName: '擁有者',
-      description: '完整系統控制權，包含帳單和組織管理',
+      displayName: 'Owner',
+      description: 'Full system control, including billing and organization management',
       permissions: [
         'user.manage', 'user.invite', 'settings.manage', 'billing.manage',
         'content.edit', 'reports.view', 'reports.export', 'analytics.view', 'keywords.manage'
       ]
     },
     admin: {
-      displayName: '管理員',
-      description: '完整系統存取權限，可管理所有功能和用戶',
+      displayName: 'Administrator',
+      description: 'Full system access, can manage all features and users',
       permissions: [
         'user.manage', 'user.invite', 'settings.manage',
         'content.edit', 'reports.view', 'reports.export', 'analytics.view', 'keywords.manage'
       ]
     },
     editor: {
-      displayName: '編輯者',
-      description: '可編輯內容和查看報告，有限管理權限',
+      displayName: 'Editor',
+      description: 'Can edit content and view reports, limited management permissions',
       permissions: ['content.edit', 'reports.view', 'reports.export', 'analytics.view', 'keywords.manage']
     },
     viewer: {
-      displayName: '檢視者',
-      description: '可查看報告和數據，基本操作權限',
+      displayName: 'Viewer',
+      description: 'Can view reports and data, basic operation permissions',
       permissions: ['reports.view', 'analytics.view']
     },
     member: {
-      displayName: '成員',
-      description: '可查看報告和數據，基本操作權限',
+      displayName: 'Member',
+      description: 'Can view reports and data, basic operation permissions',
       permissions: ['reports.view', 'analytics.view']
     }
   };

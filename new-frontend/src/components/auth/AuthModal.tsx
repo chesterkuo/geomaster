@@ -9,6 +9,7 @@ import { Loader2, Eye, EyeOff, Mail, Lock, User, Building } from 'lucide-react';
 import { authService, LoginRequest, RegisterRequest } from '@/lib/api/auth';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/components/ui/use-toast';
+import { useLanguage } from '@/hooks/use-language';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -24,14 +25,15 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { login, register } = useAuth();
+  const { t } = useLanguage();
 
-  // 登入表單狀態
+  // Login form state
   const [loginForm, setLoginForm] = useState<LoginRequest>({
     email: '',
     password: ''
   });
 
-  // 註冊表單狀態
+  // Register form state
   const [registerForm, setRegisterForm] = useState<RegisterRequest & { confirmPassword: string }>({
     fullName: '',
     email: '',
@@ -49,22 +51,22 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
       
       if (response.success) {
         toast({
-          title: "登入成功",
-          description: "歡迎回來！",
+          title: t('auth.loginSuccess'),
+          description: t('auth.welcomeBack'),
         });
-        // 強制更新頁面狀態
+        // Force page refresh to update state
         window.location.reload();
       } else {
         toast({
-          title: "登入失敗",
-          description: response.message || "請檢查您的登入資訊",
+          title: t('auth.loginFailed'),
+          description: response.message || t('auth.checkYourCredentials'),
           variant: "destructive",
         });
       }
     } catch (error: any) {
       toast({
-        title: "登入錯誤",
-        description: error.response?.data?.message || "登入時發生錯誤",
+        title: t('auth.loginError'),
+        description: error.response?.data?.message || t('auth.errorOccurredDuringLogin'),
         variant: "destructive",
       });
     } finally {
@@ -76,23 +78,23 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
     e.preventDefault();
     setIsLoading(true);
 
-    // 驗證密碼
+    // Validate password match
     if (registerForm.password !== registerForm.confirmPassword) {
       toast({
-        title: "密碼不匹配",
-        description: "請確認兩次輸入的密碼相同",
+        title: t('auth.passwordMismatch'),
+        description: t('auth.passwordMismatch'),
         variant: "destructive",
       });
       setIsLoading(false);
       return;
     }
 
-    // 驗證密碼強度
+    // Validate password strength
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
     if (registerForm.password.length < 6) {
       toast({
-        title: "密碼太短",
-        description: "密碼至少需要6個字元",
+        title: t('auth.passwordFormatError'),
+        description: t('auth.passwordTooShort6Chars'),
         variant: "destructive",
       });
       setIsLoading(false);
@@ -101,8 +103,8 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
 
     if (!passwordRegex.test(registerForm.password)) {
       toast({
-        title: "密碼格式錯誤",
-        description: "密碼必須包含大寫字母、小寫字母和數字",
+        title: t('auth.passwordFormatError'),
+        description: t('auth.mustContainUppercaseLowercaseNumber'),
         variant: "destructive",
       });
       setIsLoading(false);
@@ -115,22 +117,22 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
       
       if (response.success) {
         toast({
-          title: "註冊成功",
-          description: "歡迎加入 GEO Master！",
+          title: t('auth.registerSuccess'),
+          description: t('auth.welcomeToGeoMaster'),
         });
-        // 強制更新頁面狀態
+        // Force page refresh to update state
         window.location.reload();
       } else {
         toast({
-          title: "註冊失敗",
-          description: response.message || "註冊時發生錯誤",
+          title: t('auth.registrationFailed'),
+          description: response.message || t('auth.errorOccurredDuringRegistration'),
           variant: "destructive",
         });
       }
     } catch (error: any) {
       toast({
-        title: "註冊錯誤",
-        description: error.response?.data?.message || "註冊時發生錯誤",
+        title: t('auth.registrationError'),
+        description: error.response?.data?.message || t('auth.errorOccurredDuringRegistration'),
         variant: "destructive",
       });
     } finally {
@@ -155,28 +157,28 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center">
-            {activeTab === 'login' ? '登入帳號' : '註冊帳號'}
+            {activeTab === 'login' ? t('auth.loginAccount') : t('auth.registerAccount')}
           </DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">登入</TabsTrigger>
-            <TabsTrigger value="register">註冊</TabsTrigger>
+            <TabsTrigger value="login">{t('auth.login')}</TabsTrigger>
+            <TabsTrigger value="register">{t('auth.register')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
             <Card>
               <CardHeader>
-                <CardTitle>登入您的帳號</CardTitle>
+                <CardTitle>{t('auth.loginToYourAccount')}</CardTitle>
                 <CardDescription>
-                  輸入您的登入資訊以存取完整功能
+                  {t('auth.enterLoginInfoForFullAccess')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">電子郵件</Label>
+                    <Label htmlFor="login-email">{t('auth.email')}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
@@ -191,13 +193,13 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">密碼</Label>
+                    <Label htmlFor="login-password">{t('auth.password')}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="login-password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="請輸入密碼"
+                        placeholder={t('auth.enterPassword')}
                         className="pl-10 pr-10"
                         value={loginForm.password}
                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
@@ -214,7 +216,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    登入
+                    {t('auth.loginButton')}
                   </Button>
                 </form>
               </CardContent>
@@ -224,21 +226,21 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
           <TabsContent value="register">
             <Card>
               <CardHeader>
-                <CardTitle>建立新帳號</CardTitle>
+                <CardTitle>{t('auth.createNewAccount')}</CardTitle>
                 <CardDescription>
-                  註冊以解鎖完整的 GEO 分析功能
+                  {t('auth.registerToUnlockGeoFeatures')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="register-name">姓名</Label>
+                    <Label htmlFor="register-name">{t('auth.name')}</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="register-name"
                         type="text"
-                        placeholder="請輸入您的姓名"
+                        placeholder={t('auth.enterYourName')}
                         className="pl-10"
                         value={registerForm.fullName}
                         onChange={(e) => setRegisterForm({ ...registerForm, fullName: e.target.value })}
@@ -247,7 +249,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-email">電子郵件</Label>
+                    <Label htmlFor="register-email">{t('auth.email')}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
@@ -262,13 +264,13 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-company">公司 (選填)</Label>
+                    <Label htmlFor="register-company">{t('auth.companyOptional')}</Label>
                     <div className="relative">
                       <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="register-company"
                         type="text"
-                        placeholder="您的公司名稱"
+                        placeholder={t('auth.yourCompanyName')}
                         className="pl-10"
                         value={registerForm.company}
                         onChange={(e) => setRegisterForm({ ...registerForm, company: e.target.value })}
@@ -276,13 +278,13 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-password">密碼</Label>
+                    <Label htmlFor="register-password">{t('auth.password')}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="register-password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="請輸入密碼"
+                        placeholder={t('auth.enterPassword')}
                         className="pl-10 pr-10"
                         value={registerForm.password}
                         onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
@@ -298,23 +300,23 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                       </button>
                     </div>
                     <div className="text-xs text-gray-500 space-y-1">
-                      <p>密碼必須包含：</p>
+                      <p>{t('auth.passwordRequirements')}</p>
                       <ul className="ml-2 space-y-0.5">
-                        <li>• 至少一個小寫字母 (a-z)</li>
-                        <li>• 至少一個大寫字母 (A-Z)</li>
-                        <li>• 至少一個數字 (0-9)</li>
-                        <li>• 最少6個字元</li>
+                        <li>• {t('auth.atLeastOneLowercase')}</li>
+                        <li>• {t('auth.atLeastOneUppercase')}</li>
+                        <li>• {t('auth.atLeastOneNumber')}</li>
+                        <li>• {t('auth.minimumSixCharacters')}</li>
                       </ul>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="register-confirm-password">確認密碼</Label>
+                    <Label htmlFor="register-confirm-password">{t('auth.confirmPassword')}</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="register-confirm-password"
                         type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="再次輸入密碼"
+                        placeholder={t('auth.enterPasswordAgain')}
                         className="pl-10 pr-10"
                         value={registerForm.confirmPassword}
                         onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
@@ -331,7 +333,7 @@ export function AuthModal({ isOpen, onClose, defaultTab = 'login', onSuccess }: 
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    註冊帳號
+                    {t('auth.registerAccountButton')}
                   </Button>
                 </form>
               </CardContent>

@@ -37,8 +37,10 @@ import { websiteService, Website } from "@/lib/api/websites";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { useTranslation } from "react-i18next";
 
 const AISearch = () => {
+  const { t } = useTranslation();
   const { isAuthenticated, organization } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -53,20 +55,20 @@ const AISearch = () => {
     
     // If organization is not on free plan, all platforms are available
     if (organization?.plan !== 'free') {
-      return { available: true, hasApiKey, message: `${organization?.plan} 方案` };
+      return { available: true, hasApiKey, message: `${organization?.plan} ${t('aiSearch.platforms.paidPlanNote')}` };
     }
     
     // For free plan users
     if (platform === 'gemini') {
-      return { available: true, hasApiKey, message: '免費' };
+      return { available: true, hasApiKey, message: t('aiSearch.platforms.free') };
     }
     
     // For paid-only platforms on free plan
     if (hasApiKey) {
-      return { available: true, hasApiKey: true, message: '使用您的 API Key' };
+      return { available: true, hasApiKey: true, message: t('aiSearch.platforms.useYourApiKey') };
     }
     
-    return { available: false, hasApiKey: false, message: '需升級或設定 API Key' };
+    return { available: false, hasApiKey: false, message: t('aiSearch.platforms.needUpgradeOrApiKey') };
   };
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
@@ -151,7 +153,7 @@ const AISearch = () => {
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      toast.error('Failed to load tracking data');
+      toast.error(t('aiSearch.messages.loadDataFailed'));
     } finally {
       setLoading(false);
     }
@@ -169,11 +171,11 @@ const AISearch = () => {
       if (response.success) {
         setKeywords([...keywords, response.data]);
         setNewKeyword("");
-        toast.success('Keyword added successfully');
+        toast.success(t('aiSearch.messages.keywordAdded'));
       }
     } catch (error) {
       console.error('Error adding keyword:', error);
-      toast.error('Failed to add keyword');
+      toast.error(t('aiSearch.messages.keywordAddFailed'));
     }
   };
 
@@ -182,11 +184,11 @@ const AISearch = () => {
       const response = await aiSearchService.deleteKeyword(keywordId);
       if (response.success) {
         setKeywords(keywords.filter(k => k.id !== keywordId));
-        toast.success('Keyword removed successfully');
+        toast.success(t('aiSearch.messages.keywordRemoved'));
       }
     } catch (error) {
       console.error('Error removing keyword:', error);
-      toast.error('Failed to remove keyword');
+      toast.error(t('aiSearch.messages.keywordRemoveFailed'));
     }
   };
 
@@ -202,11 +204,11 @@ const AISearch = () => {
       if (response.success) {
         setCompetitors([...competitors, response.data]);
         setNewCompetitor("");
-        toast.success('Competitor added successfully');
+        toast.success(t('aiSearch.messages.competitorAdded'));
       }
     } catch (error) {
       console.error('Error adding competitor:', error);
-      toast.error('Failed to add competitor');
+      toast.error(t('aiSearch.messages.competitorAddFailed'));
     }
   };
 
@@ -215,11 +217,11 @@ const AISearch = () => {
       const response = await aiSearchService.removeCompetitor(competitorId);
       if (response.success) {
         setCompetitors(competitors.filter(c => c.id !== competitorId));
-        toast.success('Competitor removed successfully');
+        toast.success(t('aiSearch.messages.competitorRemoved'));
       }
     } catch (error) {
       console.error('Error removing competitor:', error);
-      toast.error('Failed to remove competitor');
+      toast.error(t('aiSearch.messages.competitorRemoveFailed'));
     }
   };
 
@@ -240,7 +242,7 @@ const AISearch = () => {
       
       if (response.success) {
         setTrackingSettings(response.data);
-        toast.success('Tracking settings updated');
+        toast.success(t('aiSearch.messages.trackingSettingsUpdated'));
       }
     } catch (error: any) {
       console.error('Error updating tracking settings:', error);
@@ -253,7 +255,7 @@ const AISearch = () => {
             duration: 6000,
           });
         } else {
-          toast.error('權限不足：無法更新追蹤設定。請確認您有足夠的權限或聯絡管理員。');
+          toast.error(t('aiSearch.messages.insufficientPermissions'));
         }
         console.log('403 錯誤詳情:', {
           status: error.response?.status,
@@ -266,10 +268,10 @@ const AISearch = () => {
           enabledPlatforms: Object.entries(selectedPlatforms).filter(([_, enabled]) => enabled).length
         });
       } else if (error.response?.status === 401) {
-        toast.error('認證失效，請重新登入');
+        toast.error(t('aiSearch.messages.authRequired'));
         setShowAuthModal(true);
       } else {
-        toast.error(error.response?.data?.message || '更新追蹤設定失敗，請稍後再試');
+        toast.error(error.response?.data?.message || t('aiSearch.messages.trackingSettingsUpdateFailed'));
       }
     }
   };
@@ -324,27 +326,27 @@ const AISearch = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">AI 可見度追蹤</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t('aiSearch.title')}</h1>
             <p className="text-muted-foreground">
-              監控您的品牌在 AI 平台上的可見度表現
-              {!isAuthenticated && <span className="ml-2 text-amber-600">• 需要登入查看完整報告</span>}
+              {t('aiSearch.description')}
+              {!isAuthenticated && <span className="ml-2 text-amber-600">• {t('aiSearch.loginRequired')}</span>}
             </p>
           </div>
-          <Button 
-            className="bg-primary text-primary-foreground" 
+          <Button
+            className="bg-primary text-primary-foreground"
             disabled={!isAuthenticated}
             onClick={isAuthenticated ? undefined : () => setShowAuthModal(true)}
           >
             <Settings className="mr-2 h-4 w-4" />
-            追蹤設定
+            {t('aiSearch.trackingSettings')}
           </Button>
         </div>
 
         <Tabs defaultValue="setup" className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="setup">追蹤設定</TabsTrigger>
-            <TabsTrigger value="overview">可見度報告</TabsTrigger>
-            <TabsTrigger value="analysis">競爭分析</TabsTrigger>
+            <TabsTrigger value="setup">{t('aiSearch.tabs.setup')}</TabsTrigger>
+            <TabsTrigger value="overview">{t('aiSearch.tabs.overview')}</TabsTrigger>
+            <TabsTrigger value="analysis">{t('aiSearch.tabs.analysis')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="setup" className="space-y-6">
@@ -361,12 +363,12 @@ const AISearch = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能設定AI追蹤</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可設定品牌關鍵字、競爭對手和追蹤頻率</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('aiSearch.overview.loginRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('aiSearch.overview.loginRequiredDesc')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('aiSearch.actions.login')}
                     </Button>
                   </div>
                 </div>
@@ -374,13 +376,13 @@ const AISearch = () => {
             ) : (
               <Card className="bg-gradient-card border-border">
                 <CardHeader>
-                  <CardTitle>關鍵字追蹤設定</CardTitle>
-                  <CardDescription>設定您要追蹤的品牌、產業關鍵字和競爭對手</CardDescription>
+                  <CardTitle>{t('aiSearch.setup.title')}</CardTitle>
+                  <CardDescription>{t('aiSearch.setup.description')}</CardDescription>
                 </CardHeader>
               <CardContent className="space-y-6">
                 {/* 品牌關鍵字 */}
                 <div className="space-y-3">
-                  <h4 className="font-medium">品牌關鍵字：</h4>
+                  <h4 className="font-medium">{t('aiSearch.setup.brandKeywords')}</h4>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {getBrandKeywords().map((keyword) => (
                       <Badge key={keyword.id} variant="default" className="flex items-center gap-2">
@@ -398,7 +400,7 @@ const AISearch = () => {
                   </div>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="新增品牌關鍵字"
+                      placeholder={t('aiSearch.setup.brandKeywordPlaceholder')}
                       value={newKeyword}
                       onChange={(e) => setNewKeyword(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addKeyword('commercial')}
@@ -411,7 +413,7 @@ const AISearch = () => {
 
                 {/* 產業關鍵字 */}
                 <div className="space-y-3">
-                  <h4 className="font-medium">產業關鍵字：</h4>
+                  <h4 className="font-medium">{t('aiSearch.setup.industryKeywords')}</h4>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {getIndustryKeywords().map((keyword) => (
                       <Badge key={keyword.id} variant="secondary" className="flex items-center gap-2">
@@ -429,7 +431,7 @@ const AISearch = () => {
                   </div>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="新增產業關鍵字"
+                      placeholder={t('aiSearch.setup.industryKeywordPlaceholder')}
                       value={newKeyword}
                       onChange={(e) => setNewKeyword(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addKeyword('informational')}
@@ -442,7 +444,7 @@ const AISearch = () => {
 
                 {/* 競爭對手 */}
                 <div className="space-y-3">
-                  <h4 className="font-medium">競爭對手：</h4>
+                  <h4 className="font-medium">{t('aiSearch.setup.competitors')}</h4>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {competitors.map((competitor) => (
                       <Badge key={competitor.id} variant="outline" className="flex items-center gap-2">
@@ -460,7 +462,7 @@ const AISearch = () => {
                   </div>
                   <div className="flex gap-2">
                     <Input
-                      placeholder="新增競爭對手 (URL)"
+                      placeholder={t('aiSearch.setup.competitorPlaceholder')}
                       value={newCompetitor}
                       onChange={(e) => setNewCompetitor(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addCompetitor()}
@@ -474,7 +476,7 @@ const AISearch = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border">
                   {/* 追蹤頻率 */}
                   <div className="space-y-3">
-                    <h4 className="font-medium">追蹤頻率：</h4>
+                    <h4 className="font-medium">{t('aiSearch.setup.trackingFrequency')}</h4>
                     <Select 
                       defaultValue={trackingSettings?.trackingFrequency || "daily"}
                       onValueChange={(value) => updateTrackingSettings(value)}
@@ -483,9 +485,9 @@ const AISearch = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="daily">每日</SelectItem>
-                        <SelectItem value="weekly">每週</SelectItem>
-                        <SelectItem value="hourly">每小時</SelectItem>
+                        <SelectItem value="daily">{t('aiSearch.frequency.daily')}</SelectItem>
+                        <SelectItem value="weekly">{t('aiSearch.frequency.weekly')}</SelectItem>
+                        <SelectItem value="hourly">{t('aiSearch.frequency.hourly')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -493,15 +495,15 @@ const AISearch = () => {
                   {/* AI 平台 */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium">AI 平台：</h4>
+                      <h4 className="font-medium">{t('aiSearch.setup.aiPlatforms')}</h4>
                       {organization?.plan === 'free' && (
                         <div className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-200">
-                          免費方案：設定 API Key 可使用所有平台
+                          {t('aiSearch.platforms.freePlanNote')}
                         </div>
                       )}
                       {organization?.plan && organization.plan !== 'free' && (
                         <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full border border-green-200">
-                          {organization.plan} 方案：無限制
+                          {organization.plan} {t('aiSearch.platforms.paidPlanNote')}
                         </div>
                       )}
                     </div>
@@ -514,14 +516,14 @@ const AISearch = () => {
                           onCheckedChange={(checked) => {
                             const platformStatus = isPlatformAvailable('chatgpt');
                             if (!platformStatus.available) {
-                              toast.error('ChatGPT 需要升級方案或設定您的 API Key。');
+                              toast.error(t('aiSearch.messages.chatgptRequiresUpgrade'));
                               return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, chatgpt: checked as boolean});
                           }}
                         />
                         <label htmlFor="chatgpt" className={`text-sm ${!isPlatformAvailable('chatgpt').available ? 'text-gray-400' : ''}`}>
-                          ChatGPT
+                          {t('aiSearch.platforms.chatgpt')}
                           <span className="ml-2 text-xs text-amber-600">({isPlatformAvailable('chatgpt').message})</span>
                         </label>
                       </div>
@@ -534,8 +536,8 @@ const AISearch = () => {
                           }}
                         />
                         <label htmlFor="gemini" className="text-sm">
-                          Gemini
-                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-green-600">(免費)</span>}
+                          {t('aiSearch.platforms.gemini')}
+                          {organization?.plan === 'free' && <span className="ml-2 text-xs text-green-600">({t('aiSearch.platforms.free')})</span>}
                         </label>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -546,14 +548,14 @@ const AISearch = () => {
                           onCheckedChange={(checked) => {
                             const platformStatus = isPlatformAvailable('perplexity');
                             if (!platformStatus.available) {
-                              toast.error('Perplexity 需要升級方案或設定您的 API Key。');
+                              toast.error(t('aiSearch.messages.perplexityRequiresUpgrade'));
                               return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, perplexity: checked as boolean});
                           }}
                         />
                         <label htmlFor="perplexity" className={`text-sm ${!isPlatformAvailable('perplexity').available ? 'text-gray-400' : ''}`}>
-                          Perplexity
+                          {t('aiSearch.platforms.perplexity')}
                           <span className="ml-2 text-xs text-amber-600">({isPlatformAvailable('perplexity').message})</span>
                         </label>
                       </div>
@@ -565,14 +567,14 @@ const AISearch = () => {
                           onCheckedChange={(checked) => {
                             const platformStatus = isPlatformAvailable('claude');
                             if (!platformStatus.available) {
-                              toast.error('Claude 需要升級方案或設定您的 API Key。');
+                              toast.error(t('aiSearch.messages.claudeRequiresUpgrade'));
                               return;
                             }
                             setSelectedPlatforms({...selectedPlatforms, claude: checked as boolean});
                           }}
                         />
                         <label htmlFor="claude" className={`text-sm ${!isPlatformAvailable('claude').available ? 'text-gray-400' : ''}`}>
-                          Claude
+                          {t('aiSearch.platforms.claude')}
                           <span className="ml-2 text-xs text-amber-600">({isPlatformAvailable('claude').message})</span>
                         </label>
                       </div>
@@ -595,7 +597,7 @@ const AISearch = () => {
                         .map(([platform]) => platform);
                       
                       if (enabledPlatforms.length === 0) {
-                        toast.error('請至少選擇一個AI平台');
+                        toast.error(t('aiSearch.messages.pleaseSelectPlatform'));
                         return;
                       }
                       
@@ -614,12 +616,12 @@ const AISearch = () => {
                             default: return p;
                           }
                         }).join(', ');
-                        toast.error(`${platformNames} 需要升級方案或設定 API Key 才能使用`);
+                        toast.error(t('aiSearch.messages.platformRequiresUpgrade', { platforms: platformNames }));
                         return;
                       }
                       
                       if (keywords.length === 0) {
-                        toast.error('請至少新增一個關鍵字');
+                        toast.error(t('aiSearch.messages.pleaseAddKeyword'));
                         return;
                       }
                       
@@ -632,17 +634,17 @@ const AISearch = () => {
                       
                       if (response.success) {
                         setTrackingSettings(response.data);
-                        toast.success(`成功啟動AI可見度追蹤！追蹤 ${keywords.length} 個關鍵字，${enabledPlatforms.length} 個平台`);
+                        toast.success(t('aiSearch.messages.trackingStarted', { keywords: keywords.length, platforms: enabledPlatforms.length }));
                       }
                     } catch (error: any) {
                       console.error('啟動追蹤失敗:', error);
-                      toast.error(error.response?.data?.message || error.message || '啟動追蹤失敗，請稍後重試');
+                      toast.error(error.response?.data?.message || error.message || t('aiSearch.messages.trackingStartFailed'));
                     }
                   }}
                   disabled={!isAuthenticated || keywords.length === 0}
                 >
                   <Eye className="mr-2 h-4 w-4" />
-                  開始追蹤
+                  {t('aiSearch.actions.startTracking')}
                 </Button>
               </CardContent>
             </Card>
@@ -653,23 +655,21 @@ const AISearch = () => {
             {(loading || trendsLoading || statsLoading || platformLoading) ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2 text-sm text-muted-foreground">載入可見度數據中...</span>
+                <span className="ml-2 text-sm text-muted-foreground">{t('aiSearch.overview.loadingData')}</span>
               </div>
             ) : trendsError ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <div className="text-lg font-medium text-orange-500 mb-2">可見度數據收集中</div>
+                  <div className="text-lg font-medium text-orange-500 mb-2">{t('aiSearch.overview.dataCollecting')}</div>
                   <p className="text-sm text-muted-foreground mb-4">
-                    由於這是新添加的網站，系統正在收集AI平台的可見度數據。
-                    <br />
-                    通常需要24-48小時才能看到完整報告。
+                    {t('aiSearch.overview.dataCollectingDesc')}
                   </p>
                   <div className="space-y-2">
                     <Button onClick={() => window.location.reload()} variant="outline">
-                      重新檢查
+                      {t('aiSearch.overview.recheckData')}
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                      如果問題持續，請確保已正確配置追蹤設定並啟動AI可見度追蹤
+                      {t('aiSearch.overview.troubleshootNote')}
                     </p>
                   </div>
                 </div>
@@ -683,15 +683,15 @@ const AISearch = () => {
                       <Clock className="h-6 w-6 text-orange-500" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">尚未設定追蹤網站</p>
-                  <p className="text-sm text-muted-foreground mb-6">需要先添加網站才能查看可見度報告</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('aiSearch.overview.noWebsiteSetup')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('aiSearch.overview.needAddWebsite')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAddWebsite(true)} className="bg-primary text-primary-foreground">
                       <Plus className="mr-2 h-4 w-4" />
-                      添加網站
+                      {t('aiSearch.overview.addWebsite')}
                     </Button>
                     <p className="text-xs text-muted-foreground">
-                      添加網站後系統將開始收集可見度數據
+                      {t('aiSearch.overview.addWebsiteNote')}
                     </p>
                   </div>
                 </div>
@@ -700,31 +700,31 @@ const AISearch = () => {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>新增網站</CardTitle>
-                    <CardDescription>添加要追蹤AI可見度的網站</CardDescription>
+                    <CardTitle>{t('aiSearch.website.title')}</CardTitle>
+                    <CardDescription>{t('aiSearch.website.description')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">網站URL</label>
+                      <label className="text-sm font-medium">{t('aiSearch.website.urlLabel')}</label>
                       <Input
                         value={newWebsiteUrl}
                         onChange={(e) => setNewWebsiteUrl(e.target.value)}
-                        placeholder="https://example.com"
+                        placeholder={t('aiSearch.website.urlPlaceholder')}
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">網站名稱</label>
+                      <label className="text-sm font-medium">{t('aiSearch.website.nameLabel')}</label>
                       <Input
                         value={newWebsiteName}
                         onChange={(e) => setNewWebsiteName(e.target.value)}
-                        placeholder="我的網站"
+                        placeholder={t('aiSearch.website.namePlaceholder')}
                       />
                     </div>
                     <div className="flex gap-2">
                       <Button
                         onClick={async () => {
                           if (!newWebsiteUrl) {
-                            toast.error("請輸入網站URL");
+                            toast.error(t('aiSearch.messages.pleaseEnterUrl'));
                             return;
                           }
                           
@@ -736,14 +736,14 @@ const AISearch = () => {
                             });
                             
                             if (response.success) {
-                              toast.success("成功添加網站");
+                              toast.success(t('aiSearch.messages.websiteAdded'));
                               setWebsites([...websites, response.data.website]);
                               setSelectedWebsiteId(response.data.website.id);
                               setShowAddWebsite(false);
                               setNewWebsiteUrl("");
                               setNewWebsiteName("");
                             } else {
-                              toast.error(response.error || "添加網站失敗");
+                              toast.error(response.error || t('aiSearch.messages.websiteAddFailed'));
                             }
                           } catch (error: any) {
                             console.error("創建網站錯誤:", error);
@@ -781,7 +781,7 @@ const AISearch = () => {
                         }}
                         className="bg-primary text-primary-foreground"
                       >
-                        確認添加
+                        {t('aiSearch.website.confirmAdd')}
                       </Button>
                       <Button
                         variant="outline"
@@ -791,7 +791,7 @@ const AISearch = () => {
                           setNewWebsiteName("");
                         }}
                       >
-                        取消
+                        {t('aiSearch.website.cancel')}
                       </Button>
                     </div>
                   </CardContent>
@@ -806,12 +806,12 @@ const AISearch = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看可見度報告</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看品牌提及率、引用位置和情感分析報告</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('aiSearch.overview.loginRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('aiSearch.overview.loginRequiredDesc')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('aiSearch.actions.login')}
                     </Button>
                   </div>
                 </div>
@@ -822,7 +822,7 @@ const AISearch = () => {
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium">網站:</label>
+                      <label className="text-sm font-medium">{t('aiSearch.overview.website')}</label>
                       <Select value={selectedWebsiteId || ''} onValueChange={(value) => {
                         if (value === 'add-new') {
                           setShowAddWebsite(true);
@@ -831,7 +831,7 @@ const AISearch = () => {
                         }
                       }}>
                         <SelectTrigger className="w-48">
-                          <SelectValue placeholder="選擇網站" />
+                          <SelectValue placeholder={t('aiSearch.overview.selectWebsite')} />
                         </SelectTrigger>
                         <SelectContent>
                           {websites.map((website) => (
@@ -841,22 +841,22 @@ const AISearch = () => {
                           ))}
                           <SelectItem value="add-new">
                             <Plus className="mr-2 h-4 w-4 inline" />
-                            新增網站
+                            {t('aiSearch.overview.addNewWebsite')}
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="flex items-center gap-2">
-                      <label className="text-sm font-medium">時間範圍:</label>
+                      <label className="text-sm font-medium">{t('aiSearch.overview.timeRange')}</label>
                       <Select value={visibilityDateRange} onValueChange={setVisibilityDateRange}>
                         <SelectTrigger className="w-32">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="7d">過去 7 天</SelectItem>
-                          <SelectItem value="30d">過去 30 天</SelectItem>
-                          <SelectItem value="90d">過去 90 天</SelectItem>
-                          <SelectItem value="12m">過去 12 月</SelectItem>
+                          <SelectItem value="7d">{t('aiSearch.timeRanges.7d')}</SelectItem>
+                          <SelectItem value="30d">{t('aiSearch.timeRanges.30d')}</SelectItem>
+                          <SelectItem value="90d">{t('aiSearch.timeRanges.90d')}</SelectItem>
+                          <SelectItem value="12m">{t('aiSearch.timeRanges.12m')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -864,11 +864,11 @@ const AISearch = () => {
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => loadData()}>
                       <Clock className="h-4 w-4 mr-2" />
-                      重新載入
+                      {t('aiSearch.overview.reload')}
                     </Button>
                     <Button variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-2" />
-                      匯出報告
+                      {t('aiSearch.overview.exportReport')}
                     </Button>
                   </div>
                 </div>
@@ -878,7 +878,7 @@ const AISearch = () => {
                 <div className="grid gap-4 md:grid-cols-3 mb-6">
                   <Card className="bg-gradient-card border-border">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">品牌提及率</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t('aiSearch.metrics.brandMentionRate')}</CardTitle>
                       <MessageSquare className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -903,12 +903,12 @@ const AISearch = () => {
 
                   <Card className="bg-gradient-card border-border">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">引用位置</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t('aiSearch.metrics.citationPosition')}</CardTitle>
                       <Target className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        平均第 {visibilityStats?.data?.averagePosition?.value || 0} 位
+                        {t('aiSearch.metrics.averagePosition', { position: visibilityStats?.data?.averagePosition?.value || 0 })}
                       </div>
                       <div className={`flex items-center space-x-1 text-xs ${
                         (visibilityStats?.data?.averagePosition?.change || 0) <= 0 ? 'text-green-600' : 'text-red-600'
@@ -919,7 +919,7 @@ const AISearch = () => {
                           <TrendingDown className="h-3 w-3" />
                         )}
                         <span>
-                          {(visibilityStats?.data.averagePosition?.change || 0) <= 0 ? '提升' : '下降'} 
+                          {(visibilityStats?.data.averagePosition?.change || 0) <= 0 ? t('aiSearch.metrics.improved') : t('aiSearch.metrics.declined')}
                           {Math.abs(visibilityStats?.data.averagePosition?.change || 0)} 位
                         </span>
                       </div>
@@ -928,12 +928,12 @@ const AISearch = () => {
 
                   <Card className="bg-gradient-card border-border">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">情感分析</CardTitle>
+                      <CardTitle className="text-sm font-medium">{t('aiSearch.metrics.sentimentAnalysis')}</CardTitle>
                       <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {visibilityStats?.data?.sentimentScore?.value || 0}% 正面
+                        {visibilityStats?.data?.sentimentScore?.value || 0}% {t('aiSearch.metrics.positive')}
                       </div>
                       <div className={`flex items-center space-x-1 text-xs ${
                         (visibilityStats?.data?.sentimentScore?.change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
@@ -957,8 +957,8 @@ const AISearch = () => {
                   <div className="mb-6">
                     <VisibilityTrendsChart 
                       data={visibilityTrends.data.trends}
-                      title="可見度趨勢分析"
-                      description="各 AI 平台的可見度變化趨勢"
+                      title={t('aiSearch.charts.visibilityTrends')}
+                      description={t('aiSearch.charts.visibilityTrendsDesc')}
                       chartType="line"
                     />
                   </div>
@@ -966,14 +966,14 @@ const AISearch = () => {
                   <div className="mb-6">
                     <Card className="bg-gradient-card border-border">
                       <CardHeader>
-                        <CardTitle>可見度趨勢分析</CardTitle>
-                        <CardDescription>各 AI 平台的可見度變化趨勢</CardDescription>
+                        <CardTitle>{t('aiSearch.charts.visibilityTrends')}</CardTitle>
+                        <CardDescription>{t('aiSearch.charts.visibilityTrendsDesc')}</CardDescription>
                       </CardHeader>
                       <CardContent className="text-center py-8">
                         <Clock className="h-8 w-8 mx-auto mb-4 text-gray-400" />
-                        <p className="text-muted-foreground mb-2">數據收集中...</p>
+                        <p className="text-muted-foreground mb-2">{t('aiSearch.charts.dataCollecting')}</p>
                         <p className="text-sm text-muted-foreground">
-                          系統正在收集可見度數據，通常需要24-48小時才會有初始數據
+                          {t('aiSearch.charts.dataCollectingNote')}
                         </p>
                       </CardContent>
                     </Card>
@@ -990,8 +990,8 @@ const AISearch = () => {
                         percentage: platform.mentionRate,
                         change: platform.change
                       }))}
-                      title="平台分佈分析"
-                      description="各 AI 平台的提及率和表現分佈"
+                      title={t('aiSearch.charts.platformDistribution')}
+                      description={t('aiSearch.charts.platformDistributionDesc')}
                     />
                   </div>
                 )}
@@ -1000,8 +1000,8 @@ const AISearch = () => {
                 {platformPerformance?.data.platforms && (
                   <Card className="bg-gradient-card border-border">
                     <CardHeader>
-                      <CardTitle>平台細分表現</CardTitle>
-                      <CardDescription>各 AI 平台的詳細表現數據</CardDescription>
+                      <CardTitle>{t('aiSearch.charts.platformPerformance')}</CardTitle>
+                      <CardDescription>{t('aiSearch.charts.platformPerformanceDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -1024,7 +1024,7 @@ const AISearch = () => {
                                 <Badge variant="secondary">#{platform.position}</Badge>
                               </div>
                               <div className="text-2xl font-bold mb-1">{platform.mentionRate}%</div>
-                              <div className="text-xs text-muted-foreground mb-2">提及率</div>
+                              <div className="text-xs text-muted-foreground mb-2">{t('aiSearch.charts.mentionRate')}</div>
                               <Progress value={platform.mentionRate} className="h-2" />
                               <div className={`flex items-center space-x-1 text-xs mt-2 ${
                                 platform.change >= 0 ? 'text-green-600' : 'text-red-600'
@@ -1050,11 +1050,11 @@ const AISearch = () => {
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle>競爭對手概覽</CardTitle>
-                          <CardDescription>追蹤中的競爭對手及其狀態</CardDescription>
+                          <CardTitle>{t('aiSearch.competitors.overview')}</CardTitle>
+                          <CardDescription>{t('aiSearch.competitors.overviewDesc')}</CardDescription>
                         </div>
                         <Badge variant="outline">
-                          {competitorsList.data.competitors.length} 個競爭對手
+                          {t('aiSearch.competitors.count', { count: competitorsList.data.competitors.length })}
                         </Badge>
                       </div>
                     </CardHeader>
@@ -1074,7 +1074,7 @@ const AISearch = () => {
                               </div>
                             </div>
                             <Badge variant={competitor.isActive ? "default" : "secondary"} className="text-xs">
-                              {competitor.isActive ? "追蹤中" : "暫停"}
+                              {competitor.isActive ? t('aiSearch.competitors.tracking') : t('aiSearch.competitors.paused')}
                             </Badge>
                           </div>
                         ))}
@@ -1086,7 +1086,7 @@ const AISearch = () => {
                             const analysisTab = document.querySelector('[value="analysis"]') as HTMLElement;
                             if (analysisTab) analysisTab.click();
                           }}>
-                            查看全部 {competitorsList.data.competitors.length} 個競爭對手
+                            {t('aiSearch.competitors.viewAll', { count: competitorsList.data.competitors.length })}
                           </Button>
                         </div>
                       )}
@@ -1101,7 +1101,7 @@ const AISearch = () => {
             {(loading || competitiveLoading) ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
-                <span className="ml-2 text-sm text-muted-foreground">載入競爭分析數據中...</span>
+                <span className="ml-2 text-sm text-muted-foreground">{t('aiSearch.analysis.loadingData')}</span>
               </div>
             ) : !isAuthenticated ? (
               <div className="flex items-center justify-center py-12">
@@ -1112,12 +1112,12 @@ const AISearch = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看競爭分析</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可分析您與競爭對手的表現比較和市場洞察</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('aiSearch.analysis.loginRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('aiSearch.analysis.loginRequiredDesc')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('aiSearch.actions.login')}
                     </Button>
                   </div>
                 </div>
@@ -1129,22 +1129,22 @@ const AISearch = () => {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle>競爭對手管理</CardTitle>
-                        <CardDescription>新增、移除和管理您的競爭對手</CardDescription>
+                        <CardTitle>{t('aiSearch.competitors.management')}</CardTitle>
+                        <CardDescription>{t('aiSearch.competitors.managementDesc')}</CardDescription>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => setShowAddCompetitor(true)}>
                         <Plus className="h-4 w-4 mr-2" />
-                        新增競爭對手
+                        {t('aiSearch.competitors.addCompetitor')}
                       </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
                     {showAddCompetitor ? (
                       <div className="space-y-4 p-4 border border-border rounded-lg mb-4">
-                        <h4 className="font-medium">新增競爭對手</h4>
+                        <h4 className="font-medium">{t('aiSearch.competitors.addCompetitor')}</h4>
                         <div className="space-y-3">
                           <div>
-                            <label className="text-sm font-medium">競爭對手網站URL</label>
+                            <label className="text-sm font-medium">{t('aiSearch.competitors.urlLabel')}</label>
                             <Input
                               value={newCompetitorUrl}
                               onChange={(e) => setNewCompetitorUrl(e.target.value)}
@@ -1152,18 +1152,18 @@ const AISearch = () => {
                             />
                           </div>
                           <div>
-                            <label className="text-sm font-medium">競爭對手名稱（可選）</label>
+                            <label className="text-sm font-medium">{t('aiSearch.competitors.nameLabel')}</label>
                             <Input
                               value={newCompetitorName}
                               onChange={(e) => setNewCompetitorName(e.target.value)}
-                              placeholder="競爭對手名稱"
+                              placeholder={t('aiSearch.competitors.namePlaceholder')}
                             />
                           </div>
                           <div className="flex gap-2">
                             <Button
                               onClick={async () => {
                                 if (!newCompetitorUrl.trim()) {
-                                  toast.error("請輸入競爭對手網站URL");
+                                  toast.error(t('aiSearch.messages.competitorUrlRequired'));
                                   return;
                                 }
                                 
@@ -1192,10 +1192,10 @@ const AISearch = () => {
                               {addCompetitorMutation.isPending ? (
                                 <>
                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  添加中...
+                                  {t('aiSearch.competitors.adding')}
                                 </>
                               ) : (
-                                "確認添加"
+                                t('aiSearch.website.confirmAdd')
                               )}
                             </Button>
                             <Button
@@ -1206,7 +1206,7 @@ const AISearch = () => {
                                 setNewCompetitorName("");
                               }}
                             >
-                              取消
+                              {t('aiSearch.website.cancel')}
                             </Button>
                           </div>
                         </div>
@@ -1229,7 +1229,7 @@ const AISearch = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant={competitor.isActive ? "default" : "secondary"}>
-                              {competitor.isActive ? "活躍" : "暫停"}
+                              {competitor.isActive ? t('aiSearch.competitors.tracking') : t('aiSearch.competitors.paused')}
                             </Badge>
                             <Button variant="ghost" size="sm">
                               <X className="h-4 w-4" />
@@ -1239,8 +1239,8 @@ const AISearch = () => {
                       )) || (
                         <div className="text-center py-8 text-muted-foreground">
                           <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>尚未新增任何競爭對手</p>
-                          <p className="text-sm">新增競爭對手以開始分析</p>
+                          <p>{t('aiSearch.competitors.noCompetitors')}</p>
+                          <p className="text-sm">{t('aiSearch.competitors.noCompetitorsNote')}</p>
                         </div>
                       )}
                     </div>
@@ -1267,8 +1267,8 @@ const AISearch = () => {
                       },
                       ...competitiveAnalysis.data.analysis.competitors
                     ]}
-                    title="競爭對手表現比較"
-                    description="您與競爭對手的 GEO 分數和各項指標對比"
+                    title={t('aiSearch.analysis.competitorPerformanceComparison')}
+                    description={t('aiSearch.analysis.competitorPerformanceDesc')}
                   />
                 )}
 
@@ -1276,21 +1276,19 @@ const AISearch = () => {
                 {!competitiveLoading && !competitiveAnalysis?.data?.analysis && competitorsList?.data?.competitors?.length > 0 && (
                   <Card className="bg-gradient-card border-border">
                     <CardHeader>
-                      <CardTitle>競爭分析數據收集中</CardTitle>
-                      <CardDescription>系統正在分析您與競爭對手的表現數據</CardDescription>
+                      <CardTitle>{t('aiSearch.analysis.dataAnalyzing')}</CardTitle>
+                      <CardDescription>{t('aiSearch.analysis.collectingDataDesc')}</CardDescription>
                     </CardHeader>
                     <CardContent className="text-center py-8">
                       <div className="flex flex-col items-center space-y-4">
                         <Clock className="h-12 w-12 text-orange-500" />
                         <div>
-                          <p className="text-lg font-medium text-muted-foreground mb-2">數據分析中</p>
+                          <p className="text-lg font-medium text-muted-foreground mb-2">{t('aiSearch.analysis.analysisInProgress')}</p>
                           <p className="text-sm text-muted-foreground mb-4">
-                            我們正在收集並分析您與 {competitorsList.data.competitors.length} 個競爭對手的表現數據。
-                            <br />
-                            這個過程通常需要 24-48 小時完成。
+                            {t('aiSearch.analysis.analysisProgressDesc', { count: competitorsList.data.competitors.length })}
                           </p>
                           <Button variant="outline" onClick={() => window.location.reload()}>
-                            重新檢查
+                            {t('aiSearch.analysis.recheckAnalysis')}
                           </Button>
                         </div>
                       </div>
@@ -1302,8 +1300,8 @@ const AISearch = () => {
                 {competitiveAnalysis?.data.analysis && (
                   <Card className="bg-gradient-card border-border">
                     <CardHeader>
-                      <CardTitle>市場份額分析</CardTitle>
-                      <CardDescription>各品牌在 AI 平台上的市場佔有率</CardDescription>
+                      <CardTitle>{t('aiSearch.marketShare.title')}</CardTitle>
+                      <CardDescription>{t('aiSearch.marketShare.description')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -1311,7 +1309,7 @@ const AISearch = () => {
                           <div className="text-2xl font-bold text-primary mb-1">
                             {competitiveAnalysis.data.analysis.yourBrand.marketShare}%
                           </div>
-                          <div className="text-sm font-medium mb-1">您的品牌</div>
+                          <div className="text-sm font-medium mb-1">{t('aiSearch.marketShare.yourBrand')}</div>
                           <Progress value={competitiveAnalysis.data.analysis.yourBrand.marketShare} className="h-2" />
                         </div>
 
@@ -1331,8 +1329,8 @@ const AISearch = () => {
                 {competitiveAnalysis?.data.insights && competitiveAnalysis.data.insights.length > 0 && (
                   <Card className="bg-gradient-card border-border">
                     <CardHeader>
-                      <CardTitle>競爭洞察</CardTitle>
-                      <CardDescription>基於數據分析的競爭情報和建議</CardDescription>
+                      <CardTitle>{t('aiSearch.insights.title')}</CardTitle>
+                      <CardDescription>{t('aiSearch.insights.description')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
@@ -1351,15 +1349,15 @@ const AISearch = () => {
                                 <div className="flex items-center gap-2 mb-1">
                                   <h5 className="font-medium">{insight.title}</h5>
                                   <Badge variant="outline" className="text-xs">
-                                    {insight.impact === 'high' ? '高影響' : insight.impact === 'medium' ? '中影響' : '低影響'}
+                                    {insight.impact === 'high' ? t('aiSearch.insights.highImpact') : insight.impact === 'medium' ? t('aiSearch.insights.mediumImpact') : t('aiSearch.insights.lowImpact')}
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground mb-2">{insight.description}</p>
                                 {insight.competitor && (
-                                  <p className="text-xs text-muted-foreground">相關競爭對手: {insight.competitor}</p>
+                                  <p className="text-xs text-muted-foreground">{t('aiSearch.insights.relatedCompetitor', { competitor: insight.competitor })}</p>
                                 )}
                                 <div className="mt-2">
-                                  <p className="text-sm font-medium text-primary">建議行動:</p>
+                                  <p className="text-sm font-medium text-primary">{t('aiSearch.insights.recommendedAction')}</p>
                                   <p className="text-sm">{insight.recommendedAction}</p>
                                 </div>
                               </div>
@@ -1375,8 +1373,8 @@ const AISearch = () => {
                 {competitiveAnalysis?.data.gapAnalysis && competitiveAnalysis.data.gapAnalysis.length > 0 && (
                   <Card className="bg-gradient-card border-border">
                     <CardHeader>
-                      <CardTitle>差距分析</CardTitle>
-                      <CardDescription>識別與競爭對手的差距和改善機會</CardDescription>
+                      <CardTitle>{t('aiSearch.gapAnalysis.title')}</CardTitle>
+                      <CardDescription>{t('aiSearch.gapAnalysis.description')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-4">
@@ -1386,10 +1384,10 @@ const AISearch = () => {
                               <h5 className="font-medium">{gap.category}</h5>
                               <div className="text-right">
                                 <div className="text-sm">
-                                  您: {gap.yourScore} vs 平均: {gap.competitorAverage}
+                                  {t('aiSearch.gapAnalysis.yourScore', { score: gap.yourScore })} vs {t('aiSearch.gapAnalysis.averageScore', { average: gap.competitorAverage })}
                                 </div>
                                 <div className={`text-xs ${gap.gap >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                  差距: {gap.gap > 0 ? '+' : ''}{gap.gap}
+                                  {t('aiSearch.gapAnalysis.gap', { gap: gap.gap > 0 ? '+' + gap.gap : gap.gap })}
                                 </div>
                               </div>
                             </div>
@@ -1398,7 +1396,7 @@ const AISearch = () => {
                               <Progress value={gap.competitorAverage} className="h-2" />
                             </div>
                             <div className="space-y-1">
-                              <p className="text-sm font-medium">改善建議:</p>
+                              <p className="text-sm font-medium">{t('aiSearch.gapAnalysis.improvementSuggestions')}</p>
                               {gap.recommendations.map((rec, recIndex) => (
                                 <p key={recIndex} className="text-sm text-muted-foreground">• {rec}</p>
                               ))}

@@ -33,8 +33,8 @@ router.post('/pages',
     body: Joi.object({
       title: Joi.string().required(),
       url: Joi.string().uri().required(),
-      type: Joi.string().valid('產品頁', '部落格', 'FAQ', '服務頁', '其他').default('其他'),
-      traffic: Joi.string().valid('高', '中', '低').default('中')
+      type: Joi.string().valid('product', 'blog', 'FAQ', 'service', 'other').default('other'),
+      traffic: Joi.string().valid('high', 'medium', 'low').default('medium')
     })
   }),
   contentController.addPage
@@ -48,8 +48,8 @@ router.put('/pages/:pageId',
     body: Joi.object({
       title: Joi.string().optional(),
       url: Joi.string().uri().optional(),
-      type: Joi.string().valid('產品頁', '部落格', 'FAQ', '服務頁', '其他').optional(),
-      traffic: Joi.string().valid('高', '中', '低').optional()
+      type: Joi.string().valid('product', 'blog', 'FAQ', 'service', 'other').optional(),
+      traffic: Joi.string().valid('high', 'medium', 'low').optional()
     })
   }),
   contentController.updatePage

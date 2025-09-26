@@ -16,8 +16,10 @@ import { Users, UserPlus, Shield, Settings, Mail, Calendar, Loader2, Eye, Trash2
 import { teamApi, TeamMember, Role, Invitation, ActivityLog } from "@/lib/api/team";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { useTranslation } from "react-i18next";
 
 const Team = () => {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState("members");
@@ -76,7 +78,7 @@ const Team = () => {
       setRoles([]); // Ensure roles is always an array even on error
       // Don't show error toast for 401 (unauthorized) errors to avoid console spam
       if (error.response?.status !== 401) {
-        toast.error('獲取角色失敗', {
+        toast.error(t('team.messages.getRolesFailed'), {
           description: error.response?.data?.message || error.message
         });
       }
@@ -104,7 +106,7 @@ const Team = () => {
     } catch (error: any) {
       // Don't show error toast for 401 (unauthorized) errors to avoid console spam
       if (error.response?.status !== 401) {
-        toast.error('獲取團隊成員失敗', {
+        toast.error(t('team.messages.getMembersFailed'), {
           description: error.response?.data?.message || error.message
         });
       }
@@ -133,7 +135,7 @@ const Team = () => {
     } catch (error: any) {
       // Don't show error toast for 401 (unauthorized) errors to avoid console spam
       if (error.response?.status !== 401) {
-        toast.error('獲取邀請列表失敗', {
+        toast.error(t('team.messages.getInvitationsFailed'), {
           description: error.response?.data?.message || error.message
         });
       }
@@ -162,7 +164,7 @@ const Team = () => {
     } catch (error: any) {
       // Don't show error toast for 401 (unauthorized) errors to avoid console spam
       if (error.response?.status !== 401) {
-        toast.error('獲取活動記錄失敗', {
+        toast.error(t('team.messages.getActivitiesFailed'), {
           description: error.response?.data?.message || error.message
         });
       }
@@ -173,20 +175,20 @@ const Team = () => {
 
   const handleSendInvitation = async () => {
     if (!inviteData.email || !inviteData.role) {
-      toast.error('請填寫所有必填欄位');
+      toast.error(t('team.messages.fillAllRequired'));
       return;
     }
 
     try {
       const response = await teamApi.sendInvitation(inviteData);
       if (response.success) {
-        toast.success('邀請已發送');
+        toast.success(t('team.messages.invitationSent'));
         setInviteDialogOpen(false);
         setInviteData({ email: "", role: "editor", message: "" });
         if (activeTab === "invitations") loadInvitations();
       }
     } catch (error: any) {
-      toast.error('發送邀請失敗', {
+      toast.error(t('team.messages.sendInvitationFailed'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -196,11 +198,11 @@ const Team = () => {
     try {
       const response = await teamApi.resendInvitation(id);
       if (response.success) {
-        toast.success('邀請已重新發送');
+        toast.success(t('team.messages.invitationResent'));
         loadInvitations();
       }
     } catch (error: any) {
-      toast.error('重新發送邀請失敗', {
+      toast.error(t('team.messages.resendInvitationFailed'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -210,11 +212,11 @@ const Team = () => {
     try {
       const response = await teamApi.cancelInvitation(id);
       if (response.success) {
-        toast.success('邀請已取消');
+        toast.success(t('team.messages.invitationCancelled'));
         loadInvitations();
       }
     } catch (error: any) {
-      toast.error('取消邀請失敗', {
+      toast.error(t('team.messages.cancelInvitationFailed'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -224,11 +226,11 @@ const Team = () => {
     try {
       const response = await teamApi.updateMember(id, updates);
       if (response.success) {
-        toast.success('成員資訊已更新');
+        toast.success(t('team.messages.memberUpdated'));
         loadMembers();
       }
     } catch (error: any) {
-      toast.error('更新成員失敗', {
+      toast.error(t('team.messages.updateMemberFailed'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -238,11 +240,11 @@ const Team = () => {
     try {
       const response = await teamApi.removeMember(id);
       if (response.success) {
-        toast.success('成員已移除');
+        toast.success(t('team.messages.memberRemoved'));
         loadMembers();
       }
     } catch (error: any) {
-      toast.error('移除成員失敗', {
+      toast.error(t('team.messages.removeMemberFailed'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -256,40 +258,40 @@ const Team = () => {
 
   const getPermissionDisplayName = (permission: string) => {
     const permissionMap: Record<string, string> = {
-      'user.manage': '管理成員',
-      'user.invite': '邀請成員',
-      'settings.manage': '管理設定',
-      'billing.manage': '管理帳單',
-      'content.edit': '編輯內容',
-      'reports.view': '查看報告',
-      'reports.export': '匯出報告',
-      'analytics.view': '查看分析',
-      'keywords.manage': '管理關鍵字'
+      'user.manage': t('team.permissions.userManage'),
+      'user.invite': t('team.permissions.userInvite'),
+      'settings.manage': t('team.permissions.settingsManage'),
+      'billing.manage': t('team.permissions.billingManage'),
+      'content.edit': t('team.permissions.contentEdit'),
+      'reports.view': t('team.permissions.reportsView'),
+      'reports.export': t('team.permissions.reportsExport'),
+      'analytics.view': t('team.permissions.analyticsView'),
+      'keywords.manage': t('team.permissions.keywordsManage')
     };
     return permissionMap[permission] || permission;
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { variant: "default" | "secondary" | "destructive"; text: string }> = {
-      'active': { variant: "default", text: "活躍" },
-      'inactive': { variant: "secondary", text: "非活躍" },
-      'suspended': { variant: "destructive", text: "已暫停" },
-      'pending': { variant: "default", text: "待接受" },
-      'accepted': { variant: "default", text: "已接受" },
-      'expired': { variant: "destructive", text: "已過期" },
-      'cancelled': { variant: "secondary", text: "已取消" }
+      'active': { variant: "default", text: t('team.status.active') },
+      'inactive': { variant: "secondary", text: t('team.status.inactive') },
+      'suspended': { variant: "destructive", text: t('team.status.suspended') },
+      'pending': { variant: "default", text: t('team.status.pending') },
+      'accepted': { variant: "default", text: t('team.status.accepted') },
+      'expired': { variant: "destructive", text: t('team.status.expired') },
+      'cancelled': { variant: "secondary", text: t('team.status.cancelled') }
     };
     const config = statusMap[status] || { variant: "secondary" as const, text: status };
     return <Badge variant={config.variant}>{config.text}</Badge>;
   };
 
   const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '未知日期';
-    
+    if (!dateString) return t('team.dates.unknownDate');
+
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '無效日期';
-    
-    return date.toLocaleDateString('zh-TW', {
+    if (isNaN(date.getTime())) return t('team.dates.invalidDate');
+
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -302,27 +304,27 @@ const Team = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">團隊管理</h1>
-          <p className="text-muted-foreground">管理團隊成員和權限設定</p>
+          <h1 className="text-3xl font-bold text-foreground">{t('team.title')}</h1>
+          <p className="text-muted-foreground">{t('team.description')}</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="members">團隊成員</TabsTrigger>
-            <TabsTrigger value="roles">角色權限</TabsTrigger>
-            <TabsTrigger value="invitations">邀請管理</TabsTrigger>
-            <TabsTrigger value="activity">活動記錄</TabsTrigger>
+            <TabsTrigger value="members">{t('team.tabs.members')}</TabsTrigger>
+            <TabsTrigger value="roles">{t('team.tabs.roles')}</TabsTrigger>
+            <TabsTrigger value="invitations">{t('team.tabs.invitations')}</TabsTrigger>
+            <TabsTrigger value="activity">{t('team.tabs.activity')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="members" className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2 className="text-xl font-semibold">團隊成員 ({members.length})</h2>
+              <h2 className="text-xl font-semibold">{t('team.members.count', { count: members.length })}</h2>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <div className="flex gap-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="搜尋成員..."
+                      placeholder={t('team.members.searchPlaceholder')}
                       value={memberSearch}
                       onChange={(e) => setMemberSearch(e.target.value)}
                       className="pl-9 w-full sm:w-48"
@@ -331,10 +333,10 @@ const Team = () => {
                   <Select value={memberRoleFilter} onValueChange={setMemberRoleFilter}>
                     <SelectTrigger className="w-32">
                       <Filter className="h-4 w-4 mr-2" />
-                      <SelectValue placeholder="角色" />
+                      <SelectValue placeholder={t('team.members.roleFilter')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">全部角色</SelectItem>
+                      <SelectItem value="all">{t('team.members.allRoles')}</SelectItem>
                       {roles && roles.length > 0 && roles.map((role) => (
                         <SelectItem key={role.name} value={role.name}>
                           {role.displayName}
@@ -347,29 +349,29 @@ const Team = () => {
                   <DialogTrigger asChild>
                     <Button>
                       <UserPlus className="h-4 w-4 mr-2" />
-                      邀請成員
+                      {t('team.members.inviteButton')}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>邀請新成員</DialogTitle>
+                      <DialogTitle>{t('team.invite.title')}</DialogTitle>
                       <DialogDescription>
-                        邀請新成員加入您的組織
+                        {t('team.invite.description')}
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email 地址</Label>
+                        <Label htmlFor="email">{t('team.invite.emailLabel')}</Label>
                         <Input
                           id="email"
                           type="email"
                           value={inviteData.email}
                           onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
-                          placeholder="user@example.com"
+                          placeholder={t('team.invite.emailPlaceholder')}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="role">角色</Label>
+                        <Label htmlFor="role">{t('team.invite.roleLabel')}</Label>
                         <Select value={inviteData.role} onValueChange={(value: any) => setInviteData({ ...inviteData, role: value })}>
                           <SelectTrigger>
                             <SelectValue />
@@ -384,22 +386,22 @@ const Team = () => {
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="message">邀請訊息 (選填)</Label>
+                        <Label htmlFor="message">{t('team.invite.messageLabel')}</Label>
                         <Textarea
                           id="message"
                           value={inviteData.message}
                           onChange={(e) => setInviteData({ ...inviteData, message: e.target.value })}
-                          placeholder="歡迎加入我們的團隊！"
+                          placeholder={t('team.invite.messagePlaceholder')}
                         />
                       </div>
                     </div>
                     <DialogFooter>
                       <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                        取消
+                        {t('common.cancel')}
                       </Button>
                       <Button onClick={handleSendInvitation}>
                         <Send className="h-4 w-4 mr-2" />
-                        發送邀請
+                        {t('team.invite.sendButton')}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -420,12 +422,12 @@ const Team = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理團隊成員</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看團隊成員、發送邀請和管理權限</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('team.auth.membersRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('team.auth.membersDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('team.auth.loginButton')}
                     </Button>
                   </div>
                 </div>
@@ -448,7 +450,7 @@ const Team = () => {
                             </p>
                             <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                               <Calendar className="h-3 w-3" />
-                              上次登入: {member.lastLogin ? formatDate(member.lastLogin) : '從未登入'}
+                              {member.lastLogin ? t('team.members.lastLogin', { date: formatDate(member.lastLogin) }) : t('team.members.neverLoggedIn')}
                             </p>
                           </div>
                         </div>
@@ -478,15 +480,15 @@ const Team = () => {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>確認移除成員</AlertDialogTitle>
+                                <AlertDialogTitle>{t('team.members.confirmRemove')}</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  您確定要移除 {member.fullName} 嗎？此操作無法復原。
+                                  {t('team.members.confirmRemoveDescription', { name: member.fullName })}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>取消</AlertDialogCancel>
+                                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
                                 <AlertDialogAction onClick={() => handleRemoveMember(member.id)}>
-                                  移除
+                                  {t('team.members.removeMember')}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -514,12 +516,12 @@ const Team = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看角色權限</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看組織內不同角色的權限設定和管理範圍</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('team.auth.rolesRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('team.auth.rolesDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('team.auth.loginButton')}
                     </Button>
                   </div>
                 </div>
@@ -527,7 +529,7 @@ const Team = () => {
             ) : (
               <>
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold">角色與權限</h2>
+                  <h2 className="text-xl font-semibold">{t('team.roles.title')}</h2>
                   {/* Note: Role creation is typically managed at the system level */}
                   {/* Future implementation could include custom role creation for enterprise plans */}
                 </div>
@@ -544,7 +546,7 @@ const Team = () => {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div>
-                          <h4 className="text-sm font-medium mb-2">權限包含:</h4>
+                          <h4 className="text-sm font-medium mb-2">{t('team.roles.permissionsInclude')}</h4>
                           <div className="space-y-1">
                             {role.permissions && Array.isArray(role.permissions) ? role.permissions.map((permission, idx) => (
                               <div key={idx} className="text-sm text-muted-foreground">
@@ -552,7 +554,7 @@ const Team = () => {
                               </div>
                             )) : (
                               <div className="text-sm text-muted-foreground">
-                                • 沒有權限資訊
+                                • {t('team.roles.noPermissionInfo')}
                               </div>
                             )}
                           </div>
@@ -562,8 +564,8 @@ const Team = () => {
                   )) : (
                     <div className="col-span-full text-center py-8 text-muted-foreground">
                       <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>沒有可用的角色</p>
-                      {!isAuthenticated && <p className="text-sm">請先登入查看角色</p>}
+                      <p>{t('team.roles.noRoles')}</p>
+                      {!isAuthenticated && <p className="text-sm">{t('team.roles.loginToViewRoles')}</p>}
                     </div>
                   )}
                 </div>
@@ -573,41 +575,41 @@ const Team = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Settings className="h-5 w-5" />
-                      角色說明
+                      {t('team.roles.guide.title')}
                     </CardTitle>
-                    <CardDescription>系統預設角色及其權限範圍</CardDescription>
+                    <CardDescription>{t('team.roles.guide.description')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid gap-4">
                       <div className="flex items-start gap-3">
-                        <Badge variant="outline">擁有者</Badge>
+                        <Badge variant="outline">{t('team.roles.owner')}</Badge>
                         <div className="flex-1">
                           <p className="text-sm text-muted-foreground">
-                            組織的最高權限者，可管理所有功能、設定帳單、邀請和移除成員
+                            {t('team.roles.guide.owner')}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <Badge variant="outline">管理員</Badge>
+                        <Badge variant="outline">{t('team.roles.admin')}</Badge>
                         <div className="flex-1">
                           <p className="text-sm text-muted-foreground">
-                            可管理大部分功能和成員，但無法存取帳單設定
+                            {t('team.roles.guide.admin')}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <Badge variant="outline">編輯者</Badge>
+                        <Badge variant="outline">{t('team.roles.editor')}</Badge>
                         <div className="flex-1">
                           <p className="text-sm text-muted-foreground">
-                            可編輯內容、管理關鍵字、查看報告，但無法管理成員
+                            {t('team.roles.guide.editor')}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <Badge variant="outline">檢視者</Badge>
+                        <Badge variant="outline">{t('team.roles.viewer')}</Badge>
                         <div className="flex-1">
                           <p className="text-sm text-muted-foreground">
-                            只能查看報告和分析數據，無法進行編輯或管理操作
+                            {t('team.roles.guide.viewer')}
                           </p>
                         </div>
                       </div>
@@ -620,18 +622,18 @@ const Team = () => {
 
           <TabsContent value="invitations" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">邀請管理</h2>
+              <h2 className="text-xl font-semibold">{t('team.invitations.title')}</h2>
               <Select value={invitationStatusFilter} onValueChange={setInvitationStatusFilter}>
                 <SelectTrigger className="w-40">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="狀態" />
+                  <SelectValue placeholder={t('team.invitations.statusFilter')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">全部狀態</SelectItem>
-                  <SelectItem value="pending">待接受</SelectItem>
-                  <SelectItem value="accepted">已接受</SelectItem>
-                  <SelectItem value="expired">已過期</SelectItem>
-                  <SelectItem value="cancelled">已取消</SelectItem>
+                  <SelectItem value="all">{t('team.invitations.allStatuses')}</SelectItem>
+                  <SelectItem value="pending">{t('team.status.pending')}</SelectItem>
+                  <SelectItem value="accepted">{t('team.status.accepted')}</SelectItem>
+                  <SelectItem value="expired">{t('team.status.expired')}</SelectItem>
+                  <SelectItem value="cancelled">{t('team.status.cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -649,12 +651,12 @@ const Team = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理邀請</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可發送邀請、重新發送邀請和查看邀請狀態</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('team.auth.invitationsRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('team.auth.invitationsDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('team.auth.loginButton')}
                     </Button>
                   </div>
                 </div>
@@ -662,8 +664,8 @@ const Team = () => {
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle>邀請列表</CardTitle>
-                  <CardDescription>管理發送給新成員的邀請</CardDescription>
+                  <CardTitle>{t('team.invitations.listTitle')}</CardTitle>
+                  <CardDescription>{t('team.invitations.listDescription')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -672,11 +674,11 @@ const Team = () => {
                         <div>
                           <div className="font-medium">{invitation.email}</div>
                           <div className="text-sm text-muted-foreground">
-                            角色: {getRoleDisplayName(invitation.role)} • 發送日期: {formatDate(invitation.createdAt)}
+                            {t('team.invitations.role', { role: getRoleDisplayName(invitation.role) })} • {t('team.invitations.sentDate', { date: formatDate(invitation.createdAt) })}
                           </div>
                           {invitation.message && (
                             <div className="text-sm text-muted-foreground mt-1">
-                              訊息: {invitation.message}
+                              {t('team.invitations.message', { message: invitation.message })}
                             </div>
                           )}
                         </div>
@@ -684,21 +686,21 @@ const Team = () => {
                           {getStatusBadge(invitation.status)}
                           {invitation.status === 'pending' && (
                             <>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => handleResendInvitation(invitation.id)}
                               >
                                 <RotateCcw className="h-4 w-4 mr-2" />
-                                重新發送
+                                {t('team.invitations.resendButton')}
                               </Button>
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 onClick={() => handleCancelInvitation(invitation.id)}
                               >
                                 <X className="h-4 w-4 mr-2" />
-                                取消
+                                {t('team.invitations.cancelButton')}
                               </Button>
                             </>
                           )}
@@ -707,7 +709,7 @@ const Team = () => {
                     ))}
                     {invitations.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
-                        沒有找到邀請記錄
+                        {t('team.invitations.noInvitations')}
                       </div>
                     )}
                   </div>
@@ -718,9 +720,9 @@ const Team = () => {
 
           <TabsContent value="activity" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">活動記錄</h2>
+              <h2 className="text-xl font-semibold">{t('team.activity.title')}</h2>
               <Input
-                placeholder="搜尋動作..."
+                placeholder={t('team.activity.searchPlaceholder')}
                 value={activityActionFilter}
                 onChange={(e) => setActivityActionFilter(e.target.value)}
                 className="w-48"
@@ -740,12 +742,12 @@ const Team = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看活動記錄</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可查看團隊成員的操作記錄和活動歷史</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t('team.auth.activityRequired')}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t('team.auth.activityDescription')}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <User className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t('team.auth.loginButton')}
                     </Button>
                   </div>
                 </div>
@@ -755,9 +757,9 @@ const Team = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    團隊活動記錄
+                    {t('team.activity.listTitle')}
                   </CardTitle>
-                  <CardDescription>查看團隊成員的操作記錄</CardDescription>
+                  <CardDescription>{t('team.activity.listDescription')}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -771,7 +773,7 @@ const Team = () => {
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">
-                              {activity.user?.fullName || '系統'}
+                              {activity.user?.fullName || t('team.activity.system')}
                             </span>
                             <Badge variant="outline" className="text-xs">
                               {activity.action}
@@ -788,7 +790,7 @@ const Team = () => {
                     ))}
                     {activities.length === 0 && (
                       <div className="text-center py-8 text-muted-foreground">
-                        沒有找到活動記錄
+                        {t('team.activity.noActivity')}
                       </div>
                     )}
                   </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -14,34 +15,34 @@ interface DateRangePickerProps {
   className?: string;
 }
 
-const predefinedRanges = [
+const getPredefinedRanges = (t: any) => [
   {
-    label: '今天',
+    label: t('common.today'),
     value: '1d',
     getDays: () => 1
   },
   {
-    label: '昨天', 
+    label: t('common.yesterday'),
     value: 'yesterday',
     getDays: () => 1
   },
   {
-    label: '過去 7 天',
+    label: t('analytics.dateRanges.last7Days'),
     value: '7d',
     getDays: () => 7
   },
   {
-    label: '過去 30 天',
-    value: '30d', 
+    label: t('analytics.dateRanges.last30Days'),
+    value: '30d',
     getDays: () => 30
   },
   {
-    label: '過去 90 天',
+    label: t('analytics.dateRanges.last90Days'),
     value: '90d',
     getDays: () => 90
   },
   {
-    label: '今年',
+    label: t('analytics.dateRanges.thisYear'),
     value: 'year',
     getDays: () => {
       const now = new Date();
@@ -52,8 +53,11 @@ const predefinedRanges = [
 ];
 
 export const DateRangePicker = ({ value, onChange, className }: DateRangePickerProps) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('7d');
+
+  const predefinedRanges = getPredefinedRanges(t);
 
   const handlePresetSelect = (preset: string) => {
     setSelectedPreset(preset);
@@ -91,7 +95,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
   };
 
   const formatDateRange = (range: DateRange | undefined) => {
-    if (!range?.from) return '選擇日期範圍';
+    if (!range?.from) return t('analytics.dateRanges.selectRange');
     if (!range.to) return format(range.from, 'yyyy-MM-dd');
     
     if (range.from.toDateString() === range.to.toDateString()) {
@@ -121,7 +125,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
         <PopoverContent className="w-auto p-0" align="start">
           <div className="flex">
             <div className="flex flex-col space-y-2 p-3 border-r">
-              <div className="text-sm font-medium text-foreground mb-2">快速選擇</div>
+              <div className="text-sm font-medium text-foreground mb-2">{t('analytics.dateRanges.quickSelect')}</div>
               {predefinedRanges.map((range) => (
                 <Button
                   key={range.value}
@@ -139,7 +143,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
                 className="justify-start h-8 px-3 text-sm"
                 onClick={() => setSelectedPreset('custom')}
               >
-                自定義範圍
+{t('analytics.dateRanges.customRange')}
               </Button>
             </div>
             <div className="p-3">
@@ -156,7 +160,7 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
           <div className="flex items-center justify-between p-3 border-t">
             <div className="text-sm text-muted-foreground">
               {value?.from && value?.to && (
-                `已選擇 ${Math.ceil((value.to.getTime() - value.from.getTime()) / (1000 * 60 * 60 * 24))} 天`
+t('analytics.dateRanges.selectedDays', { days: Math.ceil((value.to.getTime() - value.from.getTime()) / (1000 * 60 * 60 * 24)) })
               )}
             </div>
             <div className="flex gap-2">
@@ -168,14 +172,14 @@ export const DateRangePicker = ({ value, onChange, className }: DateRangePickerP
                   setSelectedPreset('7d');
                 }}
               >
-                清除
+{t('common.cancel')}
               </Button>
               <Button
                 size="sm"
                 onClick={() => setIsOpen(false)}
                 disabled={!value?.from || !value?.to}
               >
-                確認
+{t('common.confirm')}
               </Button>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useEffect, useState } from "react";
 import { dashboardService, DashboardStats } from "@/lib/api/dashboard";
+import { useTranslation } from "react-i18next";
 
 interface ChartSectionProps {
   isAuthenticated?: boolean;
@@ -12,6 +13,7 @@ interface ChartSectionProps {
 export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => {
   const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -34,23 +36,23 @@ export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => 
   };
 
   // Generate trend data from platform distribution
-  const trendData = isAuthenticated && dashboardData ? 
+  const trendData = isAuthenticated && dashboardData ?
     [
-      { name: '週一', value: 45 },
-      { name: '週二', value: 52 },
-      { name: '週三', value: 48 },
-      { name: '週四', value: 61 },
-      { name: '週五', value: 55 },
-      { name: '週六', value: 67 },
-      { name: '週日', value: 58 },
+      { name: t("common.monday", "Mon"), value: 45 },
+      { name: t("common.tuesday", "Tue"), value: 52 },
+      { name: t("common.wednesday", "Wed"), value: 48 },
+      { name: t("common.thursday", "Thu"), value: 61 },
+      { name: t("common.friday", "Fri"), value: 55 },
+      { name: t("common.saturday", "Sat"), value: 67 },
+      { name: t("common.sunday", "Sun"), value: 58 },
     ] : [
-      { name: '週一', value: 0 },
-      { name: '週二', value: 0 },
-      { name: '週三', value: 0 },
-      { name: '週四', value: 0 },
-      { name: '週五', value: 0 },
-      { name: '週六', value: 0 },
-      { name: '週日', value: 0 },
+      { name: t("common.monday", "Mon"), value: 0 },
+      { name: t("common.tuesday", "Tue"), value: 0 },
+      { name: t("common.wednesday", "Wed"), value: 0 },
+      { name: t("common.thursday", "Thu"), value: 0 },
+      { name: t("common.friday", "Fri"), value: 0 },
+      { name: t("common.saturday", "Sat"), value: 0 },
+      { name: t("common.sunday", "Sun"), value: 0 },
     ];
 
   // Get platform data from API
@@ -73,13 +75,13 @@ export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => 
       {/* AI Platform Visibility Trend */}
       <Card className="lg:col-span-2 p-6 bg-gradient-card border-border">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-foreground">AI 平台可見度趨勢</h3>
+          <h3 className="text-lg font-semibold text-foreground">{t("dashboard.aiPlatformVisibilityTrend")}</h3>
           <div className="flex space-x-2">
             <Button variant="outline" size="sm" className="bg-primary text-primary-foreground border-primary">
-              7天
+              {t("dashboard.7days", "7 days")}
             </Button>
-            <Button variant="outline" size="sm">30天</Button>
-            <Button variant="outline" size="sm">90天</Button>
+            <Button variant="outline" size="sm">{t("dashboard.30days", "30 days")}</Button>
+            <Button variant="outline" size="sm">{t("dashboard.90days", "90 days")}</Button>
           </div>
         </div>
 
@@ -111,7 +113,7 @@ export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => 
 
       {/* AI Scores */}
       <Card className="p-6 bg-gradient-card border-border">
-        <h3 className="text-lg font-semibold text-foreground mb-6">AI 綜合評分</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-6">{t("dashboard.aiComprehensiveScore")}</h3>
         
         <div className="relative w-48 h-48 mx-auto mb-6">
           <ResponsiveContainer width="100%" height="100%">
@@ -134,7 +136,7 @@ export const ChartSection = ({ isAuthenticated = false }: ChartSectionProps) => 
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="text-3xl font-bold text-foreground">{isAuthenticated ? '78' : '---'}</div>
-              <div className="text-sm text-muted-foreground">綜合評分</div>
+              <div className="text-sm text-muted-foreground">{t("dashboard.overallScore")}</div>
             </div>
           </div>
         </div>

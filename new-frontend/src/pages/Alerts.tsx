@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -15,6 +16,7 @@ import AlertDashboardStats from '@/components/alerts/AlertDashboardStats';
 import RealTimeAlertFeed from '@/components/alerts/RealTimeAlertFeed';
 
 export default function Alerts() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -71,11 +73,11 @@ export default function Alerts() {
   const manualCheckMutation = useMutation({
     mutationFn: alertsApi.triggerManualCheck,
     onSuccess: (data) => {
-      toast.success(`Manual check completed: ${data.data.alertsChecked} alerts checked, ${data.data.alertsTriggered} triggered`);
+      toast.success(t('alerts.messages.manualCheckCompleted', { alertsChecked: data.data.alertsChecked, alertsTriggered: data.data.alertsTriggered }));
       queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
     onError: (error: any) => {
-      toast.error(`Manual check failed: ${error.response?.data?.message || error.message}`);
+      toast.error(t('alerts.messages.manualCheckFailed', { error: error.response?.data?.message || error.message }));
     }
   });
 
@@ -83,11 +85,11 @@ export default function Alerts() {
   const collectMetricsMutation = useMutation({
     mutationFn: alertsApi.collectMetrics,
     onSuccess: (data) => {
-      toast.success(`Metrics collection completed: ${data.data.websitesProcessed} websites processed, ${data.data.snapshotsCreated} snapshots created`);
+      toast.success(t('alerts.messages.metricsCollectionCompleted', { websitesProcessed: data.data.websitesProcessed, snapshotsCreated: data.data.snapshotsCreated }));
       queryClient.invalidateQueries({ queryKey: ['alerts'] });
     },
     onError: (error: any) => {
-      toast.error(`Metrics collection failed: ${error.response?.data?.message || error.message}`);
+      toast.error(t('alerts.messages.metricsCollectionFailed', { error: error.response?.data?.message || error.message }));
     }
   });
 
@@ -125,12 +127,12 @@ export default function Alerts() {
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-6 w-6 text-primary" />
-                <h1 className="text-2xl font-bold">Alert Management</h1>
+                <h1 className="text-2xl font-bold">{t('alerts.title')}</h1>
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 {getConnectionStatusIcon()}
                 <span>
-                  Real-time: {connectionStatus === 'connected' ? 'Connected' : connectionStatus}
+                  {t('alerts.realTime')}: {connectionStatus === 'connected' ? t('alerts.connected') : connectionStatus}
                 </span>
               </div>
             </div>
@@ -142,7 +144,7 @@ export default function Alerts() {
                 disabled={collectMetricsMutation.isPending}
               >
                 <Activity className="h-4 w-4 mr-2" />
-                Collect Metrics
+                {t('alerts.collectMetrics')}
               </Button>
               <Button
                 variant="outline"
@@ -151,11 +153,11 @@ export default function Alerts() {
                 disabled={manualCheckMutation.isPending}
               >
                 <Play className="h-4 w-4 mr-2" />
-                Check Alerts
+                {t('alerts.checkAlerts')}
               </Button>
               <Button onClick={handleCreateAlert}>
                 <Plus className="h-4 w-4 mr-2" />
-                Create Alert
+                {t('alerts.createAlert')}
               </Button>
             </div>
           </div>
@@ -168,19 +170,19 @@ export default function Alerts() {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              Dashboard
+              {t('alerts.tabs.dashboard')}
             </TabsTrigger>
             <TabsTrigger value="configurations" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              Configurations
+              {t('alerts.tabs.configurations')}
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
-              History
+              {t('alerts.tabs.history')}
             </TabsTrigger>
             <TabsTrigger value="realtime" className="flex items-center gap-2">
               <Bell className="h-4 w-4" />
-              Real-time
+              {t('alerts.tabs.realtime')}
               {recentAlerts.length > 0 && (
                 <Badge variant="destructive" className="ml-1 text-xs">
                   {recentAlerts.length}
@@ -230,7 +232,7 @@ export default function Alerts() {
         onOpenChange={setCreateDialogOpen}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['alerts'] });
-          toast.success('Alert configuration created successfully');
+          toast.success(t('alerts.messages.alertCreated'));
         }}
       />
     </div>

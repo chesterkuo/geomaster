@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { authService, User } from "@/lib/api/auth";
 import { ApiKeySettings } from "@/components/settings/ApiKeySettings";
 
 const Settings = () => {
+  const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
@@ -30,13 +32,13 @@ const Settings = () => {
   
   // Create dynamic tabs array based on feature flags
   const availableTabs = [
-    { value: "general", label: "一般設定" },
-    { value: "profile", label: "個人資料" },
-    { value: "apikeys", label: "AI API Keys" },
-    ...(enableNotifications ? [{ value: "notifications", label: "通知設定" }] : []),
-    { value: "security", label: "安全設定" },
-    ...(enableIntegrations ? [{ value: "integrations", label: "整合設定" }] : []),
-    ...(enableAppearance ? [{ value: "appearance", label: "外觀設定" }] : [])
+    { value: "general", label: t("settings.tabs.general") },
+    { value: "profile", label: t("settings.tabs.profile") },
+    { value: "apikeys", label: t("settings.tabs.apikeys") },
+    ...(enableNotifications ? [{ value: "notifications", label: t("settings.tabs.notifications") }] : []),
+    { value: "security", label: t("settings.tabs.security") },
+    ...(enableIntegrations ? [{ value: "integrations", label: t("settings.tabs.integrations") }] : []),
+    ...(enableAppearance ? [{ value: "appearance", label: t("settings.tabs.appearance") }] : [])
   ];
   
   const gridColsClass = `grid-cols-${availableTabs.length}`;
@@ -142,7 +144,7 @@ const Settings = () => {
         });
       }
     } catch (error: any) {
-      toast.error('獲取組織設定失敗', {
+      toast.error(t('settings.messages.failedToLoadOrganizationSettings'), {
         description: error.response?.data?.message || error.message
       });
     } finally {
@@ -165,7 +167,7 @@ const Settings = () => {
         });
       }
     } catch (error: any) {
-      toast.error('獲取個人資料失敗', {
+      toast.error(t('settings.messages.failedToLoadProfile'), {
         description: error.response?.data?.message || error.message
       });
     } finally {
@@ -196,7 +198,7 @@ const Settings = () => {
         setActiveSessions(sessionsResponse.data.sessions || []);
       }
     } catch (error: any) {
-      toast.error('獲取安全設定失敗', {
+      toast.error(t('settings.messages.failedToLoadSecuritySettings'), {
         description: error.response?.data?.message || error.message
       });
     } finally {
@@ -227,7 +229,7 @@ const Settings = () => {
         });
       }
     } catch (error: any) {
-      toast.error('獲取用戶偏好失敗', {
+      toast.error(t('settings.messages.failedToLoadUserPreferences'), {
         description: error.response?.data?.message || error.message
       });
     } finally {
@@ -240,10 +242,10 @@ const Settings = () => {
       const response = await settingsApi.updateOrganizationSettings(orgFormData);
       if (response.success) {
         setOrgSettings(response.data);
-        toast.success('組織設定已更新');
+        toast.success(t('settings.messages.organizationSettingsUpdated'));
       }
     } catch (error: any) {
-      toast.error('更新組織設定失敗', {
+      toast.error(t('settings.messages.failedToUpdateOrganizationSettings'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -251,17 +253,17 @@ const Settings = () => {
 
   const handleChangePassword = async () => {
     if (!passwordForm.currentPassword || !passwordForm.newPassword) {
-      toast.error('請填寫所有密碼欄位');
+      toast.error(t('settings.messages.pleaseFillAllPasswordFields'));
       return;
     }
     
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast.error('新密碼與確認密碼不一致');
+      toast.error(t('settings.messages.passwordsDoNotMatch'));
       return;
     }
     
     if (passwordForm.newPassword.length < 8) {
-      toast.error('新密碼至少需要8個字元');
+      toast.error(t('settings.messages.passwordTooShort'));
       return;
     }
 
@@ -272,12 +274,12 @@ const Settings = () => {
       });
       
       if (response.success) {
-        toast.success('密碼已更新');
+        toast.success(t('settings.messages.passwordUpdated'));
         setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
         loadSecuritySettings(); // Refresh security data
       }
     } catch (error: any) {
-      toast.error('更新密碼失敗', {
+      toast.error(t('settings.messages.failedToUpdatePassword'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -288,10 +290,10 @@ const Settings = () => {
       const response = await settingsApi.updateUserPreferences(preferencesForm);
       if (response.success) {
         setUserPreferences(response.data);
-        toast.success('偏好設定已更新');
+        toast.success(t('settings.messages.preferencesUpdated'));
       }
     } catch (error: any) {
-      toast.error('更新偏好設定失敗', {
+      toast.error(t('settings.messages.failedToUpdatePreferences'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -301,12 +303,12 @@ const Settings = () => {
     try {
       const response = await authService.updateProfile(profileForm);
       if (response.success) {
-        toast.success('個人資料已更新');
+        toast.success(t('settings.messages.profileUpdated'));
         // Reload profile data
         loadUserProfile();
       }
     } catch (error: any) {
-      toast.error('更新個人資料失敗', {
+      toast.error(t('settings.messages.failedToUpdateProfile'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -321,7 +323,7 @@ const Settings = () => {
         setSetupStep(1);
       }
     } catch (error: any) {
-      toast.error('啟用2FA失敗', {
+      toast.error(t('settings.messages.failedToEnable2FA'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -329,23 +331,23 @@ const Settings = () => {
 
   const handleVerify2FA = async () => {
     if (!verificationCode || verificationCode.length !== 6) {
-      toast.error('請輸入6位數驗證碼');
+      toast.error(t('settings.messages.pleaseEnterSixDigitCode'));
       return;
     }
 
     try {
       const response = await settingsApi.verify2FA(verificationCode);
       if (response.success && response.data.verified) {
-        toast.success('2FA已成功啟用');
+        toast.success(t('settings.messages.twoFactorEnabled'));
         setTwoFactorDialog(false);
         setVerificationCode("");
         setSetupStep(1);
         loadSecuritySettings(); // Refresh security data
       } else {
-        toast.error('驗證碼無效');
+        toast.error(t('settings.messages.invalidVerificationCode'));
       }
     } catch (error: any) {
-      toast.error('驗證2FA失敗', {
+      toast.error(t('settings.messages.failedToVerify2FA'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -355,11 +357,11 @@ const Settings = () => {
     try {
       const response = await settingsApi.disable2FA();
       if (response.success) {
-        toast.success('2FA已停用');
+        toast.success(t('settings.messages.twoFactorDisabled'));
         loadSecuritySettings(); // Refresh security data
       }
     } catch (error: any) {
-      toast.error('停用2FA失敗', {
+      toast.error(t('settings.messages.failedToDisable2FA'), {
         description: error.response?.data?.message || error.message
       });
     }
@@ -368,14 +370,14 @@ const Settings = () => {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success('已複製到剪貼板');
+      toast.success(t('settings.messages.copiedToClipboard'));
     } catch (error) {
-      toast.error('複製失敗');
+      toast.error(t('settings.messages.copyFailed'));
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('zh-TW', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -388,8 +390,8 @@ const Settings = () => {
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">系統設定</h1>
-          <p className="text-muted-foreground">管理您的帳戶和應用程式偏好設定</p>
+          <h1 className="text-3xl font-bold text-foreground">{t("settings.title")}</h1>
+          <p className="text-muted-foreground">{t("settings.description")}</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -415,14 +417,14 @@ const Settings = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理設定</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可配置組織設定、安全選項和個人偏好</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("settings.auth.loginRequiredToManageSettings")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("settings.auth.loginToConfigureSettings")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <UserIcon className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("settings.auth.loginNow")}
                     </Button>
-                    <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.auth.noAccountPrompt")}</p>
                   </div>
                 </div>
               </div>
@@ -431,69 +433,69 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <SettingsIcon className="h-5 w-5" />
-                    組織設定
+                    {t("settings.general.organizationSettings")}
                   </CardTitle>
-                  <CardDescription>管理您的組織基本資訊和偏好設定</CardDescription>
+                  <CardDescription>{t("settings.general.organizationDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="company">公司名稱</Label>
-                      <Input 
-                        id="company" 
+                      <Label htmlFor="company">{t("settings.general.companyName")}</Label>
+                      <Input
+                        id="company"
                         value={orgFormData.name}
                         onChange={(e) => setOrgFormData({ ...orgFormData, name: e.target.value })}
-                        placeholder="輸入公司名稱" 
+                        placeholder={t("settings.general.companyNamePlaceholder")}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="website">網站網址</Label>
-                      <Input 
-                        id="website" 
+                      <Label htmlFor="website">{t("settings.general.websiteUrl")}</Label>
+                      <Input
+                        id="website"
                         value={orgFormData.website}
                         onChange={(e) => setOrgFormData({ ...orgFormData, website: e.target.value })}
-                        placeholder="https://example.com" 
+                        placeholder={t("settings.general.websiteUrlPlaceholder")}
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="timezone">時區</Label>
+                      <Label htmlFor="timezone">{t("settings.general.timezone")}</Label>
                       <Select value={orgFormData.timezone} onValueChange={(value) => setOrgFormData({ ...orgFormData, timezone: value })}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Asia/Taipei">台北 (GMT+8)</SelectItem>
-                          <SelectItem value="Asia/Tokyo">東京 (GMT+9)</SelectItem>
-                          <SelectItem value="UTC">UTC (GMT+0)</SelectItem>
+                          <SelectItem value="Asia/Taipei">{t("settings.general.timezones.taipei")}</SelectItem>
+                          <SelectItem value="Asia/Tokyo">{t("settings.general.timezones.tokyo")}</SelectItem>
+                          <SelectItem value="UTC">{t("settings.general.timezones.utc")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="language">語言</Label>
+                      <Label htmlFor="language">{t("settings.general.language")}</Label>
                       <Select value={orgFormData.language} onValueChange={(value) => setOrgFormData({ ...orgFormData, language: value })}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="zh-TW">繁體中文</SelectItem>
-                          <SelectItem value="zh-CN">简体中文</SelectItem>
-                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="zh-TW">{t("settings.general.languages.traditionalChinese")}</SelectItem>
+                          <SelectItem value="zh-CN">{t("settings.general.languages.simplifiedChinese")}</SelectItem>
+                          <SelectItem value="en">{t("settings.general.languages.english")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="currency">貨幣</Label>
+                      <Label htmlFor="currency">{t("settings.general.currency")}</Label>
                       <Select value={orgFormData.currency} onValueChange={(value) => setOrgFormData({ ...orgFormData, currency: value })}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="TWD">台幣 (TWD)</SelectItem>
-                          <SelectItem value="USD">美元 (USD)</SelectItem>
-                          <SelectItem value="EUR">歐元 (EUR)</SelectItem>
+                          <SelectItem value="TWD">{t("settings.general.currencies.twd")}</SelectItem>
+                          <SelectItem value="USD">{t("settings.general.currencies.usd")}</SelectItem>
+                          <SelectItem value="EUR">{t("settings.general.currencies.eur")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -502,12 +504,12 @@ const Settings = () => {
                   <Separator />
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium">資料偏好設定</h3>
+                    <h3 className="text-lg font-medium">{t("settings.general.dataPreferences")}</h3>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <Label>自動資料同步</Label>
-                          <p className="text-sm text-muted-foreground">每小時自動同步網站數據</p>
+                          <Label>{t("settings.general.autoDataSync")}</Label>
+                          <p className="text-sm text-muted-foreground">{t("settings.general.autoDataSyncDescription")}</p>
                         </div>
                         <Switch 
                           checked={orgFormData.autoDataSync}
@@ -516,8 +518,8 @@ const Settings = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5 flex-1">
-                          <Label>資料保留期間</Label>
-                          <p className="text-sm text-muted-foreground">保留歷史數據月數</p>
+                          <Label>{t("settings.general.dataRetention")}</Label>
+                          <p className="text-sm text-muted-foreground">{t("settings.general.dataRetentionDescription")}</p>
                         </div>
                         <div className="w-24">
                           <Input
@@ -531,8 +533,8 @@ const Settings = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <div className="space-y-0.5 flex-1">
-                          <Label>預設報告格式</Label>
-                          <p className="text-sm text-muted-foreground">匯出報告的預設格式</p>
+                          <Label>{t("settings.general.defaultReportFormat")}</Label>
+                          <p className="text-sm text-muted-foreground">{t("settings.general.defaultReportFormatDescription")}</p>
                         </div>
                         <div className="w-32">
                           <Select value={orgFormData.defaultReportFormat} onValueChange={(value) => setOrgFormData({ ...orgFormData, defaultReportFormat: value })}>
@@ -550,7 +552,7 @@ const Settings = () => {
                     </div>
                   </div>
 
-                  <Button onClick={handleSaveOrganizationSettings}>儲存變更</Button>
+                  <Button onClick={handleSaveOrganizationSettings}>{t("settings.general.saveChanges")}</Button>
                 </CardContent>
               </Card>
             )}
@@ -570,14 +572,14 @@ const Settings = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理個人資料</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可編輯您的姓名等個人資訊</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("settings.auth.loginRequiredToManageProfile")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("settings.auth.loginToEditPersonalInfo")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <UserIcon className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("settings.auth.loginNow")}
                     </Button>
-                    <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.auth.noAccountPrompt")}</p>
                   </div>
                 </div>
               </div>
@@ -586,53 +588,53 @@ const Settings = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <UserIcon className="h-5 w-5" />
-                    個人資料
+                    {t("settings.profile.title")}
                   </CardTitle>
-                  <CardDescription>管理您的個人基本資訊</CardDescription>
+                  <CardDescription>{t("settings.profile.description")}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="fullName">姓名</Label>
-                      <Input 
-                        id="fullName" 
+                      <Label htmlFor="fullName">{t("settings.profile.fullName")}</Label>
+                      <Input
+                        id="fullName"
                         value={profileForm.fullName}
                         onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
-                        placeholder="輸入您的姓名" 
+                        placeholder={t("settings.profile.fullNamePlaceholder")}
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="email">電子郵件 (唯讀)</Label>
-                      <Input 
-                        id="email" 
+                      <Label htmlFor="email">{t("settings.profile.email")}</Label>
+                      <Input
+                        id="email"
                         value={user?.email || ""}
                         disabled
                         className="bg-muted"
                       />
-                      <p className="text-sm text-muted-foreground">電子郵件地址無法修改</p>
+                      <p className="text-sm text-muted-foreground">{t("settings.profile.emailReadOnly")}</p>
                     </div>
                   </div>
 
                   <Separator />
 
                   <div className="space-y-2">
-                    <Label>帳戶資訊</Label>
+                    <Label>{t("settings.profile.accountInfo")}</Label>
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">角色: </span>
-                        <span className="font-medium">{user?.role || "用戶"}</span>
+                        <span className="text-muted-foreground">{t("settings.profile.role")}: </span>
+                        <span className="font-medium">{user?.role || t("settings.profile.defaultRole")}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">建立時間: </span>
+                        <span className="text-muted-foreground">{t("settings.profile.createdAt")}: </span>
                         <span className="font-medium">
-                          {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('zh-TW') : "未知"}
+                          {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US') : t("settings.profile.unknown")}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <Button onClick={handleSaveProfile}>儲存變更</Button>
+                  <Button onClick={handleSaveProfile}>{t("settings.profile.saveChanges")}</Button>
                 </CardContent>
               </Card>
             )}
@@ -657,12 +659,12 @@ const Settings = () => {
                         <Lock className="h-6 w-6 text-primary" />
                       </div>
                     </div>
-                    <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理通知設定</p>
-                    <p className="text-sm text-muted-foreground mb-6">登入後即可設定電子郵件通知、推播通知和提醒偏好</p>
+                    <p className="text-lg font-medium text-muted-foreground mb-2">{t("settings.auth.loginRequiredToManageNotifications")}</p>
+                    <p className="text-sm text-muted-foreground mb-6">{t("settings.auth.loginToConfigureNotifications")}</p>
                     <div className="space-y-3">
                       <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                         <UserIcon className="mr-2 h-4 w-4" />
-                        立即登入
+                        {t("settings.auth.loginNow")}
                       </Button>
                     </div>
                   </div>
@@ -672,39 +674,39 @@ const Settings = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Bell className="h-5 w-5" />
-                      通知偏好設定
+                      {t("settings.notifications.title")}
                     </CardTitle>
-                    <CardDescription>選擇您希望接收的通知類型</CardDescription>
+                    <CardDescription>{t("settings.notifications.description")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">電子郵件通知</h3>
+                      <h3 className="text-lg font-medium">{t("settings.notifications.emailNotifications")}</h3>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label>SEO 警報</Label>
-                            <p className="text-sm text-muted-foreground">當網站出現SEO問題時通知</p>
+                            <Label>{t("settings.notifications.seoAlerts")}</Label>
+                            <p className="text-sm text-muted-foreground">{t("settings.notifications.seoAlertsDescription")}</p>
                           </div>
                           <Switch defaultChecked />
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label>排名變化</Label>
-                            <p className="text-sm text-muted-foreground">關鍵字排名重大變化通知</p>
+                            <Label>{t("settings.notifications.rankingChanges")}</Label>
+                            <p className="text-sm text-muted-foreground">{t("settings.notifications.rankingChangesDescription")}</p>
                           </div>
                           <Switch defaultChecked />
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label>週報</Label>
-                            <p className="text-sm text-muted-foreground">每週SEO表現摘要報告</p>
+                            <Label>{t("settings.notifications.weeklyReport")}</Label>
+                            <p className="text-sm text-muted-foreground">{t("settings.notifications.weeklyReportDescription")}</p>
                           </div>
                           <Switch />
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label>月報</Label>
-                            <p className="text-sm text-muted-foreground">每月詳細分析報告</p>
+                            <Label>{t("settings.notifications.monthlyReport")}</Label>
+                            <p className="text-sm text-muted-foreground">{t("settings.notifications.monthlyReportDescription")}</p>
                           </div>
                           <Switch defaultChecked />
                         </div>
@@ -714,26 +716,26 @@ const Settings = () => {
                     <Separator />
 
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">推播通知</h3>
+                      <h3 className="text-lg font-medium">{t("settings.notifications.pushNotifications")}</h3>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label>即時警報</Label>
-                            <p className="text-sm text-muted-foreground">重要事件的即時推播通知</p>
+                            <Label>{t("settings.notifications.realTimeAlerts")}</Label>
+                            <p className="text-sm text-muted-foreground">{t("settings.notifications.realTimeAlertsDescription")}</p>
                           </div>
                           <Switch />
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label>任務提醒</Label>
-                            <p className="text-sm text-muted-foreground">優化任務和截止日期提醒</p>
+                            <Label>{t("settings.notifications.taskReminders")}</Label>
+                            <p className="text-sm text-muted-foreground">{t("settings.notifications.taskRemindersDescription")}</p>
                           </div>
                           <Switch defaultChecked />
                         </div>
                       </div>
                     </div>
 
-                    <Button>儲存通知設定</Button>
+                    <Button>{t("settings.notifications.saveSettings")}</Button>
                   </CardContent>
                 </Card>
               )}
@@ -754,14 +756,14 @@ const Settings = () => {
                       <Lock className="h-6 w-6 text-primary" />
                     </div>
                   </div>
-                  <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理安全設定</p>
-                  <p className="text-sm text-muted-foreground mb-6">登入後即可管理密碼、雙重驗證和登入記錄</p>
+                  <p className="text-lg font-medium text-muted-foreground mb-2">{t("settings.auth.loginRequiredToManageSecurity")}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{t("settings.auth.loginToManageSecuritySettings")}</p>
                   <div className="space-y-3">
                     <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                       <UserIcon className="mr-2 h-4 w-4" />
-                      立即登入
+                      {t("settings.auth.loginNow")}
                     </Button>
-                    <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
+                    <p className="text-xs text-muted-foreground">{t("settings.auth.noAccountPrompt")}</p>
                   </div>
                 </div>
               </div>
@@ -771,14 +773,14 @@ const Settings = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Shield className="h-5 w-5" />
-                      密碼設定
+                      {t("settings.security.passwordSettings")}
                     </CardTitle>
-                    <CardDescription>更新您的登入密碼</CardDescription>
+                    <CardDescription>{t("settings.security.passwordDescription")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-3">
                       <div className="space-y-2">
-                        <Label htmlFor="current-password">目前密碼</Label>
+                        <Label htmlFor="current-password">{t("settings.security.currentPassword")}</Label>
                         <div className="relative">
                           <Input 
                             id="current-password" 
@@ -798,7 +800,7 @@ const Settings = () => {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="new-password">新密碼</Label>
+                        <Label htmlFor="new-password">{t("settings.security.newPassword")}</Label>
                         <div className="relative">
                           <Input 
                             id="new-password" 
@@ -818,7 +820,7 @@ const Settings = () => {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirm-password">確認新密碼</Label>
+                        <Label htmlFor="confirm-password">{t("settings.security.confirmNewPassword")}</Label>
                         <div className="relative">
                           <Input 
                             id="confirm-password" 
@@ -838,31 +840,31 @@ const Settings = () => {
                         </div>
                       </div>
                     </div>
-                    <Button onClick={handleChangePassword}>更新密碼</Button>
+                    <Button onClick={handleChangePassword}>{t("settings.security.updatePassword")}</Button>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>兩步驗證 (2FA)</CardTitle>
-                    <CardDescription>增強您的帳戶安全性</CardDescription>
+                    <CardTitle>{t("settings.security.twoFactorAuth")}</CardTitle>
+                    <CardDescription>{t("settings.security.twoFactorDescription")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label>啟用兩步驗證</Label>
+                        <Label>{t("settings.security.enableTwoFactor")}</Label>
                         <p className="text-sm text-muted-foreground">
-                          狀態: {securitySettings?.twoFactorEnabled ? '已啟用' : '未啟用'}
+                          {t("settings.security.status")}: {securitySettings?.twoFactorEnabled ? t("settings.security.enabled") : t("settings.security.disabled")}
                         </p>
                       </div>
                       {securitySettings?.twoFactorEnabled ? (
                         <Button variant="outline" onClick={handleDisable2FA}>
-                          停用 2FA
+                          {t("settings.security.disable2FA")}
                         </Button>
                       ) : (
                         <Button onClick={handleEnable2FA}>
                           <QrCode className="h-4 w-4 mr-2" />
-                          啟用 2FA
+                          {t("settings.security.enable2FA")}
                         </Button>
                       )}
                     </div>
@@ -871,8 +873,8 @@ const Settings = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>登入記錄</CardTitle>
-                    <CardDescription>查看最近的登入活動</CardDescription>
+                    <CardTitle>{t("settings.security.loginHistory")}</CardTitle>
+                    <CardDescription>{t("settings.security.loginHistoryDescription")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {securitySettings?.loginHistory?.map((login, index) => (
@@ -890,7 +892,7 @@ const Settings = () => {
                     ))}
                     {(!securitySettings?.loginHistory || securitySettings.loginHistory.length === 0) && (
                       <div className="text-center py-4 text-muted-foreground">
-                        沒有登入記錄
+                        {t("settings.security.noLoginHistory")}
                       </div>
                     )}
                   </CardContent>
@@ -898,8 +900,8 @@ const Settings = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>活躍會話</CardTitle>
-                    <CardDescription>管理您的登入會話</CardDescription>
+                    <CardTitle>{t("settings.security.activeSessions")}</CardTitle>
+                    <CardDescription>{t("settings.security.activeSessionsDescription")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {activeSessions.map((session) => (
@@ -907,15 +909,15 @@ const Settings = () => {
                         <div>
                           <div className="font-medium flex items-center gap-2">
                             {session.device}
-                            {session.current && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">目前會話</span>}
+                            {session.current && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{t("settings.security.currentSession")}</span>}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {session.location} • 最後活動: {formatDate(session.lastActive)}
+                            {session.location} • {t("settings.security.lastActive")}: {formatDate(session.lastActive)}
                           </div>
                         </div>
                         {!session.current && (
                           <Button size="sm" variant="outline">
-                            終止會話
+                            {t("settings.security.terminateSession")}
                           </Button>
                         )}
                       </div>
@@ -941,12 +943,12 @@ const Settings = () => {
                         <Lock className="h-6 w-6 text-primary" />
                       </div>
                     </div>
-                    <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能管理整合設定</p>
-                    <p className="text-sm text-muted-foreground mb-6">登入後即可連接和管理第三方服務整合</p>
+                    <p className="text-lg font-medium text-muted-foreground mb-2">{t("settings.auth.loginRequiredToManageIntegrations")}</p>
+                    <p className="text-sm text-muted-foreground mb-6">{t("settings.auth.loginToManageIntegrations")}</p>
                     <div className="space-y-3">
                       <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                         <UserIcon className="mr-2 h-4 w-4" />
-                        立即登入
+                        {t("settings.auth.loginNow")}
                       </Button>
                     </div>
                   </div>
@@ -956,17 +958,17 @@ const Settings = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Globe className="h-5 w-5" />
-                      第三方整合
+                      {t("settings.integrations.title")}
                     </CardTitle>
-                    <CardDescription>連接外部服務和工具</CardDescription>
+                    <CardDescription>{t("settings.integrations.description")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
                       {[
-                        { name: "Google Analytics", status: "已連接", description: "網站流量分析" },
-                        { name: "Google Search Console", status: "未連接", description: "搜尋引擎數據" },
-                        { name: "Facebook Pixel", status: "已連接", description: "社群媒體追蹤" },
-                        { name: "Google Ads", status: "未連接", description: "廣告效果追蹤" }
+                        { name: "Google Analytics", status: t("settings.integrations.connected"), description: t("settings.integrations.googleAnalyticsDesc") },
+                        { name: "Google Search Console", status: t("settings.integrations.notConnected"), description: t("settings.integrations.googleSearchConsoleDesc") },
+                        { name: "Facebook Pixel", status: t("settings.integrations.connected"), description: t("settings.integrations.facebookPixelDesc") },
+                        { name: "Google Ads", status: t("settings.integrations.notConnected"), description: t("settings.integrations.googleAdsDesc") }
                       ].map((integration, index) => (
                         <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
                           <div>
@@ -974,11 +976,11 @@ const Settings = () => {
                             <p className="text-sm text-muted-foreground">{integration.description}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className={`text-sm ${integration.status === "已連接" ? "text-green-600" : "text-muted-foreground"}`}>
+                            <span className={`text-sm ${integration.status === t("settings.integrations.connected") ? "text-green-600" : "text-muted-foreground"}`}>
                               {integration.status}
                             </span>
-                            <Button size="sm" variant={integration.status === "已連接" ? "outline" : "default"}>
-                              {integration.status === "已連接" ? "管理" : "連接"}
+                            <Button size="sm" variant={integration.status === t("settings.integrations.connected") ? "outline" : "default"}>
+                              {integration.status === t("settings.integrations.connected") ? t("settings.integrations.manage") : t("settings.integrations.connect")}
                             </Button>
                           </div>
                         </div>
@@ -1005,14 +1007,14 @@ const Settings = () => {
                         <Lock className="h-6 w-6 text-primary" />
                       </div>
                     </div>
-                    <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能自訂外觀</p>
-                    <p className="text-sm text-muted-foreground mb-6">登入後即可設定主題、顯示偏好和儀表板配置</p>
+                    <p className="text-lg font-medium text-muted-foreground mb-2">{t("settings.auth.loginRequiredToCustomizeAppearance")}</p>
+                    <p className="text-sm text-muted-foreground mb-6">{t("settings.auth.loginToConfigureAppearance")}</p>
                     <div className="space-y-3">
                       <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                         <UserIcon className="mr-2 h-4 w-4" />
-                        立即登入
+                        {t("settings.auth.loginNow")}
                       </Button>
-                      <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
+                      <p className="text-xs text-muted-foreground">{t("settings.auth.noAccountPrompt")}</p>
                     </div>
                   </div>
                 </div>
@@ -1021,23 +1023,23 @@ const Settings = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Palette className="h-5 w-5" />
-                      外觀設定
+                      {t("settings.appearance.title")}
                     </CardTitle>
-                    <CardDescription>自訂應用程式的外觀和主題</CardDescription>
+                    <CardDescription>{t("settings.appearance.description")}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">主題設定</h3>
+                      <h3 className="text-lg font-medium">{t("settings.appearance.themeSettings")}</h3>
                       <div className="space-y-2">
-                        <Label>主題模式</Label>
+                        <Label>{t("settings.appearance.themeMode")}</Label>
                         <Select value={preferencesForm.theme} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, theme: value })}>
                           <SelectTrigger className="w-40">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="light">淺色模式</SelectItem>
-                            <SelectItem value="dark">深色模式</SelectItem>
-                            <SelectItem value="system">跟隨系統</SelectItem>
+                            <SelectItem value="light">{t("settings.appearance.lightMode")}</SelectItem>
+                            <SelectItem value="dark">{t("settings.appearance.darkMode")}</SelectItem>
+                            <SelectItem value="system">{t("settings.appearance.systemMode")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1046,12 +1048,12 @@ const Settings = () => {
                     <Separator />
 
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">顯示設定</h3>
+                      <h3 className="text-lg font-medium">{t("settings.appearance.displaySettings")}</h3>
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label>緊湊模式</Label>
-                            <p className="text-sm text-muted-foreground">減少介面元素間距</p>
+                            <Label>{t("settings.appearance.compactMode")}</Label>
+                            <p className="text-sm text-muted-foreground">{t("settings.appearance.compactModeDescription")}</p>
                           </div>
                           <Switch 
                             checked={preferencesForm.compactMode}
@@ -1060,8 +1062,8 @@ const Settings = () => {
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="space-y-0.5">
-                            <Label>動畫效果</Label>
-                            <p className="text-sm text-muted-foreground">啟用介面動畫和轉場效果</p>
+                            <Label>{t("settings.appearance.animations")}</Label>
+                            <p className="text-sm text-muted-foreground">{t("settings.appearance.animationsDescription")}</p>
                           </div>
                           <Switch 
                             checked={preferencesForm.animations}
@@ -1074,39 +1076,39 @@ const Settings = () => {
                     <Separator />
 
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">儀表板設定</h3>
+                      <h3 className="text-lg font-medium">{t("settings.appearance.dashboardSettings")}</h3>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>預設檢視</Label>
+                          <Label>{t("settings.appearance.defaultView")}</Label>
                           <Select value={preferencesForm.defaultView} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, defaultView: value })}>
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="overview">總覽</SelectItem>
-                              <SelectItem value="analytics">分析</SelectItem>
-                              <SelectItem value="reports">報告</SelectItem>
+                              <SelectItem value="overview">{t("settings.appearance.overview")}</SelectItem>
+                              <SelectItem value="analytics">{t("settings.appearance.analytics")}</SelectItem>
+                              <SelectItem value="reports">{t("settings.appearance.reports")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>每頁項目數</Label>
+                          <Label>{t("settings.appearance.itemsPerPage")}</Label>
                           <Select value={preferencesForm.itemsPerPage.toString()} onValueChange={(value) => setPreferencesForm({ ...preferencesForm, itemsPerPage: parseInt(value) })}>
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="5">5 項</SelectItem>
-                              <SelectItem value="10">10 項</SelectItem>
-                              <SelectItem value="25">25 項</SelectItem>
-                              <SelectItem value="50">50 項</SelectItem>
+                              <SelectItem value="5">{t("settings.appearance.items5")}</SelectItem>
+                              <SelectItem value="10">{t("settings.appearance.items10")}</SelectItem>
+                              <SelectItem value="25">{t("settings.appearance.items25")}</SelectItem>
+                              <SelectItem value="50">{t("settings.appearance.items50")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       </div>
                     </div>
 
-                    <Button onClick={handleSavePreferences}>儲存外觀設定</Button>
+                    <Button onClick={handleSavePreferences}>{t("settings.appearance.saveSettings")}</Button>
                   </CardContent>
                 </Card>
               )}
@@ -1118,9 +1120,9 @@ const Settings = () => {
         <Dialog open={twoFactorDialog} onOpenChange={setTwoFactorDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>設定兩步驗證</DialogTitle>
+              <DialogTitle>{t("settings.security.setup2FA")}</DialogTitle>
               <DialogDescription>
-                {setupStep === 1 ? '掃描 QR 碼來設定您的驗證器應用程式' : '輸入驗證碼來完成設定'}
+                {setupStep === 1 ? t("settings.security.scanQRCode") : t("settings.security.enterVerificationCode")}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -1130,7 +1132,7 @@ const Settings = () => {
                     <img src={twoFactorSetup.qrCode} alt="QR Code" className="max-w-48 max-h-48" />
                   </div>
                   <div className="space-y-2">
-                    <Label>備用代碼 (請妥善保管)</Label>
+                    <Label>{t("settings.twoFactor.backupCodes")}</Label>
                     <div className="grid grid-cols-2 gap-2 text-sm font-mono">
                       {twoFactorSetup.backupCodes.map((code, index) => (
                         <div key={index} className="bg-muted p-2 rounded flex justify-between items-center">
@@ -1147,12 +1149,12 @@ const Settings = () => {
               {setupStep === 2 && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="verification-code">驗證碼</Label>
+                    <Label htmlFor="verification-code">{t("settings.security.verificationCode")}</Label>
                     <Input
                       id="verification-code"
                       value={verificationCode}
                       onChange={(e) => setVerificationCode(e.target.value)}
-                      placeholder="輸入6位數驗證碼"
+                      placeholder={t("settings.security.enterSixDigitCode")}
                       maxLength={6}
                     />
                   </div>
@@ -1161,15 +1163,15 @@ const Settings = () => {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setTwoFactorDialog(false)}>
-                取消
+                {t("common.cancel")}
               </Button>
               {setupStep === 1 ? (
                 <Button onClick={() => setSetupStep(2)}>
-                  下一步
+                  {t("settings.security.nextStep")}
                 </Button>
               ) : (
                 <Button onClick={handleVerify2FA}>
-                  驗證並啟用
+                  {t("settings.security.verifyAndEnable")}
                 </Button>
               )}
             </DialogFooter>

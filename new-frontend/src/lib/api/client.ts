@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import i18n from '@/i18n';
 
 // API 配置
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.74.100.10:8000';
@@ -64,25 +65,30 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = tokenManager.getAccessToken();
     const orgId = tokenManager.getOrganizationId();
-    
-    // Debug logging for CORS issues  
+    const currentLocale = i18n.language || 'en-US';
+
+    // Debug logging for CORS issues
     console.log('🔍 API Request Debug:', {
       url: config.url,
       method: config.method,
       hasToken: !!token,
       hasOrgId: !!orgId,
+      locale: currentLocale,
       tokenPrefix: token ? token.substring(0, 20) + '...' : 'none',
       orgId: orgId || 'none',
       willAddOrgHeader: !!(token && orgId)
     });
-    
+
+    // Always add locale header for internationalization
+    config.headers['Accept-Language'] = currentLocale;
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      
+
       // Only add organization ID header for local development API
       // Production API (api-geo.blitzgame.site) doesn't support this header in CORS
       const isProductionAPI = API_BASE_URL.includes('api-geo.blitzgame.site');
-      
+
       if (orgId && !isProductionAPI) {
         config.headers['X-Organization-ID'] = orgId;
         console.log('✅ Added X-Organization-ID header for local development API');
@@ -94,7 +100,9 @@ apiClient.interceptors.request.use(
       delete config.headers['X-Organization-ID'];
       console.log('🚫 No token found, ensuring no X-Organization-ID header is sent');
     }
-    
+
+    console.log('🌐 Added Accept-Language header:', currentLocale);
+
     return config;
   },
   (error) => {

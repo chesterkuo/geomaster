@@ -29,8 +29,10 @@ import { toast } from "sonner";
 import { contentService, Page, PageCreateData } from "@/lib/api/content";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { useTranslation } from "react-i18next";
 
 const Optimization = () => {
+  const { t } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   
@@ -64,46 +66,46 @@ const Optimization = () => {
     try {
       setIsLoading(true);
       
-      // 嘗試加載頁面，即使身份驗證狀態未確定
+      // Try to load pages even if auth status is uncertain
       const response = await contentService.getPages();
       if (response.success) {
         setPages(response.data);
-        console.log('載入頁面成功:', response.data.length, '個頁面');
+        console.log('Pages loaded successfully:', response.data.length, 'pages');
       } else {
-        console.error('API 響應失敗:', response.message);
-        toast.error("載入頁面失敗: " + response.message);
+        console.error('API response failed:', response.message);
+        toast.error(t("optimization.errors.loadPagesFailed") + ": " + response.message);
         
-        // 如果是身份驗證錯誤，顯示登入提示
+        // If auth error, show login prompt
         if (response.message?.includes('token') || response.message?.includes('unauthorized')) {
           setShowAuthModal(true);
         }
       }
     } catch (error: any) {
-      console.error('載入頁面錯誤:', error);
+      console.error('Load pages error:', error);
       
-      // 處理401認證錯誤
+      // Handle 401 auth error
       if (error.response?.status === 401) {
-        console.log('檢測到401錯誤，需要重新登入');
-        toast.error("登入已過期，請重新登入");
+        console.log('401 error detected, need to re-login');
+        toast.error(t("optimization.errors.loginExpired"));
         setShowAuthModal(true);
         return;
       }
       
-      // 處理403權限錯誤
+      // Handle 403 permission error
       if (error.response?.status === 403) {
-        toast.error("權限不足，請聯絡管理員");
+        toast.error(t("optimization.errors.insufficientPermissions"));
         return;
       }
       
-      // 更詳細的錯誤處理
+      // Detailed error handling
       if (error.response?.status === 401 || error.response?.status === 403) {
-        console.log('身份驗證錯誤，顯示登入對話框');
+        console.log('Authentication error, showing login dialog');
         setShowAuthModal(true);
-        toast.error("請先登入以查看頁面列表");
+        toast.error(t("optimization.errors.pleaseLoginToViewPages"));
       } else if (error.response?.data?.message) {
-        toast.error("載入頁面失敗: " + error.response.data.message);
+        toast.error(t("optimization.errors.loadPagesFailed") + ": " + error.response.data.message);
       } else {
-        toast.error("載入頁面失敗: " + (error.message || '網路連接錯誤'));
+        toast.error(t("optimization.errors.loadPagesFailed") + ": " + (error.message || t("common.networkError")));
       }
     } finally {
       setIsLoading(false);
@@ -112,7 +114,7 @@ const Optimization = () => {
 
   const handleAddPage = async () => {
     if (!newPageData.title.trim() || !newPageData.url.trim()) {
-      toast.error("請填寫完整的標題和URL");
+      toast.error(t("optimization.errors.fillTitleAndUrl"));
       return;
     }
 
@@ -120,7 +122,7 @@ const Optimization = () => {
     try {
       new URL(newPageData.url);
     } catch {
-      toast.error("請輸入有效的URL (例如: https://example.com)");
+      toast.error(t("optimization.errors.invalidUrl"));
       return;
     }
 
@@ -128,7 +130,7 @@ const Optimization = () => {
       setIsAddingPage(true);
       const response = await contentService.addPage(newPageData);
       if (response.success) {
-        toast.success("頁面新增成功！");
+        toast.success(t("optimization.success.pageAdded"));
         setPages(prev => [response.data, ...prev]);
         setShowAddDialog(false);
         setNewPageData({
@@ -138,21 +140,21 @@ const Optimization = () => {
           traffic: "中"
         });
       } else {
-        toast.error("新增失敗: " + response.message);
+        toast.error(t("optimization.errors.addFailed") + ": " + response.message);
       }
     } catch (error: any) {
-      console.error('新增頁面錯誤:', error);
+      console.error('Add page error:', error);
       
-      // 處理特定的錯誤狀態
+      // Handle specific error conditions
       if (error.response?.status === 409 || error.response?.data?.message?.includes('already exists')) {
-        toast.error("此 URL 已存在，重新載入頁面列表");
-        // 重新載入頁面列表以顯示現有頁面
+        toast.error(t("optimization.errors.urlAlreadyExists"));
+        // Reload page list to show existing pages
         loadPages();
         setShowAddDialog(false);
       } else if (error.response?.data?.message) {
-        toast.error("新增失敗: " + error.response.data.message);
+        toast.error(t("optimization.errors.addFailed") + ": " + error.response.data.message);
       } else {
-        toast.error("新增失敗: " + (error.message || '未知錯誤'));
+        toast.error(t("optimization.errors.addFailed") + ": " + (error.message || t("common.unknownError")));
       }
     } finally {
       setIsAddingPage(false);
@@ -163,7 +165,7 @@ const Optimization = () => {
     try {
       setIsAnalyzing(true);
       
-      // 立即設置頁面為分析中狀態
+      // Immediately set page to analyzing state
       const analyzingPage: Page = {
         ...page,
         analysisStatus: 'analyzing'
@@ -174,13 +176,13 @@ const Optimization = () => {
         setSelectedPage(analyzingPage);
       }
       
-      toast.info(`開始分析 ${page.title}...`);
+      toast.info(t("optimization.info.startingAnalysis", { title: page.title }));
       
       const response = await contentService.analyzePage(page.id);
       if (response.success) {
         const { geoScore, estimatedImprovement, issues, message } = response.data;
         
-        // 更新頁面狀態
+        // Update page state
         const updatedPage: Page = {
           ...page,
           geoScore,
@@ -190,61 +192,61 @@ const Optimization = () => {
           lastAnalyzedAt: new Date().toISOString()
         };
 
-        // 更新頁面列表
+        // Update page list
         setPages(prev => prev.map(p => p.id === page.id ? updatedPage : p));
         
-        // 如果當前正在查看詳細頁面，也更新選中的頁面
+        // If currently viewing detail page, also update selected page
         if (selectedPage?.id === page.id) {
           setSelectedPage(updatedPage);
         }
 
-        toast.success(`${page.title} 分析完成！GEO 分數: ${geoScore}`);
+        toast.success(t("optimization.success.analysisComplete", { title: page.title, score: geoScore }));
         
-        // 顯示分析結果詳情
+        // Show analysis result details
         if (issues && issues.length > 0) {
           setTimeout(() => {
-            toast.info(`發現 ${issues.length} 個可優化項目，點擊查看詳情了解更多`);
+            toast.info(t("optimization.info.issuesFound", { count: issues.length }));
           }, 2000);
         }
       } else {
-        // 分析失敗，恢復原狀態
+        // Analysis failed, restore original state
         setPages(prev => prev.map(p => p.id === page.id ? page : p));
         if (selectedPage?.id === page.id) {
           setSelectedPage(page);
         }
-        toast.error("分析失敗: " + response.message);
+        toast.error(t("optimization.errors.analysisFailed") + ": " + response.message);
       }
     } catch (error: any) {
-      console.error('分析頁面錯誤:', error);
-      
-      // 分析失敗，恢復原狀態
+      console.error('Analyze page error:', error);
+
+      // Analysis failed, restore original state
       setPages(prev => prev.map(p => p.id === page.id ? page : p));
       if (selectedPage?.id === page.id) {
         setSelectedPage(page);
       }
-      
-      toast.error("分析失敗: " + (error.message || '未知錯誤'));
+
+      toast.error(t("optimization.errors.analysisFailed") + ": " + (error.message || t("common.unknownError")));
     } finally {
       setIsAnalyzing(false);
     }
   };
 
   const handleDeletePage = async (pageId: string, title: string) => {
-    if (!confirm(`確定要刪除「${title}」嗎？`)) {
+    if (!confirm(t("optimization.confirmDelete", { title }))) {
       return;
     }
 
     try {
       const response = await contentService.deletePage(pageId);
       if (response.success) {
-        toast.success("頁面已刪除");
+        toast.success(t("optimization.success.pageDeleted"));
         setPages(prev => prev.filter(p => p.id !== pageId));
       } else {
-        toast.error("刪除失敗: " + response.message);
+        toast.error(t("optimization.errors.deleteFailed") + ": " + response.message);
       }
     } catch (error: any) {
-      console.error('刪除頁面錯誤:', error);
-      toast.error("刪除失敗: " + (error.message || '未知錯誤'));
+      console.error('Delete page error:', error);
+      toast.error(t("optimization.errors.deleteFailed") + ": " + (error.message || t("common.unknownError")));
     }
   };
 
@@ -275,6 +277,16 @@ const Optimization = () => {
     }
   };
 
+  // Helper function to get traffic level translation key
+  const getTrafficLevelKey = (traffic: string) => {
+    const trafficMap: Record<string, string> = {
+      '高': 'high',
+      '中': 'medium',
+      '低': 'low'
+    };
+    return trafficMap[traffic] || traffic;
+  };
+
   const filteredPages = pages.filter(page => {
     if (filters.geoScore === "low" && (page.geoScore ?? 0) >= 60) return false;
     if (filters.traffic !== "all" && page.traffic !== filters.traffic) return false;
@@ -282,7 +294,7 @@ const Optimization = () => {
     return true;
   });
 
-  // 詳細頁面視圖
+  // Detailed page view
   if (selectedPage) {
     return (
       <DashboardLayout>
@@ -295,10 +307,10 @@ const Optimization = () => {
                 className="border-border"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                返回列表
+                {t("optimization.backToList")}
               </Button>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">頁面詳細分析</h1>
+                <h1 className="text-3xl font-bold tracking-tight">{t("optimization.pageDetailAnalysis")}</h1>
                 <p className="text-muted-foreground">{selectedPage.url}</p>
               </div>
             </div>
@@ -306,11 +318,11 @@ const Optimization = () => {
               {selectedPage.geoScore && (
                 <>
                   <Badge variant="secondary" className={getScoreBgColor(selectedPage.geoScore)}>
-                    當前 GEO: {selectedPage.geoScore}
+                    {t("optimization.currentGeo")}: {selectedPage.geoScore}
                   </Badge>
                   {selectedPage.estimatedImprovement && (
                     <Badge variant="default" className="bg-green-100 text-green-800">
-                      預估: {selectedPage.estimatedImprovement}
+                      {t("optimization.estimated")}: {selectedPage.estimatedImprovement}
                     </Badge>
                   )}
                 </>
@@ -319,17 +331,17 @@ const Optimization = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* 頁面資訊卡片 */}
+            {/* Page Information Card */}
             <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <FileText className="mr-2 h-5 w-5" />
-                  頁面資訊
+                  {t("optimization.pageInfo")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>頁面標題</Label>
+                  <Label>{t("optimization.pageTitle")}</Label>
                   <p className="text-sm text-muted-foreground mt-1">{selectedPage.title}</p>
                 </div>
                 <div>
@@ -338,21 +350,21 @@ const Optimization = () => {
                 </div>
                 <div className="flex justify-between">
                   <div>
-                    <Label>類型</Label>
+                    <Label>{t("optimization.type")}</Label>
                     <Badge variant="outline" className="mt-1 block w-fit">
                       {selectedPage.type}
                     </Badge>
                   </div>
                   <div>
-                    <Label>流量等級</Label>
+                    <Label>{t("optimization.trafficLevel")}</Label>
                     <Badge variant={selectedPage.traffic === "高" ? "default" : "secondary"} className="mt-1 block w-fit">
-                      {selectedPage.traffic}流量
+                      {t("optimization.trafficLevels." + getTrafficLevelKey(selectedPage.traffic))}
                     </Badge>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label>分析狀態</Label>
+                    <Label>{t("optimization.analysisStatus")}</Label>
                     <div className="flex items-center space-x-2 mt-1">
                       {getStatusIcon(selectedPage.analysisStatus)}
                       <span className="text-sm capitalize">{selectedPage.analysisStatus}</span>
@@ -369,18 +381,18 @@ const Optimization = () => {
                     ) : (
                       <RefreshCw className="mr-2 h-4 w-4" />
                     )}
-                    重新分析
+                    {t("optimization.reanalyze")}
                   </Button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* 分析結果卡片 */}
+            {/* Analysis Results Card */}
             <Card className="bg-gradient-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Search className="mr-2 h-5 w-5 text-primary" />
-                  分析結果
+                  {t("optimization.analysisResults")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -389,7 +401,7 @@ const Optimization = () => {
                     {selectedPage.geoScore !== undefined ? (
                       <>
                         <div className="flex items-center justify-between p-3 bg-gradient-subtle rounded-lg">
-                          <span className="font-medium">GEO 分數</span>
+                          <span className="font-medium">{t("optimization.geoScore")}</span>
                           <span className={`font-bold text-xl ${getScoreColor(selectedPage.geoScore)}`}>
                             {selectedPage.geoScore} / 100
                           </span>
@@ -400,121 +412,121 @@ const Optimization = () => {
                             <TrendingUp className="h-5 w-5 text-green-500" />
                             <div>
                               <span className="text-sm font-medium text-green-800">
-                                預估優化潛力
+                                {t("optimization.optimizationPotential")}
                               </span>
                               <p className="text-sm text-green-600">
-                                可提升至 {selectedPage.estimatedImprovement} 分 
+                                {t("optimization.canImproveToScore", { score: selectedPage.estimatedImprovement })}
                                 <span className="font-medium">
-                                  (+{selectedPage.estimatedImprovement - selectedPage.geoScore} 分)
+                                  (+{selectedPage.estimatedImprovement - selectedPage.geoScore} {t("optimization.points")})
                                 </span>
                               </p>
                             </div>
                           </div>
                         )}
 
-                        {/* GEO分數計算說明 */}
+                        {/* GEO Score Explanation */}
                         <div className="border border-blue-200 bg-blue-50 rounded-lg p-4">
                           <div className="flex items-center mb-3">
                             <Info className="h-5 w-5 text-blue-600 mr-2" />
                             <Label className="text-sm font-medium text-blue-800">
-                              GEO 分數計算說明
+                              {t("optimization.geoScoreExplanation")}
                             </Label>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div className="space-y-2">
-                              <h4 className="font-medium text-blue-800">技術SEO (30%)</h4>
+                              <h4 className="font-medium text-blue-800">{t("optimization.technicalSEO")} (30%)</h4>
                               <ul className="text-blue-700 space-y-1 pl-3">
-                                <li>• 網頁載入速度</li>
-                                <li>• 行動裝置適配性</li>
-                                <li>• HTML標籤結構</li>
-                                <li>• SSL安全性</li>
+                                <li>• {t("optimization.pageLoadSpeed")}</li>
+                                <li>• {t("optimization.mobileCompatibility")}</li>
+                                <li>• {t("optimization.htmlStructure")}</li>
+                                <li>• {t("optimization.sslSecurity")}</li>
                               </ul>
                             </div>
                             <div className="space-y-2">
-                              <h4 className="font-medium text-blue-800">內容品質 (25%)</h4>
+                              <h4 className="font-medium text-blue-800">{t("optimization.contentQuality")} (25%)</h4>
                               <ul className="text-blue-700 space-y-1 pl-3">
-                                <li>• 標題標籤優化</li>
-                                <li>• 內容長度與深度</li>
-                                <li>• 關鍵字分佈</li>
-                                <li>• 內容原創性</li>
+                                <li>• {t("optimization.titleTagOptimization")}</li>
+                                <li>• {t("optimization.contentLengthAndDepth")}</li>
+                                <li>• {t("optimization.keywordDistribution")}</li>
+                                <li>• {t("optimization.contentOriginality")}</li>
                               </ul>
                             </div>
                             <div className="space-y-2">
-                              <h4 className="font-medium text-blue-800">用戶體驗 (25%)</h4>
+                              <h4 className="font-medium text-blue-800">{t("optimization.userExperience")} (25%)</h4>
                               <ul className="text-blue-700 space-y-1 pl-3">
-                                <li>• 網站導航結構</li>
-                                <li>• 互動元素設計</li>
-                                <li>• 內容可讀性</li>
-                                <li>• 網頁無障礙性</li>
+                                <li>• {t("optimization.navigationStructure")}</li>
+                                <li>• {t("optimization.interactiveElements")}</li>
+                                <li>• {t("optimization.contentReadability")}</li>
+                                <li>• {t("optimization.accessibility")}</li>
                               </ul>
                             </div>
                             <div className="space-y-2">
-                              <h4 className="font-medium text-blue-800">搜尋優化 (20%)</h4>
+                              <h4 className="font-medium text-blue-800">{t("optimization.searchOptimization")} (20%)</h4>
                               <ul className="text-blue-700 space-y-1 pl-3">
-                                <li>• Meta描述優化</li>
-                                <li>• 內部連結策略</li>
-                                <li>• 圖片Alt標籤</li>
-                                <li>• Schema標記</li>
+                                <li>• {t("optimization.metaDescriptionOptimization")}</li>
+                                <li>• {t("optimization.internalLinkStrategy")}</li>
+                                <li>• {t("optimization.imageAltTags")}</li>
+                                <li>• {t("optimization.schemaMarkup")}</li>
                               </ul>
                             </div>
                           </div>
                         </div>
 
-                        {/* 具體優化建議 */}
+                        {/* Specific Optimization Suggestions */}
                         <div className="border border-purple-200 bg-purple-50 rounded-lg p-4">
                           <div className="flex items-center mb-3">
                             <HelpCircle className="h-5 w-5 text-purple-600 mr-2" />
                             <Label className="text-sm font-medium text-purple-800">
-                              針對此頁面的優化建議
+                              {t("optimization.optimizationSuggestionsForThisPage")}
                             </Label>
                           </div>
                           <div className="space-y-3">
                             {selectedPage.geoScore < 70 && (
                               <div className="space-y-2">
-                                <h4 className="font-medium text-purple-800">優先處理項目：</h4>
+                                <h4 className="font-medium text-purple-800">{t("optimization.priorityItems")}:</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   {selectedPage.geoScore < 60 && (
                                     <div className="bg-red-100 border border-red-200 rounded p-3">
-                                      <h5 className="font-medium text-red-800 mb-2">🚨 高優先級</h5>
+                                      <h5 className="font-medium text-red-800 mb-2">🚨 {t("optimization.highPriority")}</h5>
                                       <ul className="text-sm text-red-700 space-y-1">
-                                        <li>• 檢查網頁載入速度（目標 &lt; 3秒）</li>
-                                        <li>• 優化標題標籤（H1, H2 結構）</li>
-                                        <li>• 確保行動裝置相容性</li>
-                                        <li>• 新增或優化 Meta 描述</li>
+                                        <li>• {t("optimization.checkPageLoadSpeed")}</li>
+                                        <li>• {t("optimization.optimizeTitleTags")}</li>
+                                        <li>• {t("optimization.ensureMobileCompatibility")}</li>
+                                        <li>• {t("optimization.addOrOptimizeMetaDescription")}</li>
                                       </ul>
                                     </div>
                                   )}
                                   {selectedPage.geoScore >= 40 && (
                                     <div className="bg-yellow-100 border border-yellow-200 rounded p-3">
-                                      <h5 className="font-medium text-yellow-800 mb-2">⚡ 中優先級</h5>
+                                      <h5 className="font-medium text-yellow-800 mb-2">⚡ {t("optimization.mediumPriority")}</h5>
                                       <ul className="text-sm text-yellow-700 space-y-1">
-                                        <li>• 增加內容長度（建議 &gt; 300字）</li>
-                                        <li>• 優化關鍵字密度（2-4%）</li>
-                                        <li>• 新增內部連結</li>
-                                        <li>• 改善圖片 Alt 標籤</li>
+                                        <li>• {t("optimization.increaseContentLength")}</li>
+                                        <li>• {t("optimization.optimizeKeywordDensity")}</li>
+                                        <li>• {t("optimization.addInternalLinks")}</li>
+                                        <li>• {t("optimization.improveImageAltTags")}</li>
                                       </ul>
                                     </div>
                                   )}
                                 </div>
                                 <div className="bg-green-100 border border-green-200 rounded p-3">
-                                  <h5 className="font-medium text-green-800 mb-2">📈 進階優化</h5>
+                                  <h5 className="font-medium text-green-800 mb-2">📈 {t("optimization.advancedOptimization")}</h5>
                                   <ul className="text-sm text-green-700 space-y-1">
-                                    <li>• 實施 Schema.org 結構化標記</li>
-                                    <li>• 優化 Core Web Vitals 指標</li>
-                                    <li>• 建立相關頁面內容集群</li>
-                                    <li>• 增強用戶互動體驗元素</li>
+                                    <li>• {t("optimization.implementSchemaMarkup")}</li>
+                                    <li>• {t("optimization.optimizeCoreWebVitals")}</li>
+                                    <li>• {t("optimization.buildContentClusters")}</li>
+                                    <li>• {t("optimization.enhanceUserInteraction")}</li>
                                   </ul>
                                 </div>
                               </div>
                             )}
                             {selectedPage.geoScore >= 70 && (
                               <div className="bg-green-100 border border-green-200 rounded p-3">
-                                <h5 className="font-medium text-green-800 mb-2">🎯 維持優勢</h5>
+                                <h5 className="font-medium text-green-800 mb-2">🎯 {t("optimization.maintainAdvantage")}</h5>
                                 <ul className="text-sm text-green-700 space-y-1">
-                                  <li>• 定期更新內容保持新鮮度</li>
-                                  <li>• 監控載入速度變化</li>
-                                  <li>• 擴展相關主題內容</li>
-                                  <li>• 優化內部連結網絡</li>
+                                  <li>• {t("optimization.regularlyUpdateContent")}</li>
+                                  <li>• {t("optimization.monitorLoadSpeedChanges")}</li>
+                                  <li>• {t("optimization.expandRelatedContent")}</li>
+                                  <li>• {t("optimization.optimizeInternalLinkNetwork")}</li>
                                 </ul>
                               </div>
                             )}
@@ -524,7 +536,7 @@ const Optimization = () => {
                     ) : (
                       <div className="text-center py-4">
                         <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-yellow-500" />
-                        <p className="text-sm text-muted-foreground">分析完成，但未獲得評分數據</p>
+                        <p className="text-sm text-muted-foreground">{t("optimization.analysisCompleteNoScore")}</p>
                       </div>
                     )}
 
@@ -533,7 +545,7 @@ const Optimization = () => {
                         <div className="flex items-center mb-3">
                           <AlertTriangle className="h-5 w-5 text-amber-600 mr-2" />
                           <Label className="text-sm font-medium text-amber-800">
-                            發現 {selectedPage.issues.length} 個可優化項目
+                            {t("optimization.issuesFoundCount", { count: selectedPage.issues.length })}
                           </Label>
                         </div>
                         <ul className="space-y-2">
@@ -546,13 +558,13 @@ const Optimization = () => {
                         </ul>
                       </div>
                     ) : selectedPage.geoScore !== undefined ? (
-                      // 根據分數顯示不同的訊息
+                      // Show different messages based on score
                       selectedPage.geoScore >= 70 ? (
                         <div className="border border-green-200 bg-green-50 rounded-lg p-4">
                           <div className="flex items-center">
                             <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
                             <span className="text-sm font-medium text-green-800">
-                              恭喜！此頁面表現優秀，已達到良好水準
+                              {t("optimization.excellentPerformance")}
                             </span>
                           </div>
                         </div>
@@ -561,7 +573,7 @@ const Optimization = () => {
                           <div className="flex items-center">
                             <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
                             <span className="text-sm font-medium text-yellow-800">
-                              此頁面表現一般，仍有優化空間，建議檢查技術SEO和內容品質
+                              {t("optimization.averagePerformance")}
                             </span>
                           </div>
                         </div>
@@ -570,7 +582,7 @@ const Optimization = () => {
                           <div className="flex items-center">
                             <XCircle className="h-5 w-5 text-red-600 mr-2" />
                             <span className="text-sm font-medium text-red-800">
-                              此頁面需要重點改善，建議優先處理基礎SEO、載入速度和內容結構
+                              {t("optimization.needsImprovement")}
                             </span>
                           </div>
                         </div>
@@ -581,7 +593,7 @@ const Optimization = () => {
                       <div className="border-t pt-3">
                         <p className="text-xs text-muted-foreground flex items-center">
                           <Clock className="h-3 w-3 mr-1" />
-                          最後分析時間: {new Date(selectedPage.lastAnalyzedAt).toLocaleString('zh-TW')}
+                          {t("optimization.lastAnalyzedAt")}: {new Date(selectedPage.lastAnalyzedAt).toLocaleString()}
                         </p>
                       </div>
                     )}
@@ -590,21 +602,21 @@ const Optimization = () => {
                   <div className="flex items-center justify-center py-8">
                     <div className="text-center">
                       <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-                      <p className="text-sm text-muted-foreground">正在分析中...</p>
+                      <p className="text-sm text-muted-foreground">{t("optimization.analyzing")}</p>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center py-8">
                     <div className="text-center">
                       <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-muted-foreground">尚未進行分析</p>
+                      <p className="text-sm text-muted-foreground">{t("optimization.notAnalyzedYet")}</p>
                       <Button 
                         onClick={() => handleAnalyzePage(selectedPage)}
                         disabled={isAnalyzing}
                         size="sm"
                         className="mt-2"
                       >
-                        開始分析
+                        {t("optimization.startAnalysis")}
                       </Button>
                     </div>
                   </div>
@@ -617,42 +629,42 @@ const Optimization = () => {
     );
   }
 
-  // 主列表視圖
+  // Main list view
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* 頂部操作區 */}
+        {/* Top Action Area */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">內容優化</h1>
-            <p className="text-muted-foreground">管理和優化您的網站頁面以提升 GEO 分數</p>
+            <h1 className="text-3xl font-bold tracking-tight">{t("optimization.title")}</h1>
+            <p className="text-muted-foreground">{t("optimization.description")}</p>
           </div>
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
               <Button className="bg-primary text-primary-foreground">
                 <Plus className="mr-2 h-4 w-4" />
-                新增頁面分析
+                {t("optimization.addPageAnalysis")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>新增頁面分析</DialogTitle>
+                <DialogTitle>{t("optimization.addPageAnalysis")}</DialogTitle>
                 <DialogDescription>
-                  輸入要分析的頁面資訊，系統會對該頁面進行 GEO 分析
+                  {t("optimization.addPageDescription")}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title">頁面標題</Label>
+                  <Label htmlFor="title">{t("optimization.pageTitle")}</Label>
                   <Input
                     id="title"
-                    placeholder="例如：產品介紹頁面"
+                    placeholder={t("optimization.pageTitlePlaceholder")}
                     value={newPageData.title}
                     onChange={(e) => setNewPageData({ ...newPageData, title: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="url">頁面URL</Label>
+                  <Label htmlFor="url">{t("optimization.pageUrl")}</Label>
                   <Input
                     id="url"
                     placeholder="https://example.com/page"
@@ -662,37 +674,37 @@ const Optimization = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>頁面類型</Label>
+                    <Label>{t("optimization.pageType")}</Label>
                     <Select value={newPageData.type} onValueChange={(value: any) => setNewPageData({ ...newPageData, type: value })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="產品頁">產品頁</SelectItem>
-                        <SelectItem value="部落格">部落格</SelectItem>
-                        <SelectItem value="FAQ">FAQ</SelectItem>
-                        <SelectItem value="服務頁">服務頁</SelectItem>
-                        <SelectItem value="其他">其他</SelectItem>
+                        <SelectItem value="產品頁">{t("optimization.pageTypes.product")}</SelectItem>
+                        <SelectItem value="部落格">{t("optimization.pageTypes.blog")}</SelectItem>
+                        <SelectItem value="FAQ">{t("optimization.pageTypes.faq")}</SelectItem>
+                        <SelectItem value="服務頁">{t("optimization.pageTypes.service")}</SelectItem>
+                        <SelectItem value="其他">{t("optimization.pageTypes.other")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label>流量等級</Label>
+                    <Label>{t("optimization.trafficLevel")}</Label>
                     <Select value={newPageData.traffic} onValueChange={(value: any) => setNewPageData({ ...newPageData, traffic: value })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="高">高流量</SelectItem>
-                        <SelectItem value="中">中等流量</SelectItem>
-                        <SelectItem value="低">低流量</SelectItem>
+                        <SelectItem value="高">{t("optimization.trafficLevels.high")}</SelectItem>
+                        <SelectItem value="中">{t("optimization.trafficLevels.medium")}</SelectItem>
+                        <SelectItem value="低">{t("optimization.trafficLevels.low")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                    取消
+                    {t("common.cancel")}
                   </Button>
                   <Button onClick={handleAddPage} disabled={isAddingPage}>
                     {isAddingPage ? (
@@ -700,7 +712,7 @@ const Optimization = () => {
                     ) : (
                       <Plus className="mr-2 h-4 w-4" />
                     )}
-                    新增頁面
+                    {t("optimization.addPage")}
                   </Button>
                 </div>
               </div>
@@ -708,55 +720,55 @@ const Optimization = () => {
           </Dialog>
         </div>
 
-        {/* 篩選器 */}
+        {/* Filters */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Filter className="mr-2 h-5 w-5" />
-              篩選條件
+              {t("optimization.filterConditions")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label className="text-sm font-medium mb-2 block">GEO 分數</Label>
+                <Label className="text-sm font-medium mb-2 block">{t("optimization.geoScore")}</Label>
                 <Select value={filters.geoScore} onValueChange={(value) => setFilters({...filters, geoScore: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="選擇分數範圍" />
+                    <SelectValue placeholder={t("optimization.selectScoreRange")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">全部分數</SelectItem>
-                    <SelectItem value="low">低於 60 分</SelectItem>
+                    <SelectItem value="all">{t("optimization.allScores")}</SelectItem>
+                    <SelectItem value="low">{t("optimization.below60")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-sm font-medium mb-2 block">流量等級</Label>
+                <Label className="text-sm font-medium mb-2 block">{t("optimization.trafficLevel")}</Label>
                 <Select value={filters.traffic} onValueChange={(value) => setFilters({...filters, traffic: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="選擇流量等級" />
+                    <SelectValue placeholder={t("optimization.selectTrafficLevel")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">全部流量</SelectItem>
-                    <SelectItem value="高">高流量優先</SelectItem>
-                    <SelectItem value="中">中等流量</SelectItem>
-                    <SelectItem value="低">低流量</SelectItem>
+                    <SelectItem value="all">{t("optimization.allTraffic")}</SelectItem>
+                    <SelectItem value="高">{t("optimization.highTrafficPriority")}</SelectItem>
+                    <SelectItem value="中">{t("optimization.trafficLevels.medium")}</SelectItem>
+                    <SelectItem value="低">{t("optimization.trafficLevels.low")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-sm font-medium mb-2 block">頁面類型</Label>
+                <Label className="text-sm font-medium mb-2 block">{t("optimization.pageType")}</Label>
                 <Select value={filters.type} onValueChange={(value) => setFilters({...filters, type: value})}>
                   <SelectTrigger>
-                    <SelectValue placeholder="選擇頁面類型" />
+                    <SelectValue placeholder={t("optimization.selectPageType")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">全部類型</SelectItem>
-                    <SelectItem value="產品頁">產品頁</SelectItem>
-                    <SelectItem value="部落格">部落格</SelectItem>
-                    <SelectItem value="FAQ">FAQ</SelectItem>
-                    <SelectItem value="服務頁">服務頁</SelectItem>
-                    <SelectItem value="其他">其他</SelectItem>
+                    <SelectItem value="all">{t("optimization.allTypes")}</SelectItem>
+                    <SelectItem value="產品頁">{t("optimization.pageTypes.product")}</SelectItem>
+                    <SelectItem value="部落格">{t("optimization.pageTypes.blog")}</SelectItem>
+                    <SelectItem value="FAQ">{t("optimization.pageTypes.faq")}</SelectItem>
+                    <SelectItem value="服務頁">{t("optimization.pageTypes.service")}</SelectItem>
+                    <SelectItem value="其他">{t("optimization.pageTypes.other")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -764,19 +776,19 @@ const Optimization = () => {
           </CardContent>
         </Card>
 
-        {/* 頁面列表 */}
+        {/* Page List */}
         <Card className="bg-gradient-card border-border">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>內容頁面列表</CardTitle>
+                <CardTitle>{t("optimization.contentPageList")}</CardTitle>
                 <CardDescription>
-                  {isLoading ? "載入中..." : `共找到 ${filteredPages.length} 個頁面`}
+                  {isLoading ? t("common.loading") : t("optimization.pagesFoundCount", { count: filteredPages.length })}
                 </CardDescription>
               </div>
               <Button variant="outline" onClick={loadPages} disabled={isLoading}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                重新載入
+                {t("common.reload")}
               </Button>
             </div>
           </CardHeader>
@@ -785,7 +797,7 @@ const Optimization = () => {
               <div className="flex items-center justify-center py-8">
                 <div className="text-center">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-primary" />
-                  <p className="text-sm text-muted-foreground">載入頁面中...</p>
+                  <p className="text-sm text-muted-foreground">{t("optimization.loadingPages")}</p>
                 </div>
               </div>
             ) : filteredPages.length === 0 ? (
@@ -799,24 +811,24 @@ const Optimization = () => {
                           <Lock className="h-6 w-6 text-primary" />
                         </div>
                       </div>
-                      <p className="text-lg font-medium text-muted-foreground mb-2">需要登入才能查看頁面優化報告</p>
-                      <p className="text-sm text-muted-foreground mb-6">登入後即可新增頁面並進行完整的 GEO 分析</p>
+                      <p className="text-lg font-medium text-muted-foreground mb-2">{t("optimization.loginRequiredForOptimizationReport")}</p>
+                      <p className="text-sm text-muted-foreground mb-6">{t("optimization.loginToAddPagesAndAnalyze")}</p>
                       <div className="space-y-3">
                         <Button onClick={() => setShowAuthModal(true)} className="bg-primary text-primary-foreground">
                           <User className="mr-2 h-4 w-4" />
-                          立即登入
+                          {t("auth.loginNow")}
                         </Button>
-                        <p className="text-xs text-muted-foreground">還沒有帳號嗎？登入窗口中可以選擇註冊</p>
+                        <p className="text-xs text-muted-foreground">{t("auth.noAccountSignupPrompt")}</p>
                       </div>
                     </>
                   ) : (
                     <>
                       <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-lg font-medium text-muted-foreground mb-2">尚無頁面</p>
-                      <p className="text-sm text-muted-foreground mb-4">開始新增頁面進行 GEO 分析</p>
+                      <p className="text-lg font-medium text-muted-foreground mb-2">{t("optimization.noPages")}</p>
+                      <p className="text-sm text-muted-foreground mb-4">{t("optimization.startAddingPagesForAnalysis")}</p>
                       <Button onClick={() => setShowAddDialog(true)}>
                         <Plus className="mr-2 h-4 w-4" />
-                        新增第一個頁面
+                        {t("optimization.addFirstPage")}
                       </Button>
                     </>
                   )}
@@ -838,7 +850,7 @@ const Optimization = () => {
                           <h3 className="font-medium">{page.title}</h3>
                           <Badge variant="outline" className="text-xs">{page.type}</Badge>
                           <Badge variant={page.traffic === "高" ? "default" : "secondary"} className="text-xs">
-                            {page.traffic}流量
+                            {t("optimization.trafficLevels." + getTrafficLevelKey(page.traffic))}
                           </Badge>
                           {getStatusIcon(page.analysisStatus)}
                         </div>
@@ -847,18 +859,18 @@ const Optimization = () => {
                           {page.geoScore ? (
                             <>
                               <div className="flex items-center space-x-2">
-                                <span className="text-sm text-muted-foreground">GEO:</span>
-                                <span className={`font-bold ${getScoreColor(page.geoScore)}`}>{page.geoScore} 分</span>
+                                <span className="text-sm text-muted-foreground">{t("optimization.geo")}:</span>
+                                <span className={`font-bold ${getScoreColor(page.geoScore)}`}>{page.geoScore} {t("optimization.points")}</span>
                               </div>
                               {page.estimatedImprovement && (
                                 <div className="flex items-center space-x-2">
                                   <TrendingUp className="h-3 w-3 text-green-500" />
-                                  <span className="text-sm text-green-600">可提升至 {page.estimatedImprovement} 分</span>
+                                  <span className="text-sm text-green-600">{t("optimization.canImproveToScore", { score: page.estimatedImprovement })}</span>
                                 </div>
                               )}
                             </>
                           ) : (
-                            <span className="text-sm text-muted-foreground">尚未分析</span>
+                            <span className="text-sm text-muted-foreground">{t("optimization.notAnalyzed")}</span>
                           )}
                         </div>
                       </div>
@@ -876,14 +888,14 @@ const Optimization = () => {
                         ) : (
                           <RefreshCw className="mr-2 h-4 w-4" />
                         )}
-                        分析
+                        {t("optimization.analyze")}
                       </Button>
                       <Button 
                         onClick={() => setSelectedPage(page)}
                         size="sm"
                         className="bg-primary text-primary-foreground shadow-glow"
                       >
-                        查看詳情
+                        {t("optimization.viewDetails")}
                       </Button>
                       <Button 
                         onClick={() => handleDeletePage(page.id, page.title)}
@@ -891,7 +903,7 @@ const Optimization = () => {
                         variant="ghost"
                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
                       >
-                        刪除
+                        {t("common.delete")}
                       </Button>
                     </div>
                   </div>
