@@ -15,6 +15,7 @@ import { RealTimeMetricsService } from './services/realTimeMetrics.service';
 import { queueManager } from './services/queue/queueManager';
 import { queueWorker } from './services/queue/queueWorker';
 import { QueryTypes } from 'sequelize';
+import { platformFactory } from './services/platforms/platformFactory';
 
 class App {
   public app: Application;
@@ -31,6 +32,7 @@ class App {
 
   async initialize(): Promise<void> {
     await this.initializeDatabase();
+    this.initializePlatforms();
     this.initializeWebSocket();
     await this.initializeBackgroundJobs();
   }
@@ -182,6 +184,17 @@ class App {
     }
   }
 
+  private initializePlatforms(): void {
+    try {
+      // Clear platform factory cache to ensure fresh instances with updated configurations
+      platformFactory.clearAllCache();
+      logger.info('Platform factory cache cleared for fresh model configurations');
+    } catch (error) {
+      logger.error('Platform cache clearing failed:', error);
+      // Don't exit - this is not critical for startup
+    }
+  }
+
   private initializeWebSocket(): void {
     try {
       // Initialize the existing WebSocket service
@@ -293,8 +306,15 @@ class App {
       for (const org of organizationsWithTracking as any[]) {
         if (!org.tracking_enabled || org.website_count === 0) continue;
 
-        // Parse platforms from JSON
-        const platforms = org.platforms ? JSON.parse(org.platforms) : ['gemini', 'claude'];
+        // Parse platforms - handle both string and array formats
+        let platforms: string[] = ['gemini', 'claude']; // default
+        if (org.platforms) {
+          if (typeof org.platforms === 'string') {
+            platforms = org.platforms.split(',').map((p: string) => p.trim());
+          } else if (Array.isArray(org.platforms)) {
+            platforms = org.platforms;
+          }
+        }
 
         // Parse keywords from comma-separated string
         const keywords = org.keywords ? org.keywords.split(',').map((k: string) => k.trim()) : ['ai', 'tracking'];

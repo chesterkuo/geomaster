@@ -97,7 +97,7 @@ export class AITrackingPlatformFactory implements PlatformFactory {
         timeout: 30000,
       },
       claude: {
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-sonnet-20241213',
         maxTokens: 2000,
         temperature: 0.1,
         requestsPerMinute: 50,
@@ -105,7 +105,7 @@ export class AITrackingPlatformFactory implements PlatformFactory {
         timeout: 30000,
       },
       gemini: {
-        model: 'gemini-pro',
+        model: 'gemini-2.5-flash',
         maxTokens: 2000,
         temperature: 0.1,
         requestsPerMinute: 60,
@@ -161,7 +161,7 @@ export class AITrackingPlatformFactory implements PlatformFactory {
         timeout: 30000,
       },
       claude: {
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-sonnet-20241213',
         maxTokens: 2000,
         temperature: 0.1,
         requestsPerMinute: 50,
@@ -169,7 +169,7 @@ export class AITrackingPlatformFactory implements PlatformFactory {
         timeout: 30000,
       },
       gemini: {
-        model: 'gemini-pro',
+        model: 'gemini-2.5-flash',
         maxTokens: 2000,
         temperature: 0.1,
         requestsPerMinute: 60,
@@ -217,7 +217,7 @@ export class AITrackingPlatformFactory implements PlatformFactory {
       },
       claude: {
         apiKey: process.env.ANTHROPIC_API_KEY,
-        model: 'claude-3-sonnet-20240229',
+        model: 'claude-3-5-sonnet-20241213',
         maxTokens: 2000,
         temperature: 0.1,
         requestsPerMinute: 50,
@@ -226,7 +226,7 @@ export class AITrackingPlatformFactory implements PlatformFactory {
       },
       gemini: {
         apiKey: process.env.GOOGLE_GEMINI_API_KEY,
-        model: 'gemini-pro',
+        model: 'gemini-2.5-flash',
         maxTokens: 2000,
         temperature: 0.1,
         requestsPerMinute: 60,

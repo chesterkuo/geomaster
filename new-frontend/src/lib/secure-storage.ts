@@ -54,17 +54,13 @@ class SecureStorage {
       const encryptedValue = this.encrypt(value);
       const storageKey = this.STORAGE_PREFIX + key;
 
-      // Use sessionStorage for access tokens (shorter lived)
-      // Use localStorage for refresh tokens (longer lived but encrypted)
-      if (key.includes('access_token')) {
-        sessionStorage.setItem(storageKey, encryptedValue);
-      } else {
-        localStorage.setItem(storageKey, encryptedValue);
-      }
+      // Use localStorage for both access and refresh tokens (encrypted)
+      // This ensures tokens persist across browser refreshes
+      localStorage.setItem(storageKey, encryptedValue);
 
       // Set expiration timestamp for additional security
       const expirationKey = storageKey + '_exp';
-      const expiration = Date.now() + (key.includes('access_token') ? 300000 : 86400000); // 5min for access, 24h for refresh
+      const expiration = Date.now() + (key.includes('access_token') ? 3600000 : 86400000); // 1hr for access, 24h for refresh
       localStorage.setItem(expirationKey, expiration.toString());
     } catch (error) {
       logger.error('Failed to store secure item', { error });
@@ -86,13 +82,8 @@ class SecureStorage {
         return null;
       }
 
-      // Get from appropriate storage
-      let encryptedValue: string | null;
-      if (key.includes('access_token')) {
-        encryptedValue = sessionStorage.getItem(storageKey);
-      } else {
-        encryptedValue = localStorage.getItem(storageKey);
-      }
+      // Get from localStorage (both access and refresh tokens stored there)
+      const encryptedValue = localStorage.getItem(storageKey);
 
       if (!encryptedValue) {
         return null;
@@ -113,7 +104,6 @@ class SecureStorage {
       const storageKey = this.STORAGE_PREFIX + key;
       const expirationKey = storageKey + '_exp';
 
-      sessionStorage.removeItem(storageKey);
       localStorage.removeItem(storageKey);
       localStorage.removeItem(expirationKey);
     } catch (error) {
@@ -279,6 +269,13 @@ export const secureTokenManager = {
     const accessToken = this.getAccessToken();
     const refreshToken = this.getRefreshToken();
     return !!(accessToken || refreshToken);
+  },
+
+  /**
+   * Check if user is authenticated (has access token or refresh token)
+   */
+  isAuthenticated(): boolean {
+    return this.hasValidTokens();
   }
 };
 

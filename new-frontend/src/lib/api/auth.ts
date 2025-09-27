@@ -147,6 +147,6 @@ export const authService = {
 
   // 檢查是否已登入
   isAuthenticated(): boolean {
-    return !!tokenManager.getAccessToken();
+    return tokenManager.isAuthenticated();
   }
 };

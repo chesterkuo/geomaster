@@ -140,14 +140,27 @@ export class TrackingController {
 
       // Transform the data to match the expected API format
       const mentions: MentionData[] = trackingResults.map(result => {
-        // Determine sentiment based on citation and mention status
+        // Determine sentiment based on mention status and citation position
+        // Since citation detection isn't working properly, use position as indicator
         let sentiment: 'positive' | 'neutral' | 'negative' = 'neutral';
-        if (result.isCited && result.citationPosition && result.citationPosition <= 3) {
-          sentiment = 'positive';
-        } else if (result.isCited) {
-          sentiment = 'neutral';
-        } else if (result.isMentioned) {
-          sentiment = 'neutral';
+
+        if (result.isMentioned) {
+          // If mentioned and has a good position (1-50), consider positive
+          if (result.citationPosition && result.citationPosition <= 50) {
+            sentiment = 'positive';
+          }
+          // If mentioned but position is poor (>100), consider neutral
+          else if (result.citationPosition && result.citationPosition > 100) {
+            sentiment = 'neutral';
+          }
+          // If mentioned with moderate position (51-100), consider neutral to positive
+          else if (result.citationPosition && result.citationPosition <= 100) {
+            sentiment = 'neutral';
+          }
+          // If mentioned but no position info, default to neutral
+          else {
+            sentiment = 'neutral';
+          }
         }
 
         const website = (result as any).website;
@@ -308,15 +321,36 @@ export class TrackingController {
         trendsByDate[date][platform] = Math.round(visibility);
       });
 
+      // Debug logging for troubleshooting visibility trends
+      console.log('🔍 Debug visibility trends:', {
+        keywordRankingsCount: (keywordRankings as any[]).length,
+        trackingResultsCount: (trackingResults as any[]).length,
+        websiteId,
+        organizationId,
+        startDate
+      });
+
       // Then, process AI tracking results to generate trends if no keyword data exists
       if ((keywordRankings as any[]).length === 0 && (trackingResults as any[]).length > 0) {
+        console.log('✅ Processing AI tracking results for visibility trends');
         // Group AI tracking results by date and platform to calculate daily visibility scores
         const aiTrendsByDate: Record<string, Record<string, { mentioned: number; total: number; cited: number; }>> = {};
         
-        (trackingResults as any[]).forEach(result => {
+        (trackingResults as any[]).forEach((result, index) => {
           const date = result.trackedAt.toISOString().split('T')[0];
           const platform = result.platform.toLowerCase();
-          
+
+          // Debug first few results
+          if (index < 3) {
+            console.log(`🔎 Processing result ${index}:`, {
+              date,
+              platform,
+              isMentioned: result.isMentioned,
+              isCited: result.isCited,
+              trackingId: result.id
+            });
+          }
+
           if (!aiTrendsByDate[date]) {
             aiTrendsByDate[date] = {
               chatgpt: { mentioned: 0, total: 0, cited: 0 },
@@ -325,7 +359,7 @@ export class TrackingController {
               claude: { mentioned: 0, total: 0, cited: 0 }
             };
           }
-          
+
           if (aiTrendsByDate[date][platform]) {
             aiTrendsByDate[date][platform].total++;
             if (result.isMentioned) {
@@ -337,6 +371,8 @@ export class TrackingController {
           }
         });
 
+        console.log('📊 AI trends by date:', JSON.stringify(aiTrendsByDate, null, 2));
+
         // Convert AI tracking data to visibility scores (0-100 scale)
         Object.entries(aiTrendsByDate).forEach(([date, platforms]) => {
           if (!trendsByDate[date]) {
@@ -347,15 +383,25 @@ export class TrackingController {
               claude: 0
             };
           }
-          
+
           Object.entries(platforms).forEach(([platform, stats]) => {
-            // Calculate visibility score: (mentioned * 30 + cited * 70) / total
-            // This gives more weight to citations than just mentions
+            // Calculate visibility score: since citation detection is not working properly,
+            // we'll use mention rate as the primary score (scaled to 0-100)
             let score = 0;
             if (stats.total > 0) {
-              const mentionWeight = (stats.mentioned / stats.total) * 30;
-              const citationWeight = (stats.cited / stats.total) * 70;
-              score = Math.round(mentionWeight + citationWeight);
+              // For now, use mention rate as main visibility indicator
+              // Later we can enhance citation detection
+              const mentionRate = stats.mentioned / stats.total;
+
+              // Scale mention rate to 0-100 with some bonus for citations if they exist
+              if (stats.cited > 0) {
+                // If citations exist, give full weight
+                const citationBonus = (stats.cited / stats.total) * 30;
+                score = Math.round((mentionRate * 70) + citationBonus);
+              } else {
+                // If no citations detected, treat mentions as primary visibility indicator
+                score = Math.round(mentionRate * 80); // Scale mentions to 80% max to leave room for citations
+              }
             }
             trendsByDate[date][platform] = score;
           });

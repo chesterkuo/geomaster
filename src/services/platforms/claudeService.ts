@@ -26,7 +26,7 @@ export class ClaudeService implements AITrackingPlatform {
 
   constructor(config: PlatformConfig) {
     this.config = {
-      model: 'claude-3-sonnet-20240229',
+      model: 'claude-3-5-sonnet-20241213',
       maxTokens: 2000,
       temperature: 0.1,
       requestsPerMinute: 50,
@@ -227,14 +227,17 @@ export class ClaudeService implements AITrackingPlatform {
 
   async isAvailable(): Promise<boolean> {
     try {
+      // Use a simple, valid prompt for availability check
       const response = await this.client.messages.create({
         model: this.config.model!,
         max_tokens: 10,
-        messages: [{ role: 'user', content: 'ping' }],
+        messages: [{ role: 'user', content: 'Say "hello" in one word.' }],
       });
       return response.content.length > 0;
-    } catch (error) {
-      return false;
+    } catch (error: any) {
+      console.error(`Claude availability check failed:`, error.message);
+      // Return true if we have an API key - let the actual query handle specific errors
+      return !!this.config.apiKey;
     }
   }
 

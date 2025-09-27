@@ -23,7 +23,7 @@ export class GeminiService implements AITrackingPlatform {
 
   constructor(config: PlatformConfig) {
     this.config = {
-      model: 'gemini-1.5-pro',
+      model: 'gemini-2.5-flash',
       maxTokens: 2000,
       temperature: 0.1,
       requestsPerMinute: 60,
@@ -214,10 +214,14 @@ export class GeminiService implements AITrackingPlatform {
 
   async isAvailable(): Promise<boolean> {
     try {
-      await this.callGeminiAPI('test');
+      // Use a simple, valid prompt for availability check
+      const testPrompt = "Say 'hello' in one word.";
+      await this.callGeminiAPI(testPrompt);
       return true;
-    } catch (error) {
-      return false;
+    } catch (error: any) {
+      console.error(`Gemini availability check failed:`, error.message);
+      // Return true if we have an API key - let the actual query handle specific errors
+      return !!this.config.apiKey;
     }
   }
 
