@@ -321,35 +321,14 @@ export class TrackingController {
         trendsByDate[date][platform] = Math.round(visibility);
       });
 
-      // Debug logging for troubleshooting visibility trends
-      console.log('🔍 Debug visibility trends:', {
-        keywordRankingsCount: (keywordRankings as any[]).length,
-        trackingResultsCount: (trackingResults as any[]).length,
-        websiteId,
-        organizationId,
-        startDate
-      });
-
       // Then, process AI tracking results to generate trends if no keyword data exists
       if ((keywordRankings as any[]).length === 0 && (trackingResults as any[]).length > 0) {
-        console.log('✅ Processing AI tracking results for visibility trends');
         // Group AI tracking results by date and platform to calculate daily visibility scores
         const aiTrendsByDate: Record<string, Record<string, { mentioned: number; total: number; cited: number; }>> = {};
         
-        (trackingResults as any[]).forEach((result, index) => {
+        (trackingResults as any[]).forEach(result => {
           const date = result.trackedAt.toISOString().split('T')[0];
           const platform = result.platform.toLowerCase();
-
-          // Debug first few results
-          if (index < 3) {
-            console.log(`🔎 Processing result ${index}:`, {
-              date,
-              platform,
-              isMentioned: result.isMentioned,
-              isCited: result.isCited,
-              trackingId: result.id
-            });
-          }
 
           if (!aiTrendsByDate[date]) {
             aiTrendsByDate[date] = {
@@ -371,7 +350,6 @@ export class TrackingController {
           }
         });
 
-        console.log('📊 AI trends by date:', JSON.stringify(aiTrendsByDate, null, 2));
 
         // Convert AI tracking data to visibility scores (0-100 scale)
         Object.entries(aiTrendsByDate).forEach(([date, platforms]) => {
@@ -410,11 +388,15 @@ export class TrackingController {
 
       // Convert to array format and fill missing dates
       const trends: TrendData[] = [];
+
+      // Generate date range ending with today to include current data
+      const today = new Date();
       const dateRange = Array.from({ length: Math.min(days, 30) }, (_, i) => {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + i);
+        const date = new Date(today);
+        date.setDate(date.getDate() - (Math.min(days, 30) - 1 - i));
         return date.toISOString().split('T')[0];
       });
+
 
       dateRange.forEach(date => {
         const dayData = trendsByDate[date] || {
