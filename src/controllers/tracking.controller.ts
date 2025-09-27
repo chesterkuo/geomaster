@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import { asyncHandler } from '../middlewares/error.middleware';
 import AITrackingResult from '../models/AITrackingResult';
 import Website from '../models/Website';
@@ -457,6 +457,116 @@ export class TrackingController {
       res.status(500).json({
         success: false,
         message: 'Failed to retrieve visibility trends'
+      });
+    }
+  });
+
+  public startImmediateTracking = asyncHandler(async (req: AuthRequest, res: Response): Promise<void> => {
+    const { websiteId, platforms, keywords } = req.body;
+    const organizationId = req.organization?.id;
+
+    if (!organizationId) {
+      res.status(401).json({
+        success: false,
+        message: 'Organization ID is required'
+      });
+      return;
+    }
+
+    try {
+      // Import dependencies
+      const { sequelize } = await import('../models');
+      const TrackingSettings = (await import('../models/TrackingSettings')).default;
+
+      // Get organization's tracking settings and keywords
+      const trackingSettings = await TrackingSettings.findOne({
+        where: { organizationId, trackingEnabled: true }
+      });
+
+      if (!trackingSettings) {
+        res.status(400).json({
+          success: false,
+          message: 'Tracking is not enabled for this organization'
+        });
+        return;
+      }
+
+      // Get keywords for this organization
+      const keywordsQuery = `
+        SELECT GROUP_CONCAT(DISTINCT k.keyword) as keywords
+        FROM keywords k
+        WHERE k.organization_id = ?
+      `;
+
+      const [keywordData] = await sequelize.query(keywordsQuery, {
+        replacements: [organizationId],
+        type: QueryTypes.SELECT
+      }) as any[];
+
+      const orgKeywords = keywordData?.keywords ?
+        keywordData.keywords.split(',').map((k: string) => k.trim()) :
+        ['ai', 'tracking'];
+
+      // Use provided values or fall back to organization settings
+      const finalPlatforms = platforms && platforms.length > 0 ? platforms : trackingSettings.platforms;
+      const finalKeywords = keywords && keywords.length > 0 ? keywords : orgKeywords;
+
+      // Get websites to track
+      let websitesToTrack: any[] = [];
+      if (websiteId) {
+        // Track specific website
+        const website = await Website.findOne({
+          where: { id: websiteId, organizationId, isActive: true }
+        });
+        if (website) {
+          websitesToTrack = [website];
+        }
+      } else {
+        // Track all active websites for this organization
+        websitesToTrack = await Website.findAll({
+          where: { organizationId, isActive: true }
+        });
+      }
+
+      if (websitesToTrack.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'No active websites found to track'
+        });
+        return;
+      }
+
+      // Import app to trigger immediate tracking
+      const App = (await import('../app')).default;
+
+      // Create a new App instance to access the method
+      const appInstance = new App();
+
+      // Trigger immediate tracking using the App's method
+      await appInstance.triggerTrackingForOrganization(
+        organizationId,
+        finalPlatforms,
+        finalKeywords,
+        true // immediate = true
+      );
+
+      res.json({
+        success: true,
+        message: 'Immediate tracking started successfully',
+        data: {
+          jobsQueued: websitesToTrack.length * finalPlatforms.length,
+          websites: websitesToTrack.map(w => ({ id: w.id, domain: w.domain })),
+          platforms: finalPlatforms,
+          keywords: finalKeywords,
+          estimatedTimeMinutes: Math.ceil(finalPlatforms.length * finalKeywords.length / 10) // Rough estimate
+        }
+      });
+
+    } catch (error) {
+      console.error('Failed to start immediate tracking:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to start immediate tracking'
       });
     }
   });

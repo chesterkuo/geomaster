@@ -118,7 +118,7 @@ export const DashboardHeader = ({ onShowAuth }: DashboardHeaderProps) => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleProfileClick}>
                   <User className="mr-2 h-4 w-4" />
-                  {t("settings.profile")}
+                  {t("settings.tabs.profile")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSettingsClick}>
                   <Settings className="mr-2 h-4 w-4" />

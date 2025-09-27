@@ -334,14 +334,6 @@ const AISearch = () => {
               {!isAuthenticated && <span className="ml-2 text-amber-600">• {t('aiSearch.loginRequired')}</span>}
             </p>
           </div>
-          <Button
-            className="bg-primary text-primary-foreground"
-            disabled={!isAuthenticated}
-            onClick={isAuthenticated ? undefined : () => setShowAuthModal(true)}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            {t('aiSearch.trackingSettings')}
-          </Button>
         </div>
 
         <Tabs defaultValue="setup" className="space-y-6">
@@ -633,10 +625,35 @@ const AISearch = () => {
                         trackingFrequency: trackingSettings?.trackingFrequency || 'daily',
                         platforms: enabledPlatforms
                       });
-                      
+
                       if (response.success) {
                         setTrackingSettings(response.data);
-                        toast.success(t('aiSearch.messages.trackingStarted', { keywords: keywords.length, platforms: enabledPlatforms.length }));
+
+                        // Trigger immediate tracking after settings are saved
+                        try {
+                          const trackingResponse = await aiSearchService.startImmediateTracking({
+                            platforms: enabledPlatforms,
+                            keywords: keywords.map(k => k.keyword)
+                          });
+
+                          if (trackingResponse.success) {
+                            toast.success(
+                              t('aiSearch.messages.trackingStarted', {
+                                keywords: keywords.length,
+                                platforms: enabledPlatforms.length
+                              }) + ' ' + t('aiSearch.messages.trackingInProgress', {
+                                estimatedTime: trackingResponse.data.estimatedTimeMinutes
+                              })
+                            );
+                          }
+                        } catch (trackingError: any) {
+                          // If immediate tracking fails, still show success for settings update
+                          console.error('Immediate tracking failed:', trackingError);
+                          toast.success(t('aiSearch.messages.trackingStarted', {
+                            keywords: keywords.length,
+                            platforms: enabledPlatforms.length
+                          }));
+                        }
                       }
                     } catch (error: any) {
                       console.error('啟動追蹤失敗:', error);

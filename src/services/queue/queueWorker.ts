@@ -39,11 +39,18 @@ export class QueueWorker {
     const aiTrackingQueue = queueManager.getQueue(QUEUE_NAMES.AI_TRACKING);
     if (aiTrackingQueue) {
       // Process AI tracking jobs
-      aiTrackingQueue.process('ai-tracking', 2, processAITrackingJob);
-      
+      aiTrackingQueue.process('ai-tracking', 2, async (job) => {
+        // Check if this is a scheduler job
+        if (job.data.trackingSettings?.isSchedulerJob) {
+          return await this.processSchedulerJob(job);
+        }
+        // Otherwise process as normal tracking job
+        return await processAITrackingJob(job);
+      });
+
       // Process competitor analysis jobs
       aiTrackingQueue.process('competitor-analysis', 1, processCompetitorAnalysisJob);
-      
+
       console.log('✅ AI tracking queue processors setup');
     }
 
@@ -160,10 +167,37 @@ export class QueueWorker {
     // }
   }
 
+  // Process scheduler job that triggers tracking checks
+  private async processSchedulerJob(job: any): Promise<any> {
+    console.log('⏰ Processing hourly scheduler job...');
+
+    try {
+      // Import App class to trigger tracking checks
+      const App = (await import('../../app')).default;
+
+      // Create app instance and trigger tracking checks
+      const appInstance = new App();
+      await appInstance.checkAndTriggerTrackingJobs();
+
+      console.log('✅ Scheduler job completed successfully');
+
+      return {
+        jobId: job.id,
+        status: 'completed',
+        message: 'Hourly tracking check completed',
+        timestamp: new Date().toISOString()
+      };
+
+    } catch (error: any) {
+      console.error('❌ Scheduler job failed:', error);
+      throw error;
+    }
+  }
+
   // Manual job triggering for testing
   async triggerTestJob(): Promise<void> {
     console.log('🧪 Triggering test AI tracking job...');
-    
+
     await queueManager.addTrackingJob({
       websiteId: 'test-website-id',
       organizationId: 'test-org-id',
@@ -171,7 +205,7 @@ export class QueueWorker {
       keywords: ['AI', 'tracking', 'test'],
       trackingSettings: { frequency: 'daily', platforms: ['chatgpt'], alertsEnabled: false }
     });
-    
+
     console.log('✅ Test job added to queue');
   }
 }

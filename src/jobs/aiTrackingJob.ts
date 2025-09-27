@@ -69,21 +69,38 @@ export class AITrackingJobProcessor {
           
           // Create platform instance using organization's API key configuration
           let platform;
-          try {
-            platform = await platformFactory.createPlatformWithApiKeys(platformName, organizationId);
-          } catch (error: any) {
-            console.warn(`⚠️ Platform ${platformName} not available for organization ${organizationId}: ${error.message}`);
+          let apiKeyInfo: any = null;
 
-            // Add errors for all queries for this platform
-            queries.forEach(query => {
-              errors.push({
-                query: query.query,
-                error: `Platform ${platformName} not available: ${error.message}`,
-                code: 'PLATFORM_NOT_AVAILABLE'
+          try {
+            // Get API key configuration for this platform
+            apiKeyInfo = await apiKeyManager.getApiKeyForPlatform(platformName, organizationId);
+
+            if (!apiKeyInfo) {
+              throw new Error(`No API key available for platform ${platformName}`);
+            }
+
+            platform = await platformFactory.createPlatformWithApiKeys(platformName, organizationId);
+
+            console.log(`🔑 Using ${apiKeyInfo.source} API key for ${platformName} (User provided: ${apiKeyInfo.isUserProvided})`);
+
+          } catch (error: any) {
+            // Try fallback for any platform (prioritizing .env keys for free usage)
+            console.warn(`⚠️ Primary API key failed for ${platformName}, attempting fallback: ${error.message}`);
+            try {
+              platform = await platformFactory.createPlatformWithFallback(platformName);
+              console.log(`🔑 Fallback: Using .env API key for ${platformName} (organization ${organizationId})`);
+            } catch (fallbackError: any) {
+              console.error(`❌ Fallback also failed for ${platformName}: ${fallbackError.message}`);
+              queries.forEach(query => {
+                errors.push({
+                  query: query.query,
+                  error: `Platform ${platformName} not available (primary failed: ${error.message}, fallback failed: ${fallbackError.message})`,
+                  code: 'PLATFORM_NOT_AVAILABLE'
+                });
               });
-            });
-            completedQueries += queries.length;
-            continue;
+              completedQueries += queries.length;
+              continue;
+            }
           }
 
           // Validate platform is available

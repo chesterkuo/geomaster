@@ -26,13 +26,25 @@ router.get('/mentions',
 );
 
 router.get('/visibility-trends',
-  validateRequest({ 
+  validateRequest({
     query: Joi.object({
       websiteId: commonSchemas.uuid.required(),
       period: Joi.string().valid('7d', '30d', '90d', '1y').default('30d')
     })
   }),
   trackingController.getVisibilityTrends
+);
+
+// Immediate tracking execution
+router.post('/start-immediate',
+  validateRequest({
+    body: Joi.object({
+      websiteId: commonSchemas.uuid.optional(), // If not provided, track all websites
+      platforms: Joi.array().items(Joi.string().valid('gemini', 'claude', 'chatgpt', 'perplexity')).optional(),
+      keywords: Joi.array().items(Joi.string()).optional()
+    })
+  }),
+  trackingController.startImmediateTracking
 );
 
 export default router;

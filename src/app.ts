@@ -14,6 +14,7 @@ import { setupAlertScheduler } from './services/alertQueue';
 import { RealTimeMetricsService } from './services/realTimeMetrics.service';
 import { queueManager } from './services/queue/queueManager';
 import { queueWorker } from './services/queue/queueWorker';
+import { QueryTypes } from 'sequelize';
 
 class App {
   public app: Application;
@@ -231,40 +232,171 @@ class App {
 
   private async scheduleExistingWebsiteTracking(): Promise<void> {
     try {
-      // Import models here to avoid circular dependencies
-      const Website = (await import('./models/Website')).default;
-      
-      // Find all active websites without Keyword association for now
-      const websites = await Website.findAll({
-        where: { isActive: true }
-      });
+      // Set up a single hourly scheduler that checks all organizations
+      await queueManager.addRecurringTrackingJob({
+        websiteId: 'scheduler',
+        organizationId: 'system',
+        platforms: [],
+        keywords: [],
+        trackingSettings: {
+          frequency: 'hourly',
+          platforms: [],
+          alertsEnabled: false,
+          isSchedulerJob: true
+        }
+      }, '0 * * * *'); // Every hour at minute 0
 
-      logger.info(`Found ${websites.length} active websites for AI tracking`);
+      logger.info('✅ Hourly scheduler job set up successfully');
 
-      // Schedule tracking for each website
-      for (const website of websites) {
-        // Use default keywords for now since Keyword association is not set up
-        const keywords = ['figma', 'design tool', 'AI tracking'];
-        
-        // Schedule daily AI tracking job
-        await queueManager.addRecurringTrackingJob({
-          websiteId: website.id,
-          organizationId: website.organizationId,
-          platforms: ['chatgpt', 'claude', 'gemini', 'perplexity'],
-          keywords,
-          trackingSettings: { 
-            frequency: 'daily',
-            platforms: ['chatgpt', 'claude', 'gemini', 'perplexity'],
-            alertsEnabled: true
-          }
-        }, '0 9 * * *'); // Daily at 9 AM
+      // Trigger an immediate check for organizations that need tracking now
+      await this.checkAndTriggerTrackingJobs();
 
-        logger.info(`Scheduled AI tracking for website: ${website.domain}`);
-      }
-      
     } catch (error) {
       logger.error('Error scheduling website tracking:', error);
       // Don't throw - this is not critical for startup
+    }
+  }
+
+  public async checkAndTriggerTrackingJobs(): Promise<void> {
+    try {
+      // Import models here to avoid circular dependencies
+      const Website = (await import('./models/Website')).default;
+      const TrackingSettings = (await import('./models/TrackingSettings')).default;
+      const PlatformSettings = (await import('./models/PlatformSettings')).default;
+      const { sequelize } = await import('./models');
+
+      // Find all organizations with their tracking settings, websites, and keywords
+      const organizationsWithTracking = await sequelize.query(`
+        SELECT
+          o.id as organization_id,
+          o.name as organization_name,
+          ts.tracking_enabled,
+          ts.tracking_frequency,
+          ts.platforms,
+          ts.alerts_enabled,
+          ts.updated_at as tracking_settings_updated,
+          COUNT(DISTINCT w.id) as website_count,
+          GROUP_CONCAT(DISTINCT k.keyword) as keywords
+        FROM organizations o
+        LEFT JOIN tracking_settings ts ON o.id = ts.organization_id
+        LEFT JOIN websites w ON o.id = w.organization_id AND w.is_active = 1
+        LEFT JOIN keywords k ON o.id = k.organization_id
+        WHERE ts.tracking_enabled = 1
+        GROUP BY o.id, ts.id, ts.updated_at
+      `, { type: QueryTypes.SELECT });
+
+      logger.info(`Found ${organizationsWithTracking.length} organizations with tracking enabled`);
+
+      const currentTime = new Date();
+
+      // Check each organization to see if they need tracking now
+      for (const org of organizationsWithTracking as any[]) {
+        if (!org.tracking_enabled || org.website_count === 0) continue;
+
+        // Parse platforms from JSON
+        const platforms = org.platforms ? JSON.parse(org.platforms) : ['gemini', 'claude'];
+
+        // Parse keywords from comma-separated string
+        const keywords = org.keywords ? org.keywords.split(',').map((k: string) => k.trim()) : ['ai', 'tracking'];
+
+        // Get last tracking time for this organization
+        const lastTrackingResult = await sequelize.query(`
+          SELECT MAX(atr.tracked_at) as last_tracked
+          FROM ai_tracking_results atr
+          JOIN websites w ON atr.website_id = w.id
+          WHERE w.organization_id = ?
+        `, {
+          replacements: [org.organization_id],
+          type: QueryTypes.SELECT
+        });
+
+        const lastTracked = (lastTrackingResult[0] as any)?.last_tracked ? new Date((lastTrackingResult[0] as any).last_tracked) : null;
+
+        // Determine if we need to run tracking based on frequency
+        let shouldTrack = false;
+        const timeSinceLastTrack = lastTracked ? (currentTime.getTime() - lastTracked.getTime()) / (1000 * 60 * 60) : 999;
+
+        if (org.tracking_frequency === 'hourly' && timeSinceLastTrack >= 1) {
+          shouldTrack = true;
+        } else if (org.tracking_frequency === 'daily' && timeSinceLastTrack >= 24) {
+          shouldTrack = true;
+        } else if (org.tracking_frequency === 'weekly' && timeSinceLastTrack >= 168) {
+          shouldTrack = true;
+        }
+
+        if (shouldTrack) {
+          await this.triggerTrackingForOrganization(org.organization_id, platforms, keywords, false);
+        }
+      }
+
+    } catch (error) {
+      logger.error('Error checking and triggering tracking jobs:', error);
+    }
+  }
+
+  public async triggerTrackingForOrganization(
+    organizationId: string,
+    platforms: string[],
+    keywords: string[],
+    immediate: boolean = false
+  ): Promise<void> {
+    try {
+      // Import models here to avoid circular dependencies
+      const Website = (await import('./models/Website')).default;
+      const PlatformSettings = (await import('./models/PlatformSettings')).default;
+
+      // Get platform settings for this organization to check for API keys
+      const platformSettings = await PlatformSettings.findAll({
+        where: {
+          organizationId,
+          enabled: true
+        }
+      });
+
+      // Build platform configuration with API keys
+      const platformConfig: any = {};
+      platformSettings.forEach(setting => {
+        if (platforms.includes(setting.platform)) {
+          platformConfig[setting.platform] = {
+            enabled: setting.enabled,
+            apiKey: setting.apiKey,
+            settings: setting.settings
+          };
+        }
+      });
+
+      // Get all websites for this organization
+      const websites = await Website.findAll({
+        where: {
+          organizationId,
+          isActive: true
+        }
+      });
+
+      // Queue tracking for each website in this organization
+      for (const website of websites) {
+        await queueManager.addTrackingJob({
+          websiteId: website.id,
+          organizationId,
+          platforms,
+          keywords,
+          trackingSettings: {
+            frequency: immediate ? 'immediate' : 'scheduled',
+            platforms,
+            alertsEnabled: true,
+            platformConfig,
+            immediate
+          }
+        });
+
+        logger.info(`Queued ${immediate ? 'immediate' : 'scheduled'} AI tracking for website: ${website.domain}`);
+        logger.info(`  - Platforms: [${platforms.join(', ')}]`);
+        logger.info(`  - Keywords: [${keywords.join(', ')}]`);
+      }
+
+    } catch (error) {
+      logger.error('Error triggering tracking for organization:', error);
+      throw error;
     }
   }
 

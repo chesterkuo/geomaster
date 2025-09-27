@@ -104,7 +104,7 @@ export const I18nDemo = () => {
 
         <div className="border-t pt-4">
           <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-3">
-            {t("settings.profile")} & {t("auth.login")}
+            {t("settings.tabs.profile")} & {t("auth.login")}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -118,9 +118,9 @@ export const I18nDemo = () => {
             <div className="space-y-2">
               <div className="text-sm text-muted-foreground">{t("settings.title")}</div>
               <div className="flex space-x-2">
-                <Badge variant="secondary">{t("settings.profile")}</Badge>
-                <Badge variant="outline">{t("settings.security")}</Badge>
-                <Badge variant="outline">{t("settings.language")}</Badge>
+                <Badge variant="secondary">{t("settings.tabs.profile")}</Badge>
+                <Badge variant="outline">{t("settings.tabs.security")}</Badge>
+                <Badge variant="outline">{t("settings.tabs.appearance")}</Badge>
               </div>
             </div>
           </div>

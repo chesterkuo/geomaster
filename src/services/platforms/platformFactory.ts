@@ -139,6 +139,70 @@ export class AITrackingPlatformFactory implements PlatformFactory {
     return this.createPlatform(platformName, config);
   }
 
+  // Create platform with fallback to .env API key
+  async createPlatformWithFallback(platformName: string): Promise<AITrackingPlatform> {
+    const fallbackApiKeyConfig = await apiKeyManager.getFallbackApiKey(platformName);
+
+    if (!fallbackApiKeyConfig) {
+      throw new PlatformError(
+        platformName,
+        'NO_FALLBACK_API_KEY',
+        `No fallback API key available for platform ${platformName}`
+      );
+    }
+
+    const defaultConfigs: Record<PlatformName, Omit<PlatformConfig, 'apiKey'>> = {
+      chatgpt: {
+        model: 'gpt-4',
+        maxTokens: 2000,
+        temperature: 0.1,
+        requestsPerMinute: 60,
+        maxRetries: 3,
+        timeout: 30000,
+      },
+      claude: {
+        model: 'claude-3-sonnet-20240229',
+        maxTokens: 2000,
+        temperature: 0.1,
+        requestsPerMinute: 50,
+        maxRetries: 3,
+        timeout: 30000,
+      },
+      gemini: {
+        model: 'gemini-pro',
+        maxTokens: 2000,
+        temperature: 0.1,
+        requestsPerMinute: 60,
+        maxRetries: 3,
+        timeout: 30000,
+      },
+      perplexity: {
+        model: 'llama-3-sonar-large-32k-online',
+        maxTokens: 2000,
+        temperature: 0.1,
+        requestsPerMinute: 20,
+        maxRetries: 3,
+        timeout: 30000,
+      },
+    };
+
+    const baseConfig = defaultConfigs[platformName.toLowerCase() as PlatformName];
+    if (!baseConfig) {
+      throw new PlatformError(
+        platformName,
+        'UNSUPPORTED_PLATFORM',
+        `No default configuration available for platform ${platformName}`
+      );
+    }
+
+    const config: PlatformConfig = {
+      ...baseConfig,
+      apiKey: fallbackApiKeyConfig.apiKey
+    };
+
+    return this.createPlatform(platformName, config);
+  }
+
   // Legacy method - keep for backward compatibility
   createPlatformWithDefaults(platformName: string): AITrackingPlatform {
     const defaultConfigs: Record<PlatformName, PlatformConfig> = {

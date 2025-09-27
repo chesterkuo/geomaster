@@ -243,4 +243,20 @@ export const aiSearchService = {
     return response.data;
   },
 
+  // POST /api/v1/tracking/start-immediate - Start immediate tracking
+  async startImmediateTracking(data?: {
+    websiteId?: string;
+    platforms?: string[];
+    keywords?: string[];
+  }): Promise<ApiResponse<{
+    jobsQueued: number;
+    websites: Array<{ id: string; domain: string }>;
+    platforms: string[];
+    keywords: string[];
+    estimatedTimeMinutes: number;
+  }>> {
+    const response = await apiClient.post('/tracking/start-immediate', data || {});
+    return response.data;
+  },
+
 };

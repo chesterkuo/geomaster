@@ -14,17 +14,18 @@ export class ApiKeyManagerService {
    * Get API key for a platform with prioritization:
    * 1. User-provided API keys (from database) - highest priority
    * 2. .env API keys - fallback for free usage
-   * 3. Exception: GEMINI always uses .env key
+   * 3. Special: GEMINI prefers .env key but allows user keys
    */
   async getApiKeyForPlatform(
     platform: string,
-    organizationId: string
+    organizationId: string,
+    forceEnvKey: boolean = false
   ): Promise<ApiKeyConfig | null> {
     const platformName = platform.toLowerCase();
 
-    // Special case: GEMINI always uses .env API key
-    if (platformName === 'gemini') {
-      const envApiKey = process.env.GOOGLE_GEMINI_API_KEY;
+    // If forceEnvKey is true, use .env key directly (used for fallback)
+    if (forceEnvKey) {
+      const envApiKey = this.getEnvApiKey(platformName);
       if (envApiKey) {
         return {
           apiKey: envApiKey,
@@ -35,7 +36,7 @@ export class ApiKeyManagerService {
       return null;
     }
 
-    // Try to get user-provided API key first
+    // Try to get user-provided API key first (for ALL platforms including Gemini)
     try {
       const platformSetting = await PlatformSettings.findOne({
         where: {
@@ -57,7 +58,7 @@ export class ApiKeyManagerService {
       console.error(`Error retrieving user API key for ${platform}:`, error);
     }
 
-    // Fallback to .env API key for free usage
+    // Fallback to .env API key for free usage (for ALL platforms)
     const envApiKey = this.getEnvApiKey(platformName);
     if (envApiKey) {
       return {
@@ -68,6 +69,13 @@ export class ApiKeyManagerService {
     }
 
     return null;
+  }
+
+  /**
+   * Get fallback API key (always .env) for a platform
+   */
+  async getFallbackApiKey(platform: string): Promise<ApiKeyConfig | null> {
+    return this.getApiKeyForPlatform(platform, '', true);
   }
 
   /**
@@ -109,23 +117,18 @@ export class ApiKeyManagerService {
 
   /**
    * Check if platform is available (has either user or env API key)
-   * Exception: GEMINI only checks .env key
+   * User API keys have priority, .env keys are fallback for free usage
    */
   async isPlatformAvailable(platform: string, organizationId: string): Promise<boolean> {
     const platformName = platform.toLowerCase();
 
-    // Special case: GEMINI only uses .env API key
-    if (platformName === 'gemini') {
-      return !!(process.env.GOOGLE_GEMINI_API_KEY);
-    }
-
-    // Check user API key first
+    // Check user API key first (for ALL platforms including Gemini)
     const hasUserKey = await this.hasUserApiKey(platform, organizationId);
     if (hasUserKey) {
       return true;
     }
 
-    // Fallback to .env API key
+    // Fallback to .env API key for free usage
     const envApiKey = this.getEnvApiKey(platformName);
     return !!envApiKey;
   }

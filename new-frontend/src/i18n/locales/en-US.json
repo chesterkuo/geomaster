@@ -919,6 +919,7 @@
       "platformRequiresUpgrade": "{{platforms}} requires plan upgrade or API Key setup to use",
       "pleaseAddKeyword": "Please add at least one keyword",
       "trackingStarted": "AI visibility tracking started successfully! Tracking {{keywords}} keywords, {{platforms}} platforms",
+      "trackingInProgress": "Tracking is running, estimated time: {{estimatedTime}} minutes",
       "trackingStartFailed": "Failed to start tracking, please try again later",
       "pleaseEnterUrl": "Please enter website URL",
       "websiteAdded": "Website added successfully",
