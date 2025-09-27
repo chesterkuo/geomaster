@@ -334,6 +334,7 @@
     "loginToViewTrackingDetails": "Login to add website URLs and start monitoring AI platform visibility",
     "topPerformingSites": "Top performing websites",
     "mentions": "mentions",
+    "totalMentions": "Total Mentions",
     "startTrackingWebsites": "Start tracking your websites",
     "addWebsiteUrlToMonitor": "Add website URL to start monitoring AI platform visibility",
     "addWebsite": "Add Website",
@@ -649,6 +650,10 @@
       "platformPerformance": "Platform Detailed Performance",
       "platformPerformanceDesc": "Detailed performance data for each AI platform",
       "mentionRate": "Mention Rate",
+      "averagePositionTooltip": "Average citation position across all mentions. Lower numbers indicate better ranking (position 1 is best).",
+      "brandMentionRateTooltip": "Percentage of AI platform responses that mention your brand when relevant keywords are searched. Higher percentages indicate better visibility.",
+      "citationPositionTooltip": "Average ranking position when your brand is mentioned in AI responses. Position 1 means first mention, lower numbers are better.",
+      "sentimentAnalysisTooltip": "Percentage of positive sentiment in AI platform mentions of your brand. Calculated by analyzing the context and tone of citations.",
       "competitorComparison": {
         "title": "Competitor Comparison",
         "description": "Comprehensive performance comparison with competitors",
@@ -663,7 +668,7 @@
     "competitors": {
       "overview": "Competitors Overview",
       "overviewDesc": "Competitors being tracked and their status",
-      "count": "{count} Competitors",
+      "count": "{{count}} Competitors",
       "tracking": "Tracking",
       "paused": "Paused",
       "management": "Competitor Management",
@@ -685,7 +690,8 @@
     "marketShare": {
       "title": "Market Share Analysis",
       "yourBrand": "Your Brand",
-      "description": "Market share of each brand on AI platforms"
+      "description": "Market share of each brand on AI platforms",
+      "percentageTooltip": "Calculated as: (Brand mentions / Total mentions across all brands) × 100%. Shows the relative visibility share of each brand in AI platform responses."
     },
     "insights": {
       "title": "Competitive Insights",
@@ -702,6 +708,11 @@
       "averageScore": "Average: {{average}}",
       "gap": "Gap: {{gap}}",
       "improvementSuggestions": "Improvement Suggestions:"
+    },
+    "competitors": {
+      "overview": "Competitors Overview",
+      "overviewDesc": "Competitors being tracked and their status",
+      "count": "{{count}} Competitors"
     },
     "diagnosis": {
       "performanceMetrics": {

@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useVisibilityTrends, useVisibilityStats, usePlatformPerformance, useVisibilityHistory } from "@/hooks/useVisibility";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCompetitiveAnalysis, useCompetitors, useAddCompetitor } from "@/hooks/useCompetitors";
 import { VisibilityTrendsChart } from "@/components/charts/VisibilityTrendsChart";
 import { PlatformDistributionChart } from "@/components/charts/PlatformDistributionChart";
@@ -324,6 +325,7 @@ const AISearch = () => {
   const addCompetitorMutation = useAddCompetitor();
 
   return (
+    <TooltipProvider delayDuration={300}>
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -928,7 +930,14 @@ const AISearch = () => {
                 <div className="grid gap-4 md:grid-cols-3 mb-6">
                   <Card className="bg-gradient-card border-border">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">{t('aiSearch.metrics.brandMentionRate')}</CardTitle>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <CardTitle className="text-sm font-medium cursor-help">{t('aiSearch.metrics.brandMentionRate')}</CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>{t('aiSearch.charts.brandMentionRateTooltip')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                       <MessageSquare className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -953,7 +962,14 @@ const AISearch = () => {
 
                   <Card className="bg-gradient-card border-border">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">{t('aiSearch.metrics.citationPosition')}</CardTitle>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <CardTitle className="text-sm font-medium cursor-help">{t('aiSearch.metrics.citationPosition')}</CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>{t('aiSearch.charts.citationPositionTooltip')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                       <Target className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -978,7 +994,14 @@ const AISearch = () => {
 
                   <Card className="bg-gradient-card border-border">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">{t('aiSearch.metrics.sentimentAnalysis')}</CardTitle>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <CardTitle className="text-sm font-medium cursor-help">{t('aiSearch.metrics.sentimentAnalysis')}</CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                          <p>{t('aiSearch.charts.sentimentAnalysisTooltip')}</p>
+                        </TooltipContent>
+                      </Tooltip>
                       <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -1071,7 +1094,14 @@ const AISearch = () => {
                                    <MessageSquare className="h-5 w-5 text-gray-500" />}
                                   <h4 className="font-medium capitalize">{platform.platform}</h4>
                                 </div>
-                                <Badge variant="secondary">#{platform.position}</Badge>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <Badge variant="secondary" className="cursor-help">#{platform.position}</Badge>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-xs">
+                                    <p>{t('aiSearch.charts.averagePositionTooltip')}</p>
+                                  </TooltipContent>
+                                </Tooltip>
                               </div>
                               <div className="text-2xl font-bold mb-1">{platform.mentionRate}%</div>
                               <div className="text-xs text-muted-foreground mb-2">{t('aiSearch.charts.mentionRate')}</div>
@@ -1356,16 +1386,30 @@ const AISearch = () => {
                     <CardContent>
                       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <div className="text-center p-4 bg-gradient-subtle rounded-lg border border-border">
-                          <div className="text-2xl font-bold text-primary mb-1">
-                            {competitiveAnalysis.data.analysis.yourBrand.marketShare}%
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <div className="text-2xl font-bold text-primary mb-1 cursor-help">
+                                {competitiveAnalysis.data.analysis.yourBrand.marketShare}%
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs">
+                              <p>{t('aiSearch.marketShare.percentageTooltip')}</p>
+                            </TooltipContent>
+                          </Tooltip>
                           <div className="text-sm font-medium mb-1">{t('aiSearch.marketShare.yourBrand')}</div>
                           <Progress value={competitiveAnalysis.data.analysis.yourBrand.marketShare} className="h-2" />
                         </div>
 
                         {competitiveAnalysis.data.analysis.competitors.slice(0, 3).map((competitor) => (
                           <div key={competitor.competitorId} className="text-center p-4 bg-gradient-subtle rounded-lg border border-border">
-                            <div className="text-2xl font-bold text-red-500 mb-1">{competitor.marketShare}%</div>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="text-2xl font-bold text-red-500 mb-1 cursor-help">{competitor.marketShare}%</div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <p>{t('aiSearch.marketShare.percentageTooltip')}</p>
+                              </TooltipContent>
+                            </Tooltip>
                             <div className="text-sm font-medium mb-1">{competitor.name}</div>
                             <Progress value={competitor.marketShare} className="h-2" />
                           </div>
@@ -1472,6 +1516,7 @@ const AISearch = () => {
         }}
       />
     </DashboardLayout>
+    </TooltipProvider>
   );
 };
 

@@ -2,6 +2,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 interface PlatformData {
   platform: string;
@@ -78,6 +79,7 @@ export const PlatformDistributionChart: React.FC<PlatformDistributionChartProps>
   innerRadius = 60,
   outerRadius = 100,
 }) => {
+  const { t } = useTranslation();
   // Prepare data for chart
   const chartData = data.map(item => ({
     name: chartConfig[item.platform as keyof ChartConfig]?.label || item.platform,
@@ -127,7 +129,7 @@ export const PlatformDistributionChart: React.FC<PlatformDistributionChartProps>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold">{total.toLocaleString()}</div>
-            <div className="text-sm text-muted-foreground">總提及數</div>
+            <div className="text-sm text-muted-foreground">{t('totalMentions')}</div>
           </div>
         </div>
       </CardHeader>

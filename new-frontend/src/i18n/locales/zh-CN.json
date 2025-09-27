@@ -182,6 +182,7 @@
     "loginToViewTrackingDetails": "登录以添加网站URL并开始监控AI平台可见度",
     "topPerformingSites": "表现最佳的网站",
     "mentions": "次提及",
+    "totalMentions": "總提及數",
     "startTrackingWebsites": "开始跟踪您的网站",
     "addWebsiteUrlToMonitor": "添加网站URL开始监控AI平台可见度",
     "addWebsite": "添加网站",
@@ -644,6 +645,10 @@
       "platformPerformance": "平台详细表现",
       "platformPerformanceDesc": "各AI平台的详细表现数据",
       "mentionRate": "提及率",
+      "averagePositionTooltip": "所有提及的平均引用位置。数字越小排名越好（位置1最佳）。",
+      "brandMentionRateTooltip": "当搜索相关关键词时，AI平台回应中提及您品牌的百分比。百分比越高表示可见度越好。",
+      "citationPositionTooltip": "当您的品牌在AI回应中被提及时的平均排名位置。位置1表示首次提及，数字越小越好。",
+      "sentimentAnalysisTooltip": "AI平台提及您品牌时的正面情感百分比。通过分析引用的上下文和语调计算得出。",
       "competitorComparison": {
         "title": "竞争对手比较",
         "description": "与竞争对手的综合表现对比",
@@ -680,7 +685,8 @@
     "marketShare": {
       "title": "市场份额分析",
       "yourBrand": "您的品牌",
-      "description": "各品牌在AI平台上的市场占有率"
+      "description": "各品牌在AI平台上的市场占有率",
+      "percentageTooltip": "计算方式：(品牌提及数 / 所有品牌总提及数) × 100%。显示各品牌在AI平台回复中的相对可见度份额。"
     },
     "insights": {
       "title": "竞争洞察",
@@ -697,6 +703,11 @@
       "averageScore": "平均: {{average}}",
       "gap": "差距: {{gap}}",
       "improvementSuggestions": "改善建议:"
+    },
+    "competitors": {
+      "overview": "竞争对手概览",
+      "overviewDesc": "正在跟踪的竞争对手及其状态",
+      "count": "{{count}} 竞争对手"
     },
     "diagnosis": {
       "performanceMetrics": {
