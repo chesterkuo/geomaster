@@ -19,9 +19,12 @@ import {
   Info,
   ExternalLink,
   Trash2,
-  Settings
+  Settings,
+  User
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { AuthModal } from '@/components/auth/AuthModal';
 import apiClient from '@/lib/api/client';
 
 interface PlatformSetting {
@@ -68,6 +71,7 @@ const PLATFORM_COLORS = {
 
 export function ApiKeySettings() {
   const { t } = useTranslation();
+  const { isAuthenticated } = useAuth();
   const [platforms, setPlatforms] = useState<PlatformSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
@@ -78,6 +82,7 @@ export function ApiKeySettings() {
   const [requirements, setRequirements] = useState<ApiKeyRequirements | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { toast } = useToast();
 
   // Utility function to ensure fixed-length API key display
@@ -111,8 +116,13 @@ export function ApiKeySettings() {
   };
 
   useEffect(() => {
-    loadPlatformSettings();
-  }, []);
+    // Only load platforms if user is authenticated
+    if (isAuthenticated) {
+      loadPlatformSettings();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const loadPlatformSettings = async () => {
     try {
@@ -412,7 +422,7 @@ export function ApiKeySettings() {
                   </div>
                   
                   <div className="flex items-center space-x-3">
-                    {hasApiKey && (
+                    {hasApiKey && isAuthenticated && (
                       <div className="flex items-center space-x-2">
                         <Label htmlFor={`${platform}-enabled`} className="text-sm">
                           {t('settings.apiKeys.status.enabled')}
@@ -425,16 +435,27 @@ export function ApiKeySettings() {
                       </div>
                     )}
                     
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openApiKeyDialog(platform)}
-                    >
-                      <Settings className="h-4 w-4 mr-1" />
-                      {hasApiKey ? t('settings.apiKeys.actions.edit') : t('settings.apiKeys.actions.setup')}
-                    </Button>
+                    {isAuthenticated ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openApiKeyDialog(platform)}
+                      >
+                        <Settings className="h-4 w-4 mr-1" />
+                        {hasApiKey ? t('settings.apiKeys.actions.edit') : t('settings.apiKeys.actions.setup')}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAuthModal(true)}
+                      >
+                        <User className="h-4 w-4 mr-1" />
+                        {t("auth.loginNow")}
+                      </Button>
+                    )}
                     
-                    {hasApiKey && (
+                    {hasApiKey && isAuthenticated && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -590,6 +611,18 @@ export function ApiKeySettings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          // Reload platforms after login
+          if (isAuthenticated) {
+            loadPlatformSettings();
+          }
+        }}
+      />
     </>
   );
 }
