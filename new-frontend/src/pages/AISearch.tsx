@@ -34,6 +34,7 @@ import { PlatformDistributionChart } from "@/components/charts/PlatformDistribut
 import { CompetitorComparisonChart } from "@/components/charts/CompetitorComparisonChart";
 import { aiSearchService, Keyword, Competitor, TrackingSettings, PlatformSettings } from "@/lib/api/aiSearch";
 import { websiteService, Website } from "@/lib/api/websites";
+import { tokenManager } from "@/lib/api/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -102,7 +103,7 @@ const AISearch = () => {
       
       
       // Check actual token availability instead of just React auth state
-      const hasValidAuth = localStorage.getItem('geo_access_token') && localStorage.getItem('geo_organization_id');
+      const hasValidAuth = tokenManager.getAccessToken() && tokenManager.getOrganizationId();
       
       if (!hasValidAuth) {
         // Show preview/mock data when not authenticated
