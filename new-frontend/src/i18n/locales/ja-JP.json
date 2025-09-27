@@ -667,6 +667,12 @@
     },
     "analysis": {
       "title": "競合分析",
+      "loginRequired": "競合分析を表示するにはログインが必要です",
+      "loginRequiredDesc": "ログイン後、競合他社とのパフォーマンス比較と市場インサイトを分析できます",
+      "dataAnalyzing": "競合分析データ収集中",
+      "collectingDataDesc": "システムが競合他社とのパフォーマンスデータを分析中です",
+      "analysisInProgress": "データ分析中",
+      "analysisProgressDesc": "あなたと{count}社の競合他社のパフォーマンスデータを収集・分析しています。このプロセスは通常24-48時間かかります。",
       "recheckAnalysis": "分析を再確認",
       "competitorPerformanceComparison": "競合他社パフォーマンス比較",
       "competitorPerformanceDesc": "競合他社との詳細なパフォーマンスデータ比較分析"

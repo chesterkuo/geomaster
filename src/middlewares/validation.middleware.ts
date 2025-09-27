@@ -34,21 +34,6 @@ export const validateRequest = (schema: {
     }
 
     if (errors.length > 0) {
-      // Debug logging for validation errors
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Validation Error Details:', {
-          url: req.url,
-          method: req.method,
-          body: req.body,
-          headers: {
-            authorization: req.headers.authorization ? 'present' : 'missing',
-            'x-organization-id': req.headers['x-organization-id'] ? 'present' : 'missing',
-            'content-type': req.headers['content-type']
-          },
-          errors
-        });
-      }
-      
       res.status(400).json({
         success: false,
         message: 'Validation failed',
@@ -98,6 +83,11 @@ export const authSchemas = {
   resetPassword: Joi.object({
     token: Joi.string().required(),
     password: commonSchemas.password
+  }),
+
+  changePassword: Joi.object({
+    currentPassword: Joi.string().required(),
+    newPassword: commonSchemas.password
   })
 };
 

@@ -40,6 +40,8 @@ export class AuthController {
     const token = this.generateToken(user.id);
     const refreshToken = this.generateRefreshToken(user.id);
 
+    // Note: Session middleware removed - using JWT-only authentication
+
     res.status(201).json({
       success: true,
       data: {
@@ -80,6 +82,8 @@ export class AuthController {
 
     const token = this.generateToken(user.id);
     const refreshToken = this.generateRefreshToken(user.id);
+
+    // Note: Session middleware removed - using JWT-only authentication
 
     res.json({
       success: true,
@@ -237,6 +241,33 @@ export class AuthController {
       data: {
         user: user.toJSON()
       }
+    });
+  });
+
+  // Note: Session management methods removed - using JWT-only authentication
+
+  public changePassword = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const userId = (req as any).user.id;
+    const { currentPassword, newPassword } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+
+    // Verify current password
+    const isValidPassword = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValidPassword) {
+      throw new AppError('Current password is incorrect', 400);
+    }
+
+    // Update password
+    user.passwordHash = newPassword; // Will be hashed by the model hook
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully. All sessions have been invalidated.'
     });
   });
 

@@ -667,6 +667,12 @@
     },
     "analysis": {
       "title": "竞争分析",
+      "loginRequired": "需要登录才能查看竞争分析",
+      "loginRequiredDesc": "登录后即可分析您与竞争对手的表现比较和市场洞察",
+      "dataAnalyzing": "竞争分析数据收集中",
+      "collectingDataDesc": "系统正在分析您与竞争对手的表现数据",
+      "analysisInProgress": "数据分析中",
+      "analysisProgressDesc": "我们正在收集并分析您与 {count} 个竞争对手的表现数据。这个过程通常需要 24-48 小时完成。",
       "recheckAnalysis": "重新检查",
       "competitorPerformanceComparison": "竞争对手表现比较",
       "competitorPerformanceDesc": "与竞争对手的详细表现数据比较分析"

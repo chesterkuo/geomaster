@@ -672,6 +672,12 @@
     },
     "analysis": {
       "title": "Competitive Analysis",
+      "loginRequired": "Login required to view competitive analysis",
+      "loginRequiredDesc": "After logging in, you can analyze your performance comparison and market insights with competitors",
+      "dataAnalyzing": "Competitive analysis data collection in progress",
+      "collectingDataDesc": "System is analyzing your performance data compared to competitors",
+      "analysisInProgress": "Data analysis in progress",
+      "analysisProgressDesc": "We are collecting and analyzing performance data for you and {count} competitors. This process usually takes 24-48 hours to complete.",
       "recheckAnalysis": "Recheck Analysis",
       "competitorPerformanceComparison": "Competitor Performance Comparison",
       "competitorPerformanceDesc": "Detailed performance data comparison and analysis with competitors"

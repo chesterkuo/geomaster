@@ -98,10 +98,12 @@ export const authService = {
   // 獲取用戶資料
   async getProfile(): Promise<ApiResponse<{ user: User; organizations: Organization[] }>> {
     // Create a clean axios instance for profile check to avoid CORS issues
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://10.74.100.10:3000';
+    const API_BASE_URL = import.meta.env.VITE_API_URL ||
+      (import.meta.env.DEV ? 'https://api-geo-staging.boxtradex.io' : 'https://api-geo.boxtradex.io');
     const cleanClient = axios.create({
       baseURL: `${API_BASE_URL}/api/v1`,
       timeout: 30000,
+      // Note: withCredentials removed - using JWT-only authentication
       headers: {
         'Content-Type': 'application/json',
       },

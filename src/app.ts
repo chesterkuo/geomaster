@@ -55,7 +55,8 @@ class App {
           'http://localhost:8081',
           'http://10.74.100.10:8081',
           'http://localhost:5173',
-          'https://api-geo.blitzgame.site'
+          'https://api-geo-staging.boxtradex.io',
+          'https://api-geo.boxtradex.io'
         ];
 
     // Allow all origins in development for now
@@ -83,6 +84,8 @@ class App {
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+    // Note: Cookie parsing removed - using JWT-only authentication
 
     // Compression and logging
     this.app.use(compression());

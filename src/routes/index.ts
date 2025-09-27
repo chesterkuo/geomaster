@@ -19,6 +19,7 @@ import integrationsRoutes from './integrations.routes';
 import abTestingRoutes from './abTesting.routes';
 import invitationRoutes from './invitation.routes';
 import platformSettingsRoutes from './platformSettings.routes';
+// import securityRoutes from './security';
 
 const router = Router();
 
@@ -47,6 +48,9 @@ router.use('/reports', reportsRoutes);
 router.use('/ml-optimization', mlOptimizationRoutes);
 router.use('/integrations', integrationsRoutes);
 router.use('/ab-testing', abTestingRoutes);
+
+// Security monitoring routes
+// router.use('/security', securityRoutes);
 
 // API health check
 router.get('/health', (req, res) => {

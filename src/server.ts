@@ -25,7 +25,7 @@ if (missingEnvVars.length > 0) {
 async function startServer() {
   try {
     const app = new App();
-    const port = parseInt(process.env.PORT || '8000', 10);
+    const port = 3030;
 
     // Handle uncaught exceptions
     process.on('uncaughtException', (error: Error) => {
