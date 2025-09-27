@@ -691,6 +691,21 @@
         "averageGeoScore": "平均 GEO 分數",
         "highestScore": "最高分數",
         "yourScore": "您的分數"
+      },
+      "metrics": {
+        "geoScore": "GEO 分數",
+        "visibilityScore": "可見度分數",
+        "mentionCount": "提及數量",
+        "sentimentScore": "情感分數",
+        "marketShare": "市場份額",
+        "technicalScore": "技術分數",
+        "contentScore": "內容分數",
+        "visibility": "可見度",
+        "mentions": "提及量",
+        "sentiment": "情感",
+        "technical": "技術",
+        "content": "內容",
+        "yourBrand": "您的品牌"
       }
     },
 

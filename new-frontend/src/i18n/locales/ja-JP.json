@@ -653,6 +653,21 @@
         "averageGeoScore": "平均GEOスコア",
         "highestScore": "最高スコア",
         "yourScore": "あなたのスコア"
+      },
+      "metrics": {
+        "geoScore": "GEOスコア",
+        "visibilityScore": "可視性スコア",
+        "mentionCount": "言及数",
+        "sentimentScore": "感情スコア",
+        "marketShare": "市場シェア",
+        "technicalScore": "技術スコア",
+        "contentScore": "コンテンツスコア",
+        "visibility": "可視性",
+        "mentions": "言及",
+        "sentiment": "感情",
+        "technical": "技術",
+        "content": "コンテンツ",
+        "yourBrand": "あなたのブランド"
       }
     },
     "competitors": {

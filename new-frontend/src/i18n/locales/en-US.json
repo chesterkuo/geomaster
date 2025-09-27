@@ -663,6 +663,21 @@
         "averageGeoScore": "Average GEO Score",
         "highestScore": "Highest Score",
         "yourScore": "Your Score"
+      },
+      "metrics": {
+        "geoScore": "GEO Score",
+        "visibilityScore": "Visibility Score",
+        "mentionCount": "Mention Count",
+        "sentimentScore": "Sentiment Score",
+        "marketShare": "Market Share",
+        "technicalScore": "Technical Score",
+        "contentScore": "Content Score",
+        "visibility": "Visibility",
+        "mentions": "Mentions",
+        "sentiment": "Sentiment",
+        "technical": "Technical",
+        "content": "Content",
+        "yourBrand": "Your Brand"
       }
     },
     "competitors": {

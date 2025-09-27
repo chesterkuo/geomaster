@@ -15,29 +15,6 @@ interface CompetitorComparisonChartProps {
   chartType?: 'bar' | 'radar';
 }
 
-const chartConfig: ChartConfig = {
-  geoScore: {
-    label: 'GEO 分數',
-    color: '#3b82f6',
-  },
-  visibilityScore: {
-    label: '可見度分數',
-    color: '#10b981',
-  },
-  mentionCount: {
-    label: '提及數量',
-    color: '#8b5cf6',
-  },
-  sentimentScore: {
-    label: '情感分數',
-    color: '#f59e0b',
-  },
-  marketShare: {
-    label: '市場份額',
-    color: '#ef4444',
-  },
-};
-
 export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps> = ({
   data,
   title,
@@ -46,6 +23,30 @@ export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps>
   chartType = 'bar',
 }) => {
   const { t } = useTranslation();
+
+  const chartConfig: ChartConfig = {
+    geoScore: {
+      label: t('aiSearch.charts.metrics.geoScore'),
+      color: '#3b82f6',
+    },
+    visibilityScore: {
+      label: t('aiSearch.charts.metrics.visibilityScore'),
+      color: '#10b981',
+    },
+    mentionCount: {
+      label: t('aiSearch.charts.metrics.mentionCount'),
+      color: '#8b5cf6',
+    },
+    sentimentScore: {
+      label: t('aiSearch.charts.metrics.sentimentScore'),
+      color: '#f59e0b',
+    },
+    marketShare: {
+      label: t('aiSearch.charts.metrics.marketShare'),
+      color: '#ef4444',
+    },
+  };
+
   // Prepare data for bar chart
   const barChartData = data.map(competitor => ({
     name: competitor.name.length > 12 ? competitor.name.substring(0, 12) + '...' : competitor.name,
@@ -61,12 +62,12 @@ export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps>
 
   // Prepare data for radar chart
   const radarData = [
-    { metric: 'GEO 分數', ...Object.fromEntries(data.map(c => [c.name, c.metrics.geoScore])) },
-    { metric: '可見度', ...Object.fromEntries(data.map(c => [c.name, c.metrics.visibilityScore])) },
-    { metric: '提及量', ...Object.fromEntries(data.map(c => [c.name, Math.min(c.metrics.mentionCount / 10, 100)])) }, // Scale down for radar
-    { metric: '情感', ...Object.fromEntries(data.map(c => [c.name, c.metrics.sentimentScore])) },
-    { metric: '技術', ...Object.fromEntries(data.map(c => [c.name, c.metrics.technicalScore])) },
-    { metric: '內容', ...Object.fromEntries(data.map(c => [c.name, c.metrics.contentScore])) },
+    { metric: t('aiSearch.charts.metrics.geoScore'), ...Object.fromEntries(data.map(c => [c.name, c.metrics.geoScore])) },
+    { metric: t('aiSearch.charts.metrics.visibility'), ...Object.fromEntries(data.map(c => [c.name, c.metrics.visibilityScore])) },
+    { metric: t('aiSearch.charts.metrics.mentions'), ...Object.fromEntries(data.map(c => [c.name, Math.min(c.metrics.mentionCount / 10, 100)])) }, // Scale down for radar
+    { metric: t('aiSearch.charts.metrics.sentiment'), ...Object.fromEntries(data.map(c => [c.name, c.metrics.sentimentScore])) },
+    { metric: t('aiSearch.charts.metrics.technical'), ...Object.fromEntries(data.map(c => [c.name, c.metrics.technicalScore])) },
+    { metric: t('aiSearch.charts.metrics.content'), ...Object.fromEntries(data.map(c => [c.name, c.metrics.contentScore])) },
   ];
 
   // Find top performer
@@ -88,7 +89,7 @@ export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps>
         <div className="bg-background border border-border rounded-lg p-3 shadow-lg">
           <div className="font-medium mb-2">
             {data.fullName || label}
-            {data.isYourBrand && <Badge className="ml-2" variant="secondary">您的品牌</Badge>}
+            {data.isYourBrand && <Badge className="ml-2" variant="secondary">{t('aiSearch.charts.metrics.yourBrand')}</Badge>}
           </div>
           <div className="space-y-1 text-sm">
             {payload.map((entry: any, index: number) => (
@@ -98,11 +99,11 @@ export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps>
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: entry.color }}
                   />
-                  {entry.name === 'geoScore' && 'GEO 分數'}
-                  {entry.name === 'visibilityScore' && '可見度分數'}
-                  {entry.name === 'mentionCount' && '提及數量'}
-                  {entry.name === 'sentimentScore' && '情感分數'}
-                  {entry.name === 'marketShare' && '市場份額'}
+                  {entry.name === 'geoScore' && t('aiSearch.charts.metrics.geoScore')}
+                  {entry.name === 'visibilityScore' && t('aiSearch.charts.metrics.visibilityScore')}
+                  {entry.name === 'mentionCount' && t('aiSearch.charts.metrics.mentionCount')}
+                  {entry.name === 'sentimentScore' && t('aiSearch.charts.metrics.sentimentScore')}
+                  {entry.name === 'marketShare' && t('aiSearch.charts.metrics.marketShare')}
                 </span>
                 <span className="font-medium">
                   {entry.name === 'marketShare' ? `${entry.value}%` : entry.value}
@@ -131,7 +132,7 @@ export const CompetitorComparisonChart: React.FC<CompetitorComparisonChartProps>
           tick={{ fontSize: 12 }}
         />
         <ChartTooltip content={<CustomTooltip />} />
-        <Bar dataKey="geoScore" name="GEO 分數" radius={4}>
+        <Bar dataKey="geoScore" name={t('aiSearch.charts.metrics.geoScore')} radius={4}>
           {barChartData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={competitorColors[index]} />
           ))}
