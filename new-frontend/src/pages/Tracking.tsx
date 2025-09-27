@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Globe, Scan, CheckCircle, AlertTriangle, X, TrendingUp, Users, Target, Search, AlertCircle, Loader2, Lock, Star, ArrowRight, Zap } from "lucide-react";
+import { Globe, Scan, CheckCircle, AlertTriangle, X, TrendingUp, Users, Target, Search, AlertCircle, Loader2, Lock, Star, ArrowRight, Zap, Brain, FileText, BarChart3 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { scanService, type Scan as ScanType, type ScanResults, type BasicScanResults, type DetailedScanResults } from "@/lib/api/scans";
 import { contentService, type OptimizationRequest } from "@/lib/api/content";
@@ -844,10 +844,10 @@ const Tracking = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("tracking.freeAIDiagnosis")}</h1>
-            <p className="text-muted-foreground">{t("tracking.freeDiagnosisSteps")}</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="hidden md:block text-3xl font-bold tracking-tight break-words">{t("tracking.freeAIDiagnosis")}</h1>
+            <p className="hidden md:block text-base text-muted-foreground break-words">{t("tracking.freeDiagnosisSteps")}</p>
           </div>
           <Button 
             variant="outline" 
@@ -1211,12 +1211,209 @@ const Tracking = () => {
           </Card>
         ) : scanResults ? (
           <>
-            {isBasicScanResults(scanResults) 
+            {isBasicScanResults(scanResults)
               ? renderBasicResults(scanResults)
               : renderDetailedResults(scanResults)
             }
           </>
         ) : null}
+
+        {/* How It Works Section */}
+        {!showResults && (
+          <>
+            <div className="mt-12 space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">{t("tracking.howItWorks")}</h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                {t("tracking.howItWorksDescription")}
+              </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card className="bg-gradient-card border-border relative overflow-hidden">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                      <Globe className="h-6 w-6" />
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Step 1
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">{t("tracking.stepEnterUrl")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{t("tracking.stepEnterUrlDesc")}</p>
+                  <ArrowRight className="absolute -right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hidden lg:block" />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-card border-border relative overflow-hidden">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                      <Brain className="h-6 w-6" />
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Step 2
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">{t("tracking.stepAiAnalysis")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{t("tracking.stepAiAnalysisDesc")}</p>
+                  <ArrowRight className="absolute -right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hidden lg:block" />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-card border-border relative overflow-hidden">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                      <FileText className="h-6 w-6" />
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Step 3
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">{t("tracking.stepGetReport")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{t("tracking.stepGetReportDesc")}</p>
+                  <ArrowRight className="absolute -right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hidden lg:block" />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-card border-border relative overflow-hidden">
+                <CardHeader>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                      <TrendingUp className="h-6 w-6" />
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      Step 4
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">{t("tracking.stepImprove")}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{t("tracking.stepImproveDesc")}</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Trusted By Section */}
+          <div className="mt-16 space-y-8 border-t border-border pt-12">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-4">{t("tracking.trustedBy")}</h2>
+            </div>
+
+            {/* Statistics */}
+            <div className="grid gap-4 md:grid-cols-3 max-w-4xl mx-auto">
+              <Card className="bg-gradient-card border-border text-center">
+                <CardContent className="pt-6">
+                  <div className="flex justify-center mb-2">
+                    <Globe className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="text-3xl font-bold">50,000+</div>
+                  <div className="text-sm text-muted-foreground">{t("tracking.websitesAnalyzed")}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-card border-border text-center">
+                <CardContent className="pt-6">
+                  <div className="flex justify-center mb-2">
+                    <TrendingUp className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="text-3xl font-bold">87%</div>
+                  <div className="text-sm text-muted-foreground">{t("tracking.performanceImprovement")}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-card border-border text-center">
+                <CardContent className="pt-6">
+                  <div className="flex justify-center mb-2">
+                    <Brain className="h-5 w-5 text-blue-500" />
+                  </div>
+                  <div className="text-3xl font-bold">24/7</div>
+                  <div className="text-sm text-muted-foreground">{t("tracking.aiPoweredAnalysis")}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Testimonials */}
+            <div className="grid gap-6 md:grid-cols-3 max-w-6xl mx-auto">
+              <Card className="bg-gradient-subtle border-border">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary">SC</span>
+                    </div>
+                    <div>
+                      <div className="font-medium">Sarah Chen</div>
+                      <div className="text-xs text-muted-foreground">Content Creator</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground italic">
+                    "{t("tracking.testimonial1")}"
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-subtle border-border">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary">MR</span>
+                    </div>
+                    <div>
+                      <div className="font-medium">Mike Rodriguez</div>
+                      <div className="text-xs text-muted-foreground">Marketing Director</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground italic">
+                    "{t("tracking.testimonial2")}"
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-subtle border-border">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-medium text-primary">ET</span>
+                    </div>
+                    <div>
+                      <div className="font-medium">Emma Thompson</div>
+                      <div className="text-xs text-muted-foreground">Business Owner</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 mb-3">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground italic">
+                    "{t("tracking.testimonial3")}"
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+          </div>
+          </>
+        )}
       </div>
 
       {/* 認證 Modal */}

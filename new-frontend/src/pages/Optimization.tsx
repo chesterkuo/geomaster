@@ -59,14 +59,24 @@ const Optimization = () => {
 
   // Load pages on component mount
   useEffect(() => {
-    loadPages();
-  }, []);
+    // Only load pages if user is authenticated
+    if (isAuthenticated) {
+      loadPages();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated]);
 
   const loadPages = async () => {
     try {
       setIsLoading(true);
-      
-      // Try to load pages even if auth status is uncertain
+
+      // Only try to load pages if authenticated
+      if (!isAuthenticated) {
+        setIsLoading(false);
+        return;
+      }
+
       const response = await contentService.getPages();
       if (response.success) {
         setPages(response.data);
@@ -629,6 +639,7 @@ const Optimization = () => {
     );
   }
 
+
   // Main list view
   return (
     <DashboardLayout>
@@ -639,14 +650,15 @@ const Optimization = () => {
             <h1 className="text-3xl font-bold tracking-tight">{t("optimization.title")}</h1>
             <p className="text-muted-foreground">{t("optimization.description")}</p>
           </div>
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button className="bg-primary text-primary-foreground">
-                <Plus className="mr-2 h-4 w-4" />
-                {t("optimization.addPageAnalysis")}
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
+          {isAuthenticated ? (
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button className="bg-primary text-primary-foreground">
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("optimization.addPageAnalysis")}
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
               <DialogHeader>
                 <DialogTitle>{t("optimization.addPageAnalysis")}</DialogTitle>
                 <DialogDescription>
@@ -717,7 +729,16 @@ const Optimization = () => {
                 </div>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          ) : (
+            <Button
+              onClick={() => setShowAuthModal(true)}
+              className="bg-primary text-primary-foreground"
+            >
+              <User className="mr-2 h-4 w-4" />
+              {t("auth.loginNow")}
+            </Button>
+          )}
         </div>
 
         {/* Filters */}

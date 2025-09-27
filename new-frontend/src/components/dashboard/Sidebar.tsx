@@ -47,8 +47,8 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       items: [
         { id: "tracking", label: t("nav.main.tracking"), icon: Globe, path: "/" },
         { id: "dashboard", label: t("nav.main.dashboard"), icon: LayoutDashboard, path: "/dashboard" },
-        { id: "optimization", label: t("nav.main.optimization"), icon: BarChart3, path: "/optimization" },
         { id: "ai-search", label: t("nav.main.aiSearch"), icon: Brain, path: "/ai-search" },
+        { id: "optimization", label: t("nav.main.optimization"), icon: BarChart3, path: "/optimization" },
       ]
     },
     // Only include SEO features if enabled

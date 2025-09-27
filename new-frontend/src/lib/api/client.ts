@@ -182,7 +182,7 @@ apiClient.interceptors.response.use(
 
               // Delay redirect to allow user to see the message
               setTimeout(() => {
-                window.location.href = '/login';
+                window.location.href = '/';
               }, 2000);
             }
           } else {
@@ -207,7 +207,7 @@ apiClient.interceptors.response.use(
         // No refresh token available
         tokenManager.clearTokens();
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          window.location.href = '/';
         }
       }
     }
