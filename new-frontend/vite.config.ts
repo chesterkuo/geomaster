@@ -93,7 +93,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    securityHeadersPlugin(),
+    // securityHeadersPlugin(), // Disabled to prevent conflicts with Cloudflare security headers
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
