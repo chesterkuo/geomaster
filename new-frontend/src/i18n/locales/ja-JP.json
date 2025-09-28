@@ -185,6 +185,7 @@
     "loginToViewTrackingDetails": "ログインしてウェブサイトURLを追加し、AIプラットフォーム可視性の監視を開始",
     "topPerformingSites": "最高パフォーマンスウェブサイト",
     "mentions": "言及",
+    "totalMentions": "総言及数",
     "startTrackingWebsites": "ウェブサイトの追跡を開始",
     "addWebsiteUrlToMonitor": "ウェブサイトURLを追加してAIプラットフォーム可視性の監視を開始",
     "addWebsite": "ウェブサイト追加",
@@ -248,6 +249,7 @@
     "foundOptimizationSuggestions": "{count}件の最適化提案が見つかりました、GEOスコア：{score}/100",
     "optimizationAnalysisFailed": "最適化分析に失敗しました",
     "freeAIDiagnosis": "無料AI可視性診断",
+    "enterWebsiteUrl": "ウェブサイトのURLを入力して無料AI可視性診断を受ける",
     "freeDiagnosisSteps": "無料診断 → 登録試用 → 詳細分析",
     "scanRecord": "スキャン記録",
     "scanHistoryTitle": "スキャン履歴記録",
@@ -672,6 +674,10 @@
       "platformPerformance": "プラットフォーム詳細パフォーマンス",
       "platformPerformanceDesc": "各AIプラットフォームの詳細パフォーマンスデータ",
       "mentionRate": "言及率",
+      "averagePositionTooltip": "すべての言及にわたる平均引用位置。数値が小さいほど良いランキングを示します（位置1が最高）。",
+      "brandMentionRateTooltip": "関連キーワードが検索された際にAIプラットフォームの回答であなたのブランドが言及される割合。割合が高いほど可視性が良いことを示します。",
+      "citationPositionTooltip": "AI回答であなたのブランドが言及される際の平均ランキング位置。位置1は最初の言及を意味し、数値が小さいほど良いです。",
+      "sentimentAnalysisTooltip": "AIプラットフォームでのブランド言及における肯定的感情の割合。引用の文脈とトーンを分析して計算されます。",
       "competitorComparison": {
         "title": "競合他社比較",
         "description": "競合他社との総合パフォーマンス比較",
@@ -723,7 +729,8 @@
     "marketShare": {
       "title": "市場シェア分析",
       "yourBrand": "あなたのブランド",
-      "description": "AIプラットフォームでの各ブランドの市場シェア"
+      "description": "AIプラットフォームでの各ブランドの市場シェア",
+      "percentageTooltip": "計算方法：(ブランド言及数 / 全ブランド総言及数) × 100%。AIプラットフォーム回答における各ブランドの相対的可視性シェアを示します。"
     },
     "insights": {
       "title": "競合インサイト",
@@ -807,6 +814,12 @@
           "lackOfStructuredFaq": "構造化された FAQ コンテンツの不足",
           "pageLoadSpeedIssue": "ページ読み込み速度の改善が必要 - 最大コンテンツ描画 (LCP): {lcp}s, 初回コンテンツ描画 (FCP): {fcp}s",
           "coreWebVitalsOptimization": "コアウェブバイタルの最適化が必要 - 累積レイアウトシフト (CLS): {cls} (推奨 < {recommended})"
+        },
+        "upgradeReasons": {
+          "detailedAnalysis": "30以上の技術指標の詳細分析を取得",
+          "competitorComparison": "特定の競合他社パフォーマンス比較を表示",
+          "optimizationPlan": "パーソナライズされた最適化実行プランを取得",
+          "progressTracking": "改善進捗とパフォーマンス監視を追跡"
         },
         "technicalHealth": {
           "schemaMarkup": "Schema マークアップ",
@@ -951,6 +964,7 @@
       "platformRequiresUpgrade": "{{platforms}}は使用するためにプランのアップグレードまたはAPIキー設定が必要です",
       "pleaseAddKeyword": "少なくとも1つのキーワードを追加してください",
       "trackingStarted": "AI可視性追跡が正常に開始されました！{{keywords}}個のキーワード、{{platforms}}個のプラットフォームを追跡",
+      "trackingInProgress": "追跡が実行中です。推定時間：{{estimatedTime}}分",
       "trackingStartFailed": "追跡の開始に失敗、後でもう一度試してください",
       "pleaseEnterUrl": "ウェブサイトURLを入力してください",
       "websiteAdded": "ウェブサイトが正常に追加されました",

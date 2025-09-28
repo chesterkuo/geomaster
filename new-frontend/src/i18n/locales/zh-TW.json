@@ -78,7 +78,8 @@
     "thursday": "星期四",
     "friday": "星期五",
     "saturday": "星期六",
-    "sunday": "星期日"
+    "sunday": "星期日",
+    "reload": "重新載入"
   },
   "auth": {
     "login": "登入",
@@ -184,6 +185,7 @@
     "loginToViewTrackingDetails": "登入以新增網站 URL 並開始監控 AI 平台可見度",
     "topPerformingSites": "表現最佳的網站",
     "mentions": "次提及",
+    "totalMentions": "總提及數",
     "startTrackingWebsites": "開始追蹤您的網站",
     "addWebsiteUrlToMonitor": "新增網站 URL 以開始監控 AI 平台可見度",
     "addWebsite": "新增網站",
@@ -513,6 +515,10 @@
   },
   "optimization": {
     "title": "內容優化",
+    "info": {
+      "startingAnalysis": "開始分析 {{title}}...",
+      "issuesFound": "發現 {{count}} 項優化項目，點擊查看詳情以獲取更多資訊"
+    },
     "suggestions": "優化建議",
     "priority": "優先級",
     "high": "高",
@@ -533,6 +539,10 @@
     "phase": "階段",
     "duration": "預計時間",
     "tasks": "執行項目",
+    "filterConditions": "篩選條件",
+    "contentPageList": "內容頁面列表",
+    "noPages": "暫無頁面",
+    "startAddingPagesForAnalysis": "開始新增頁面進行GEO分析",
     "markdownReport": "Markdown 報告",
     "exportPdf": "匯出 PDF",
     "exportExcel": "匯出 Excel",
@@ -690,14 +700,14 @@
     "metrics": {
       "brandMentionRate": "品牌提及率",
       "citationPosition": "引用位置",
-      "averagePosition": "平均第 {position} 位",
+      "averagePosition": "平均第{{position}}位",
       "sentimentAnalysis": "情感分析",
       "positive": "正面",
       "improved": "提升",
       "declined": "下降",
-      "change": "{direction} {value}",
-      "positionImproved": "提升 {value} 位",
-      "positionDeclined": "下降 {value} 位"
+      "change": "{{direction}} {{value}}",
+      "positionImproved": "提升{{value}}位",
+      "positionDeclined": "下降{{value}}位"
     },
 
     "charts": {
@@ -740,10 +750,10 @@
     "competitors": {
       "overview": "競爭對手概覽",
       "overviewDesc": "追蹤中的競爭對手及其狀態",
-      "count": "{count} 個競爭對手",
+      "count": "{{count}}個競爭對手",
       "tracking": "追蹤中",
       "paused": "暫停",
-      "viewAll": "查看全部 {count} 個競爭對手",
+      "viewAll": "查看全部{{count}}個競爭對手",
       "management": "競爭對手管理",
       "managementDesc": "新增、移除和管理您的競爭對手",
       "addCompetitor": "新增競爭對手",
@@ -771,7 +781,7 @@
       "dataAnalyzing": "競爭分析數據收集中",
       "dataAnalyzingDesc": "系統正在分析您與競爭對手的表現數據",
       "analysisInProgress": "數據分析中",
-      "analysisProgressDesc": "我們正在收集並分析您與 {count} 個競爭對手的表現數據。這個過程通常需要 24-48 小時完成。",
+      "analysisProgressDesc": "我們正在收集並分析您與{{count}}個競爭對手的表現數據。這個過程通常需要 24-48 小時完成。",
       "recheckAnalysis": "重新檢查",
       "competitorPerformanceComparison": "競爭對手表現比較",
       "competitorPerformanceDesc": "與競爭對手的詳細表現數據比較分析"
@@ -1038,28 +1048,64 @@
     }
   },
   "analytics": {
-    "title": "競爭分析",
-    "competitors": "競爭對手",
-    "addCompetitor": "新增競爭對手",
-    "competitorUrl": "競爭對手網址",
-    "marketShare": "市場佔有率",
-    "trafficEstimate": "流量估計",
-    "keywordOverlap": "關鍵字重疊",
-    "contentGaps": "內容缺口",
-    "strengths": "優勢",
-    "weaknesses": "劣勢",
-    "opportunities": "機會",
-    "threats": "威脅",
-    "swotAnalysis": "SWOT 分析",
-    "competitiveAdvantage": "競爭優勢",
-    "benchmarking": "基準分析",
-    "performanceComparison": "效能比較",
+    "title": "分析工具",
+    "description": "全面的網站分析和效能洞察",
     "trafficSources": "流量來源",
-    "deviceBreakdown": "裝置分析",
-    "geographicDistribution": "地理分佈",
-    "timeOnSite": "網站停留時間",
-    "bounceRate": "跳出率",
-    "pageViews": "頁面瀏覽數",
+    "userBehavior": "使用者行為",
+    "conversion": "轉換",
+    "organicSearch": "自然搜尋",
+    "directTraffic": "直接流量",
+    "socialMedia": "社群媒體",
+    "referralTraffic": "推薦流量",
+    "emailMarketing": "電子郵件行銷",
+    "paidAdvertising": "付費廣告",
+    "desktop": "桌面",
+    "mobile": "行動裝置",
+    "tablet": "平板",
+    "auth": {
+      "overviewRequired": "需要登入才能查看數據總覽",
+      "overviewDescription": "登入後即可查看詳細的網站分析和關鍵指標",
+      "realtimeRequired": "需要登入才能查看即時數據",
+      "realtimeDescription": "登入後即可監控網站的即時訪客活動",
+      "trafficRequired": "需要登入才能查看流量分析",
+      "trafficDescription": "登入後即可查看詳細的流量趨勢和來源分析",
+      "behaviorRequired": "需要登入才能查看使用者行為",
+      "behaviorDescription": "登入後即可分析網站上的使用者互動模式",
+      "conversionRequired": "需要登入才能查看轉換分析",
+      "conversionDescription": "登入後即可追蹤和分析關鍵轉換指標",
+      "reportsRequired": "需要登入才能使用報告中心",
+      "reportsDescription": "登入後即可設定和管理分析報告"
+    },
+    "overview": {
+      "totalVisitors": "總訪客數",
+      "pageViews": "頁面瀏覽量",
+      "averageSessionDuration": "平均會話時間",
+      "bounceRate": "跳出率",
+      "comparedToLastWeek": "與上週比較"
+    },
+    "trafficSources": {
+      "title": "流量來源",
+      "description": "訪客來源分析"
+    },
+    "deviceBreakdown": {
+      "title": "裝置類型",
+      "description": "使用者裝置分佈"
+    },
+    "popularPages": {
+      "title": "熱門頁面",
+      "description": "最受歡迎的頁面統計",
+      "views": "瀏覽量",
+      "bounceRate": "跳出率",
+      "avgTime": "平均時間",
+      "viewDetails": "查看詳情"
+    },
+    "conversion": {
+      "title": "轉換率分析",
+      "description": "追蹤和分析關鍵轉換指標",
+      "overallRate": "整體轉換率",
+      "monthlyConversions": "月轉換數",
+      "conversionValue": "轉換價值"
+    },
     "dateRanges": {
       "selectRange": "選擇日期範圍",
       "quickSelect": "快速選擇",
@@ -1078,7 +1124,7 @@
       "downloadNote": "匯出的檔案將會自動下載到您的電腦",
       "formats": {
         "pdfReport": "PDF 報告",
-        "pdfDescription": "完整的分析報告",
+        "pdfDescription": "完整分析報告",
         "excelFile": "Excel 檔案",
         "excelDescription": "可編輯的數據表格",
         "csvFile": "CSV 檔案",
@@ -1087,7 +1133,7 @@
         "pngDescription": "圖表截圖"
       },
       "types": {
-        "dashboard": "總覽數據",
+        "dashboard": "儀表板數據",
         "trends": "趨勢分析",
         "sources": "流量來源",
         "devices": "裝置分析",
@@ -1099,10 +1145,10 @@
         "trendsChart": "趨勢圖表 (PNG)"
       },
       "messages": {
-        "successExport": "已成功匯出 {format}",
+        "successExport": "成功匯出 {format}",
         "dataDownloaded": "{type} 數據已下載",
         "exportFailed": "匯出失敗",
-        "tryAgainOrContact": "請稍後重試或聯繫支援"
+        "tryAgainOrContact": "請稍後重試或聯絡支援"
       },
       "actions": {
         "viewDownload": "查看下載",
@@ -1112,10 +1158,64 @@
   },
   "research": {
     "title": "關鍵字研究",
+    "description": "發現高價值關鍵字以改善 SEO 排名",
+    "tabs": {
+      "keywordSearch": "關鍵字搜尋",
+      "competitorAnalysis": "競爭對手分析",
+      "rankingTracking": "排名追蹤",
+      "opportunityDiscovery": "機會發現"
+    },
+    "auth": {
+      "keywordSearchRequired": "需要登入才能使用關鍵字搜尋",
+      "keywordSearchDescription": "登入以搜尋高價值關鍵字並改善 SEO 排名",
+      "competitorAnalysisRequired": "需要登入才能使用競爭對手分析",
+      "competitorAnalysisDescription": "登入以分析競爭對手的關鍵字策略",
+      "rankingTrackingRequired": "需要登入才能使用排名追蹤",
+      "rankingTrackingDescription": "登入以監控搜尋引擎中的關鍵字排名變化",
+      "opportunityDiscoveryRequired": "需要登入才能使用機會發現",
+      "opportunityDiscoveryDescription": "登入以基於數據分析發現潛在的 SEO 優化機會"
+    },
+    "keywordTool": {
+      "title": "關鍵字搜尋工具",
+      "description": "輸入種子關鍵字以獲得相關建議",
+      "placeholder": "輸入關鍵字...",
+      "suggestions": "關鍵字建議",
+      "monthlyVolume": "月搜尋量"
+    },
+    "keywords": {
+      "seoOptimization": "SEO 優化",
+      "keywordResearch": "關鍵字研究",
+      "contentMarketing": "內容行銷",
+      "digitalMarketing": "數位行銷"
+    },
+    "difficulty": {
+      "low": "低",
+      "medium": "中",
+      "high": "高"
+    },
+    "competitorAnalysis": {
+      "title": "競爭對手分析",
+      "description": "分析競爭對手的關鍵字策略",
+      "keywordCount": "關鍵字數量",
+      "monthlyTraffic": "月流量"
+    },
+    "rankingTracking": {
+      "title": "排名追蹤",
+      "description": "監控關鍵字排名變化",
+      "startTitle": "開始追蹤關鍵字排名",
+      "startDescription": "新增關鍵字以監控其在搜尋引擎中的排名變化",
+      "addTracking": "新增追蹤"
+    },
+    "opportunityDiscovery": {
+      "title": "機會發現",
+      "description": "發現 SEO 優化機會",
+      "exploreTitle": "探索新機會",
+      "exploreDescription": "基於數據分析發現潛在的 SEO 優化機會",
+      "startAnalysis": "開始分析"
+    },
     "keywordIdeas": "關鍵字建議",
     "searchVolume": "搜尋量",
     "competition": "競爭程度",
-    "difficulty": "SEO 難度",
     "cpc": "每次點擊成本",
     "trends": "趨勢",
     "relatedKeywords": "相關關鍵字",
@@ -1136,6 +1236,87 @@
   },
   "reporting": {
     "title": "報告中心",
+    "description": "自動化報告和白標客製化",
+    "createNewReport": "建立新報告",
+    "tabs": {
+      "library": "報告庫",
+      "templateManagement": "範本管理",
+      "scheduledReports": "定期報告",
+      "templateBuilder": "範本建立器",
+      "whiteLabel": "白標報告"
+    },
+    "auth": {
+      "libraryRequired": "需要登入才能使用報告庫",
+      "libraryDescription": "登入以瀏覽和管理您的報告",
+      "templatesRequired": "需要登入才能管理範本",
+      "templatesDescription": "登入以建立和編輯報告範本",
+      "scheduledRequired": "需要登入才能使用定期報告",
+      "scheduledDescription": "登入以設定自動報告排程",
+      "builderRequired": "需要登入才能使用範本建立器",
+      "builderDescription": "登入以建立自訂報告範本",
+      "whiteLabelRequired": "需要登入才能使用白標報告",
+      "whiteLabelDescription": "登入以建立品牌化報告",
+      "loginNow": "立即登入"
+    },
+    "templateManagement": {
+      "title": "報告範本管理",
+      "comingSoon": "此功能即將推出，敬請期待！"
+    },
+    "regularReports": {
+      "weeklySummary": {
+        "title": "週總結",
+        "description": "自動化每週 GEO 效能報告",
+        "frequency": "每週一"
+      },
+      "monthlyAnalysis": {
+        "title": "月分析報告",
+        "description": "深度月分析和趨勢洞察",
+        "frequency": "每月1日"
+      },
+      "quarterlyCompetitive": {
+        "title": "季競爭分析",
+        "description": "競爭對手 GEO 效能比較分析",
+        "frequency": "每季"
+      }
+    },
+    "metrics": {
+      "aiVisibility": "AI 可見度分數",
+      "contentQuality": "內容品質分數",
+      "technicalHealth": "技術健康",
+      "competitorRanking": "競爭對手排名",
+      "trafficPotential": "流量改善潛力",
+      "conversionRate": "轉換率優化"
+    },
+    "categories": {
+      "core": "核心指標",
+      "content": "內容",
+      "technical": "技術",
+      "competitive": "競爭分析",
+      "prediction": "預測",
+      "conversion": "轉換"
+    },
+    "whiteLabel": {
+      "title": "白標客製化",
+      "description": "為代理商客戶提供品牌化報告",
+      "companyLogo": "公司標誌",
+      "uploadLogo": "上傳標誌",
+      "logoSizeHint": "建議尺寸：200x80px，PNG/JPG",
+      "brandColors": "品牌色彩",
+      "primaryColor": "主色",
+      "secondaryColor": "輔色",
+      "customDomain": "自訂網域",
+      "customDomainHint": "設定後，客戶將在您的網域上檢視報告",
+      "applySettings": "套用白標設定",
+      "preview": {
+        "title": "報告預覽",
+        "description": "白標報告樣式預覽",
+        "geoReport": "GEO 報告",
+        "aiVisibilityAnalysis": "AI 可見度分析",
+        "overallScore": "整體分數",
+        "trafficIncrease": "流量增長",
+        "technicalScore": "技術分數"
+      }
+    },
     "reports": "報告",
     "createReport": "建立報告",
     "reportTemplates": "報告範本",
@@ -1147,7 +1328,6 @@
     "marketPosition": "市場定位分析",
     "swotAnalysis": "SWOT 分析",
     "keywordAnalysis": "關鍵字分析",
-    "customReport": "自訂報告",
     "exportFormat": "匯出格式",
     "pdfDocument": "PDF 文件",
     "excelSpreadsheet": "Excel 試算表",
@@ -1171,44 +1351,129 @@
   },
   "team": {
     "title": "團隊管理",
-    "members": "團隊成員",
-    "invitations": "邀請",
+    "description": "管理團隊成員和權限設定",
+    "tabs": {
+      "members": "團隊成員",
+      "roles": "角色權限",
+      "invitations": "邀請管理",
+      "activity": "活動記錄"
+    },
+    "members": {
+      "title": "團隊成員",
+      "count": "團隊成員 ({{count}})",
+      "searchPlaceholder": "搜尋成員...",
+      "roleFilter": "角色",
+      "allRoles": "所有角色",
+      "inviteButton": "邀請成員",
+      "lastLogin": "最後登入：{{date}}",
+      "neverLoggedIn": "從未登入",
+      "removeMember": "移除成員",
+      "confirmRemove": "確認移除成員",
+      "confirmRemoveDescription": "確定要移除 {{name}} 嗎？此操作無法復原。",
+      "noMembers": "找不到成員"
+    },
+    "invite": {
+      "title": "邀請新成員",
+      "description": "邀請新成員加入您的組織",
+      "emailLabel": "電子郵件地址",
+      "emailPlaceholder": "user@example.com",
+      "roleLabel": "角色",
+      "messageLabel": "邀請訊息（選填）",
+      "messagePlaceholder": "歡迎加入我們的團隊！",
+      "sendButton": "發送邀請"
+    },
     "roles": {
+      "title": "角色與權限",
+      "noRoles": "沒有可用角色",
+      "loginToViewRoles": "請先登入以查看角色",
+      "permissionsInclude": "權限包括：",
+      "noPermissionInfo": "無權限資訊",
       "owner": "擁有者",
       "admin": "管理員",
       "editor": "編輯者",
       "viewer": "檢視者",
-      "permissionsInclude": "權限包括",
       "guide": {
-        "title": "角色指南",
-        "description": "了解各種角色的權限和責任",
-        "owner": "擁有者 - 完全控制組織和所有功能",
-        "admin": "管理員 - 管理團隊和設定，除了刪除組織",
-        "editor": "編輯者 - 建立和編輯內容，查看報告"
+        "title": "角色說明",
+        "description": "系統預設角色及其權限範圍",
+        "owner": "組織的最高權限，可管理所有功能、設定帳務、邀請和移除成員",
+        "admin": "可管理大部分功能和成員，但無法存取帳務設定",
+        "editor": "可編輯內容、管理關鍵字、查看報告，但無法管理成員",
+        "viewer": "只能查看報告和分析數據，無法執行編輯或管理操作"
       }
     },
-    "permissions": "權限",
-    "addMember": "新增成員",
-    "inviteMember": "邀請成員",
-    "memberEmail": "成員電子郵件",
-    "selectRole": "選擇角色",
-    "owner": "擁有者",
-    "admin": "管理員",
-    "editor": "編輯者",
-    "viewer": "檢視者",
-    "pendingInvitation": "待處理邀請",
-    "accepted": "已接受",
-    "declined": "已拒絕",
-    "expired": "已過期",
-    "resendInvitation": "重新發送邀請",
-    "cancelInvitation": "取消邀請",
-    "removeMember": "移除成員",
-    "changeRole": "變更角色",
-    "lastActive": "最後活動",
-    "joinedDate": "加入日期",
-    "activityLog": "活動記錄",
-    "userActivity": "用戶活動",
-    "systemActivity": "系統活動",
+    "invitations": {
+      "title": "邀請管理",
+      "listTitle": "邀請清單",
+      "listDescription": "管理發送給新成員的邀請",
+      "statusFilter": "狀態",
+      "allStatuses": "所有狀態",
+      "role": "角色：{{role}}",
+      "sentDate": "發送日期：{{date}}",
+      "message": "訊息：{{message}}",
+      "resendButton": "重新發送",
+      "cancelButton": "取消",
+      "noInvitations": "找不到邀請記錄"
+    },
+    "activity": {
+      "title": "活動記錄",
+      "searchPlaceholder": "搜尋操作...",
+      "listTitle": "團隊活動記錄",
+      "listDescription": "查看團隊成員的操作記錄",
+      "system": "系統",
+      "noActivity": "找不到活動記錄"
+    },
+    "auth": {
+      "membersRequired": "需要登入才能管理團隊成員",
+      "membersDescription": "登入後即可查看團隊成員、發送邀請和管理權限",
+      "rolesRequired": "需要登入才能查看角色權限",
+      "rolesDescription": "登入後即可查看組織內不同角色的權限設定和管理範圍",
+      "invitationsRequired": "需要登入才能管理邀請",
+      "invitationsDescription": "登入後即可發送邀請、重新發送邀請和查看邀請狀態",
+      "activityRequired": "需要登入才能查看活動記錄",
+      "activityDescription": "登入後即可查看團隊成員的操作記錄和活動歷史",
+      "loginButton": "立即登入"
+    },
+    "permissions": {
+      "userManage": "管理成員",
+      "userInvite": "邀請成員",
+      "settingsManage": "管理設定",
+      "billingManage": "管理帳務",
+      "contentEdit": "編輯內容",
+      "reportsView": "查看報告",
+      "reportsExport": "匯出報告",
+      "analyticsView": "查看分析",
+      "keywordsManage": "管理關鍵字"
+    },
+    "status": {
+      "active": "啟用",
+      "inactive": "停用",
+      "suspended": "暫停",
+      "pending": "待處理",
+      "accepted": "已接受",
+      "expired": "已過期",
+      "cancelled": "已取消"
+    },
+    "messages": {
+      "getRolesFailed": "取得角色失敗",
+      "getMembersFailed": "取得團隊成員失敗",
+      "getInvitationsFailed": "取得邀請清單失敗",
+      "getActivitiesFailed": "取得活動記錄失敗",
+      "fillAllRequired": "請填寫所有必填欄位",
+      "invitationSent": "邀請已發送",
+      "sendInvitationFailed": "發送邀請失敗",
+      "invitationResent": "邀請已重新發送",
+      "resendInvitationFailed": "重新發送邀請失敗",
+      "invitationCancelled": "邀請已取消",
+      "cancelInvitationFailed": "取消邀請失敗",
+      "memberUpdated": "成員資訊已更新",
+      "updateMemberFailed": "更新成員失敗",
+      "memberRemoved": "成員已移除",
+      "removeMemberFailed": "移除成員失敗"
+    },
+    "dates": {
+      "unknownDate": "未知日期",
+      "invalidDate": "無效日期"
+    },
     "activityActions": {
       "team.members.list": "查看團隊成員",
       "team.members.invite": "邀請團隊成員",
@@ -1217,9 +1482,9 @@
       "team.invitations.send": "發送邀請",
       "team.invitations.resend": "重新發送邀請",
       "team.invitations.cancel": "取消邀請",
-      "platform.api_key.create": "建立API密鑰",
-      "platform.api_key.update": "更新API密鑰",
-      "platform.api_key.delete": "刪除API密鑰",
+      "platform.api_key.create": "建立 API 金鑰",
+      "platform.api_key.update": "更新 API 金鑰",
+      "platform.api_key.delete": "刪除 API 金鑰",
       "settings.profile.update": "更新個人資料",
       "settings.organization.update": "更新組織設定",
       "auth.login": "登入",
@@ -1234,9 +1499,26 @@
     }
   },
   "alerts": {
-    "title": "警報中心",
-    "alerts": "警報",
+    "title": "警報管理",
+    "realTime": "即時",
+    "connected": "已連線",
+    "collectMetrics": "收集指標",
+    "checkAlerts": "檢查警報",
     "createAlert": "建立警報",
+    "tabs": {
+      "dashboard": "儀表板",
+      "configurations": "設定",
+      "history": "歷史",
+      "realtime": "即時"
+    },
+    "messages": {
+      "manualCheckCompleted": "手動檢查完成：{{alertsChecked}} 個警報已檢查，{{alertsTriggered}} 個已觸發",
+      "manualCheckFailed": "手動檢查失敗：{{error}}",
+      "metricsCollectionCompleted": "指標收集完成：{{websitesProcessed}} 個網站已處理，{{snapshotsCreated}} 個快照已建立",
+      "metricsCollectionFailed": "指標收集失敗：{{error}}",
+      "alertCreated": "警報設定建立成功"
+    },
+    "alerts": "警報",
     "alertRules": "警報規則",
     "alertHistory": "警報歷史",
     "alertName": "警報名稱",
@@ -1266,6 +1548,7 @@
   },
   "settings": {
     "title": "設定",
+    "description": "管理您的帳戶和應用程式偏好設定",
     "general": "一般設定",
     "account": "帳號設定",
     "security": "安全設定",
@@ -1304,6 +1587,85 @@
       "security": "安全設定",
       "integrations": "整合設定",
       "appearance": "外觀設定"
+    },
+    "general": {
+      "organizationSettings": "組織設定",
+      "organizationDescription": "管理您組織的基本資訊和偏好設定",
+      "companyName": "公司名稱",
+      "companyNamePlaceholder": "輸入公司名稱",
+      "websiteUrl": "網站 URL",
+      "websiteUrlPlaceholder": "https://example.com",
+      "timezone": "時區",
+      "language": "語言",
+      "currency": "貨幣",
+      "timezones": {
+        "taipei": "台北（GMT+8）",
+        "tokyo": "東京（GMT+9）",
+        "utc": "UTC（GMT+0）"
+      },
+      "languages": {
+        "traditionalChinese": "繁體中文",
+        "simplifiedChinese": "簡體中文",
+        "english": "英語"
+      },
+      "currencies": {
+        "twd": "台幣（TWD）",
+        "usd": "美元（USD）",
+        "eur": "歐元（EUR）"
+      },
+      "dataPreferences": "資料偏好",
+      "autoDataSync": "自動資料同步",
+      "autoDataSyncDescription": "每小時自動同步網站資料",
+      "dataRetention": "資料保留期",
+      "dataRetentionDescription": "保留歷史資料的月數",
+      "defaultReportFormat": "預設報告格式",
+      "defaultReportFormatDescription": "產生報告時的預設檔案格式",
+      "saveChanges": "儲存變更"
+    },
+    "profile": {
+      "title": "個人檔案",
+      "description": "管理您的個人基本資訊",
+      "fullName": "姓名",
+      "fullNamePlaceholder": "輸入您的姓名",
+      "email": "電子郵件（唯讀）",
+      "emailReadOnly": "電子郵件地址不能修改",
+      "accountInfo": "帳戶資訊",
+      "role": "角色",
+      "defaultRole": "用戶",
+      "createdAt": "創建於",
+      "unknown": "未知",
+      "saveChanges": "儲存變更"
+    },
+    "security": {
+      "passwordSettings": "密碼設定",
+      "passwordDescription": "更新您的登入密碼",
+      "currentPassword": "目前密碼",
+      "newPassword": "新密碼",
+      "confirmNewPassword": "確認新密碼",
+      "updatePassword": "更新密碼",
+      "twoFactorAuth": "雙重身份驗證（2FA）",
+      "twoFactorDescription": "增強您的帳戶安全",
+      "enableTwoFactor": "啟用雙重身份驗證",
+      "status": "狀態",
+      "enabled": "已啟用",
+      "disabled": "已停用",
+      "enable2FA": "啟用2FA",
+      "disable2FA": "停用2FA",
+      "loginHistory": "登入歷史",
+      "loginHistoryDescription": "查看最近的登入活動",
+      "noLoginHistory": "無登入歷史",
+      "activeSessions": "活躍會話",
+      "activeSessionsDescription": "管理您的登入會話",
+      "currentSession": "目前會話",
+      "lastActive": "最後活躍",
+      "terminateSession": "終止會話",
+      "setup2FA": "設定雙重身份驗證",
+      "scanQRCode": "掃描 QR 碼以設定您的身份驗證器應用程式",
+      "enterVerificationCode": "輸入驗證碼以完成設定",
+      "verificationCode": "驗證碼",
+      "enterSixDigitCode": "輸入 6 位數驗證碼",
+      "nextStep": "下一步",
+      "verifyAndEnable": "驗證並啟用"
     },
     "apiKeys": {
       "title": "AI API Key 管理",

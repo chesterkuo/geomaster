@@ -249,6 +249,7 @@
     "foundOptimizationSuggestions": "发现 {count} 项优化建议，GEO 分数：{score}/100",
     "optimizationAnalysisFailed": "优化分析失败",
     "freeAIDiagnosis": "免费AI可见度诊断",
+    "enterWebsiteUrl": "输入您的网站网址以获得免费AI可见度诊断",
     "freeDiagnosisSteps": "免费诊断 → 注册试用 → 深度分析",
     "scanRecord": "扫描记录",
     "scanHistoryTitle": "扫描历史记录",
@@ -819,6 +820,12 @@
           "pageLoadSpeedIssue": "页面加载速度需要改善 - 最大内容绘制 (LCP): {lcp}s, 首次内容绘制 (FCP): {fcp}s",
           "coreWebVitalsOptimization": "核心网页体验需要优化 - 累积版面位移 (CLS): {cls} (建议 < {recommended})"
         },
+        "upgradeReasons": {
+          "detailedAnalysis": "获得30+项技术指标的详细分析",
+          "competitorComparison": "查看特定竞争对手表现比较",
+          "optimizationPlan": "获得个性化优化执行计划",
+          "progressTracking": "跟踪改进进度和性能监控"
+        },
         "technicalHealth": {
           "schemaMarkup": "Schema 标记",
           "schemaMarkupCoverage": "60% 覆盖率 (建议 85%+)",
@@ -962,6 +969,7 @@
       "platformRequiresUpgrade": "{{platforms}}需要计划升级或API密钥设置才能使用",
       "pleaseAddKeyword": "请至少添加一个关键词",
       "trackingStarted": "AI可见度跟踪启动成功！跟踪{{keywords}}个关键词，{{platforms}}个平台",
+      "trackingInProgress": "跟踪正在运行中，预计时间：{{estimatedTime}}分钟",
       "trackingStartFailed": "启动跟踪失败，请稍后重试",
       "pleaseEnterUrl": "请输入网站URL",
       "websiteAdded": "网站添加成功",
