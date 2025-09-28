@@ -1445,9 +1445,10 @@ const Tracking = () => {
                 </button>
                 {expandedFaq === "charging" && (
                   <div className="px-6 pb-6 pt-0">
-                    <p className="text-muted-foreground leading-relaxed">
-                      {t("tracking.faqChargingAnswer")}
-                    </p>
+                    <p
+                      className="text-muted-foreground leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: t("tracking.faqChargingAnswer") }}
+                    />
                   </div>
                 )}
               </div>
@@ -1469,9 +1470,10 @@ const Tracking = () => {
                 </button>
                 {expandedFaq === "scanLimit" && (
                   <div className="px-6 pb-6 pt-0">
-                    <p className="text-muted-foreground leading-relaxed">
-                      {t("tracking.faqScanLimitAnswer")}
-                    </p>
+                    <p
+                      className="text-muted-foreground leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: t("tracking.faqScanLimitAnswer") }}
+                    />
                   </div>
                 )}
               </div>

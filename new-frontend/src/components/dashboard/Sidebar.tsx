@@ -163,7 +163,10 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
           ) : (
             <div className="space-y-2">
               <div className="text-sm font-medium text-foreground">{t('nav.upgrade.contactTitle')}</div>
-              <div className="text-xs text-muted-foreground">{t('nav.upgrade.contactMessage')}</div>
+              <div
+                className="text-xs text-muted-foreground"
+                dangerouslySetInnerHTML={{ __html: t('nav.upgrade.contactMessage') }}
+              />
               <Button
                 size="sm"
                 variant="outline"

@@ -8,35 +8,56 @@ import zhTW from './locales/zh-TW.json';
 import zhCN from './locales/zh-CN.json';
 import enUS from './locales/en-US.json';
 import jaJP from './locales/ja-JP.json';
+import koKR from './locales/ko-KR.json';
+import frFR from './locales/fr-FR.json';
+import ptBR from './locales/pt-BR.json';
 
 const resources = {
-  'zh-TW': {
-    translation: zhTW
+  'en-US': {
+    translation: enUS
   },
   'zh-CN': {
     translation: zhCN
   },
-  'en-US': {
-    translation: enUS
-  },
   'ja-JP': {
     translation: jaJP
   },
+  'ko-KR': {
+    translation: koKR
+  },
+  'zh-TW': {
+    translation: zhTW
+  },
+  'fr-FR': {
+    translation: frFR
+  },
+  'pt-BR': {
+    translation: ptBR
+  },
   // Add common browser locale mappings
+  'en': {
+    translation: enUS
+  },
   'zh': {
     translation: zhCN // Default Chinese to Simplified Chinese
-  },
-  'zh-tw': {
-    translation: zhTW
   },
   'zh-cn': {
     translation: zhCN
   },
-  'en': {
-    translation: enUS
+  'zh-tw': {
+    translation: zhTW
   },
   'ja': {
     translation: jaJP
+  },
+  'ko': {
+    translation: koKR
+  },
+  'fr': {
+    translation: frFR
+  },
+  'pt': {
+    translation: ptBR
   }
 };
 
@@ -87,7 +108,17 @@ i18n
           'en-au': 'en-US',
           'en-ca': 'en-US',
           'ja': 'ja-JP',
-          'ja-jp': 'ja-JP'
+          'ja-jp': 'ja-JP',
+          'ko': 'ko-KR',
+          'ko-kr': 'ko-KR',
+          'fr': 'fr-FR',
+          'fr-fr': 'fr-FR',
+          'fr-ca': 'fr-FR', // Canadian French uses same translations
+          'fr-be': 'fr-FR', // Belgian French uses same translations
+          'fr-ch': 'fr-FR', // Swiss French uses same translations
+          'pt': 'pt-BR',
+          'pt-br': 'pt-BR',
+          'pt-pt': 'pt-BR' // Portuguese from Portugal uses Brazilian Portuguese for now
         };
 
         // Return mapped language or fallback to English
