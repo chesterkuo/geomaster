@@ -16,7 +16,14 @@ const languages = [
   { code: 'ja-JP', name: '日本語', flag: '🇯🇵' },
   { code: 'ko-KR', name: '한국어', flag: '🇰🇷' },
   { code: 'pt-BR', name: 'Português', flag: '🇧🇷' },
-  { code: 'zh-TW', name: '繁體中文', flag: '🇹🇼' }
+  { code: 'zh-TW', name: '繁體中文', flag: '🇹🇼' },
+  { code: 'de-DE', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'it-IT', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'es-ES', name: 'Español', flag: '🇪🇸' },
+  { code: 'sv-SE', name: 'Svenska', flag: '🇸🇪' },
+  { code: 'da-DK', name: 'Dansk', flag: '🇩🇰' },
+  { code: 'nb-NO', name: 'Norsk', flag: '🇳🇴' },
+  { code: 'ru-RU', name: 'Русский', flag: '🇷🇺' }
 ];
 
 interface LanguageSwitcherProps {

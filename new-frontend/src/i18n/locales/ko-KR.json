@@ -734,12 +734,12 @@
     "marketShare": {
       "title": "시장 점유율 분석",
       "yourBrand": "브랜드",
-      "description": "Market share of each brand on AI platforms",
+      "description": "AI 플랫폼에서 각 브랜드의 시장 점유율",
       "percentageTooltip": "Calculated as: (Brand mentions / Total mentions across all brands) × 100%. Shows the relative visibility share of each brand in AI platform responses."
     },
     "insights": {
       "title": "경쟁사 인사이트",
-      "description": "Competitive intelligence and recommendations based on data analysis",
+      "description": "데이터 분석을 기반으로 한 경쟁 인텔리전스 및 권장사항",
       "highImpact": "높은 영향도",
       "mediumImpact": "중간 영향도",
       "lowImpact": "낮은 영향도",
@@ -747,7 +747,7 @@
     },
     "gapAnalysis": {
       "title": "격차 분석",
-      "description": "Identify gaps and improvement opportunities compared to competitors",
+      "description": "경쟁사 대비 격차와 개선 기회 식별",
       "yourScore": "You: {{score}}",
       "averageScore": "Average: {{average}}",
       "gap": "Gap: {{gap}}",
@@ -755,7 +755,7 @@
     },
     "competitors": {
       "overview": "경쟁사 개요",
-      "overviewDesc": "Competitors being tracked and their status",
+      "overviewDesc": "추적 중인 경쟁사와 그들의 상태",
       "count": "{{count}} Competitors"
     },
     "diagnosis": {
@@ -769,75 +769,75 @@
       },
       "seoChecks": {
         "robotsTxt": "robots.txt configuration",
-        "robotsTxtAllowed": "AI crawler access allowed",
-        "schemaMarkup": "Schema markup",
+        "robotsTxtAllowed": "AI 크롤러 액세스 허용",
+        "schemaMarkup": "스키마 마크업",
         "schemaMarkupCoverage": "{coverage}% coverage ({recommended}%+ recommended)",
-        "websiteSpeed": "Website speed",
-        "performanceScore": "Performance score: {score}/100, Largest Contentful Paint (LCP): {lcp}s",
+        "websiteSpeed": "웹사이트 속도",
+        "performanceScore": "성능 점수: {score}/100, 최대 콘텐츠풀 페인트 (LCP): {lcp}초",
         "coreWebVitals": "Core Web Vitals",
-        "coreWebVitalsDetails": "Cumulative Layout Shift (CLS): {cls}, First Contentful Paint (FCP): {fcp}s",
-        "jsRendering": "JavaScript rendering",
-        "insufficientSSR": "Insufficient SSR support",
-        "sslCertificate": "SSL certificate",
-        "validHttps": "Valid HTTPS configuration",
-        "httpsConnection": "HTTPS secure connection",
-        "mobileOptimization": "Mobile optimization",
-        "missingViewportMeta": "Missing viewport meta tag",
-        "pageTitle": "Page title",
-        "titleTooShort": "Title too short ({length} characters)",
-        "metaDescription": "Meta description",
-        "missingMetaDescription": "Missing Meta description tag",
-        "pageLoadSpeed": "Page load speed",
-        "performanceDetails": "Performance score: {score}/100, Largest Contentful Paint (LCP): {lcp}s",
-        "accessibility": "Accessibility design",
-        "accessibilityDetails": "Cumulative Layout Shift (CLS): {cls}, First Contentful Paint (FCP): {fcp}s",
-        "headingStructure": "Heading structure",
-        "missingH1": "Missing H1 main heading",
-        "contentLength": "Content length",
-        "contentTooShort": "Content too short (approximately {words} words)",
-        "imageOptimization": "Image optimization",
-        "allImagesHaveAlt": "All images have Alt text ({count}/{total})",
-        "internalLinks": "Internal links",
-        "appropriateLinks": "Appropriate amount of links ({count} links)",
-        "schemaData": "Schema markup",
-        "foundStructuredData": "Found {count} structured data",
-        "socialMediaTags": "Social media tags",
-        "missingOpenGraphTwitter": "Missing Open Graph and Twitter tags",
-        "faqContent": "FAQ content",
-        "noFaqFound": "No FAQ or Q&A content found",
-        "contentReadability": "Content readability",
-        "sentencesTooShort": "Sentences too short (average {length} words/sentence)"
+        "coreWebVitalsDetails": "누적 레이아웃 시프트 (CLS): {cls}, 최초 콘텐츠풀 페인트 (FCP): {fcp}초",
+        "jsRendering": "JavaScript 렌더링",
+        "insufficientSSR": "SSR 지원 부족",
+        "sslCertificate": "SSL 인증서",
+        "validHttps": "유효한 HTTPS 구성",
+        "httpsConnection": "HTTPS 보안 연결",
+        "mobileOptimization": "모바일 최적화",
+        "missingViewportMeta": "viewport 메타 태그 누락",
+        "pageTitle": "페이지 제목",
+        "titleTooShort": "제목이 너무 짧음 ({length}자)",
+        "metaDescription": "메타 설명",
+        "missingMetaDescription": "메타 설명 태그 누락",
+        "pageLoadSpeed": "페이지 로드 속도",
+        "performanceDetails": "성능 점수: {score}/100, 최대 콘텐츠풀 페인트 (LCP): {lcp}초",
+        "accessibility": "접근성 디자인",
+        "accessibilityDetails": "누적 레이아웃 시프트 (CLS): {cls}, 최초 콘텐츠풀 페인트 (FCP): {fcp}초",
+        "headingStructure": "제목 구조",
+        "missingH1": "H1 메인 제목 누락",
+        "contentLength": "콘텐츠 길이",
+        "contentTooShort": "콘텐츠가 너무 짧음 (약 {words}단어)",
+        "imageOptimization": "이미지 최적화",
+        "allImagesHaveAlt": "모든 이미지에 Alt 텍스트 있음 ({count}/{total})",
+        "internalLinks": "내부 링크",
+        "appropriateLinks": "적절한 링크 수 ({count}개 링크)",
+        "schemaData": "스키마 마크업",
+        "foundStructuredData": "{count}개의 구조화된 데이터 발견",
+        "socialMediaTags": "소셜 미디어 태그",
+        "missingOpenGraphTwitter": "Open Graph 및 Twitter 태그 누락",
+        "faqContent": "FAQ 콘텐츠",
+        "noFaqFound": "FAQ 또는 Q&A 콘텐츠를 찾을 수 없음",
+        "contentReadability": "콘텐츠 가독성",
+        "sentencesTooShort": "문장이 너무 짧음 (평균 {length}단어/문장)"
       },
       "scanResults": {
         "scores": {
-          "excellent": "Excellent",
-          "good": "Good",
+          "excellent": "우수",
+          "good": "좋음",
           "needsImprovement": "개선 필요",
           "criticalIssues": "중요 문제"
         },
         "messages": {
-          "removed": "These messages should come from backend with proper domain interpolation"
+          "removed": "이 메시지들은 적절한 도메인 인터폴레이션과 함께 백엔드에서 와야 합니다"
         },
         "keyIssues": {
-          "insufficientSchemaMarkup": "Insufficient Schema markup coverage (only {coverage}%)",
-          "lowContentUpdateFrequency": "Low content update frequency",
-          "lackOfStructuredFaq": "Lack of structured FAQ content",
-          "pageLoadSpeedIssue": "Page load speed needs improvement - Largest Contentful Paint (LCP): {lcp}s, First Contentful Paint (FCP): {fcp}s",
-          "coreWebVitalsOptimization": "Core Web Vitals need optimization - Cumulative Layout Shift (CLS): {cls} (recommended < {recommended})"
+          "insufficientSchemaMarkup": "스키마 마크업 커버리지 부족 ({coverage}%만)",
+          "lowContentUpdateFrequency": "낮은 콘텐츠 업데이트 빈도",
+          "lackOfStructuredFaq": "구조화된 FAQ 콘텐츠 부족",
+          "pageLoadSpeedIssue": "페이지 로드 속도 개선 필요 - 최대 콘텐츠풀 페인트 (LCP): {lcp}초, 최초 콘텐츠풀 페인트 (FCP): {fcp}초",
+          "coreWebVitalsOptimization": "Core Web Vitals 최적화 필요 - 누적 레이아웃 시프트 (CLS): {cls} (권장 < {recommended})"
         },
         "upgradeReasons": {
-          "detailedAnalysis": "Get detailed analysis of 30+ technical metrics",
-          "competitorComparison": "View specific competitor performance comparison",
-          "optimizationPlan": "Get personalized optimization execution plan",
-          "progressTracking": "Track improvement progress and performance monitoring"
+          "detailedAnalysis": "30개 이상의 기술 메트릭에 대한 상세 분석 받기",
+          "competitorComparison": "구체적인 경쟁사 성능 비교 보기",
+          "optimizationPlan": "개인화된 최적화 실행 계획 받기",
+          "progressTracking": "개선 진행상황 및 성능 모니터링 추적"
         },
         "technicalHealth": {
-          "schemaMarkup": "Schema markup",
+          "schemaMarkup": "스키마 마크업",
           "schemaMarkupCoverage": "60% coverage (85%+ recommended)",
-          "javascriptRendering": "JavaScript rendering",
-          "insufficientSSRSupport": "Insufficient SSR support",
-          "sslCertificate": "SSL certificate",
-          "validHTTPSConfiguration": "Valid HTTPS configuration",
+          "javascriptRendering": "JavaScript 렌더링",
+          "insufficientSSRSupport": "SSR 지원 부족",
+          "sslCertificate": "SSL 인증서",
+          "validHTTPSConfiguration": "유효한 HTTPS 구성",
           "averageContentLength": "Average content length",
           "contentLengthRecommendation": "{words} words ({recommended}+ recommended)",
           "faqCoverage": "FAQ coverage",
@@ -982,28 +982,28 @@
     }
   },
   "analytics": {
-    "title": "Analytics",
-    "description": "Comprehensive website analytics and performance insights",
+    "title": "분석",
+    "description": "포괄적인 웹사이트 분석 및 성능 인사이트",
     "trafficSources": "트래픽 소스",
     "userBehavior": "사용자 행동",
-    "conversion": "Conversion",
+    "conversion": "전환",
     "organicSearch": "자연 검색",
     "directTraffic": "직접 트래픽",
     "socialMedia": "소셜 미디어",
-    "referralTraffic": "Referral Traffic",
-    "emailMarketing": "Email Marketing",
-    "paidAdvertising": "Paid Advertising",
-    "desktop": "Desktop",
-    "mobile": "Mobile",
-    "tablet": "Tablet",
+    "referralTraffic": "추천 트래픽",
+    "emailMarketing": "이메일 마케팅",
+    "paidAdvertising": "유료 광고",
+    "desktop": "데스크톱",
+    "mobile": "모바일",
+    "tablet": "태블릿",
     "auth": {
-      "overviewRequired": "Login required to view data overview",
-      "overviewDescription": "After logging in, you can view detailed website analytics and key metrics",
-      "realtimeRequired": "Login required to view real-time data",
-      "realtimeDescription": "After logging in, you can monitor real-time visitor activity on your website",
-      "trafficRequired": "Login required to view traffic analysis",
-      "trafficDescription": "After logging in, you can view detailed traffic trends and source analysis",
-      "behaviorRequired": "Login required to view user behavior",
+      "overviewRequired": "데이터 개요를 보려면 로그인이 필요합니다",
+      "overviewDescription": "로그인 후 웹사이트 분석과 주요 메트릭을 상세히 볼 수 있습니다",
+      "realtimeRequired": "실시간 데이터를 보려면 로그인이 필요합니다",
+      "realtimeDescription": "로그인 후 웹사이트의 실시간 방문자 활동을 모니터링할 수 있습니다",
+      "trafficRequired": "트래픽 분석을 보려면 로그인이 필요합니다",
+      "trafficDescription": "로그인 후 상세한 트래픽 동향과 소스 분석을 본 수 있습니다",
+      "behaviorRequired": "사용자 행동을 보려면 로그인이 필요합니다",
       "behaviorDescription": "After logging in, you can analyze user interaction patterns on your website",
       "conversionRequired": "Login required to view conversion analysis",
       "conversionDescription": "After logging in, you can track and analyze key conversion metrics",
@@ -1011,27 +1011,27 @@
       "reportsDescription": "After logging in, you can set up and manage analytics reports"
     },
     "overview": {
-      "totalVisitors": "Total Visitors",
-      "pageViews": "Page Views",
-      "averageSessionDuration": "Average Session Duration",
-      "bounceRate": "Bounce Rate",
-      "comparedToLastWeek": "compared to last week"
+      "totalVisitors": "총 방문자 수",
+      "pageViews": "페이지뷰",
+      "averageSessionDuration": "평균 세션 지속 시간",
+      "bounceRate": "이탈률",
+      "comparedToLastWeek": "지난주 대비"
     },
     "trafficSources": {
       "title": "트래픽 소스",
-      "description": "Visitor source analysis"
+      "description": "방문자 소스 분석"
     },
     "deviceBreakdown": {
-      "title": "Device Types",
-      "description": "User device distribution"
+      "title": "디바이스 유형",
+      "description": "사용자 디바이스 분포"
     },
     "popularPages": {
-      "title": "Popular Pages",
-      "description": "Most popular page statistics",
-      "views": "Views",
-      "bounceRate": "Bounce Rate",
-      "avgTime": "Avg Time",
-      "viewDetails": "View Details"
+      "title": "인기 페이지",
+      "description": "가장 인기 있는 페이지 통계",
+      "views": "조회수",
+      "bounceRate": "이탈률",
+      "avgTime": "평균 시간",
+      "viewDetails": "세부 사항 보기"
     },
     "conversion": {
       "title": "Conversion Rate Analysis",
@@ -1091,17 +1091,17 @@
     }
   },
   "research": {
-    "title": "Keyword Research",
-    "description": "Discover high-value keywords to improve SEO rankings",
+    "title": "키워드 리서치",
+    "description": "SEO 순위 향상을 위한 고가치 키워드 발견",
     "tabs": {
-      "keywordSearch": "Keyword Search",
-      "competitorAnalysis": "Competitor Analysis",
-      "rankingTracking": "Ranking Tracking",
-      "opportunityDiscovery": "Opportunity Discovery"
+      "keywordSearch": "키워드 검색",
+      "competitorAnalysis": "경쟁사 분석",
+      "rankingTracking": "순위 추적",
+      "opportunityDiscovery": "기회 발견"
     },
     "auth": {
-      "keywordSearchRequired": "Login required to use keyword search",
-      "keywordSearchDescription": "Login to search high-value keywords and improve SEO rankings",
+      "keywordSearchRequired": "키워드 검색을 사용하려면 로그인이 필요합니다",
+      "keywordSearchDescription": "로그인하여 고가치 키워드를 검색하고 SEO 순위를 향상시키세요",
       "competitorAnalysisRequired": "Login required to use competitor analysis",
       "competitorAnalysisDescription": "Login to analyze competitors' keyword strategies",
       "rankingTrackingRequired": "Login required to use ranking tracking",
@@ -1169,11 +1169,11 @@
     "createList": "Create List"
   },
   "reporting": {
-    "title": "Reporting Center",
-    "description": "Automated reporting and white-label customization",
-    "createNewReport": "Create New Report",
+    "title": "리포트 센터",
+    "description": "자동화된 리포트 및 화이트 레이블 커스터마이제이션",
+    "createNewReport": "새 리포트 생성",
     "tabs": {
-      "library": "Report Library",
+      "library": "리포트 라이브러리",
       "templateManagement": "Template Management",
       "scheduledReports": "Scheduled Reports",
       "templateBuilder": "Template Builder",
@@ -1284,13 +1284,13 @@
     "autoGenerate": "Auto Generate"
   },
   "team": {
-    "title": "Team Management",
-    "description": "Manage team members and permission settings",
+    "title": "팀 관리",
+    "description": "팀 구성원 및 권한 설정 관리",
     "tabs": {
-      "members": "Team Members",
-      "roles": "Role Permissions",
-      "invitations": "Invitation Management",
-      "activity": "Activity Log"
+      "members": "팀 구성원",
+      "roles": "역할 권한",
+      "invitations": "초대 관리",
+      "activity": "활동 로그"
     },
     "members": {
       "title": "Team Members",
@@ -1433,8 +1433,8 @@
     }
   },
   "alerts": {
-    "title": "Alert Management",
-    "realTime": "Real-time",
+    "title": "알림 관리",
+    "realTime": "실시간",
     "connected": "Connected",
     "collectMetrics": "Collect Metrics",
     "checkAlerts": "Check Alerts",
@@ -1481,11 +1481,11 @@
     "resolve": "Resolve"
   },
   "settings": {
-    "title": "System Settings",
-    "description": "Manage your account and application preferences",
+    "title": "시스템 설정",
+    "description": "계정 및 애플리케이션 기본 설정 관리",
     "tabs": {
-      "general": "General Settings",
-      "profile": "Profile",
+      "general": "일반 설정",
+      "profile": "프로필",
       "apikeys": "AI API Keys",
       "notifications": "Notification Settings",
       "security": "Security Settings",
@@ -1797,7 +1797,7 @@
     "metrics": {
       "activeUsers": "Active Users",
       "pagesPerSecond": "Pages/sec",
-      "bounceRate": "Bounce Rate",
+      "bounceRate": "이탈률",
       "avgDuration": "Avg Stay"
     },
     "sections": {

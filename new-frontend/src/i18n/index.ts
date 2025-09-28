@@ -11,6 +11,13 @@ import jaJP from './locales/ja-JP.json';
 import koKR from './locales/ko-KR.json';
 import frFR from './locales/fr-FR.json';
 import ptBR from './locales/pt-BR.json';
+import deDE from './locales/de-DE.json';
+import itIT from './locales/it-IT.json';
+import esES from './locales/es-ES.json';
+import svSE from './locales/sv-SE.json';
+import daDK from './locales/da-DK.json';
+import nbNO from './locales/nb-NO.json';
+import ruRU from './locales/ru-RU.json';
 
 const resources = {
   'en-US': {
@@ -33,6 +40,27 @@ const resources = {
   },
   'pt-BR': {
     translation: ptBR
+  },
+  'de-DE': {
+    translation: deDE
+  },
+  'it-IT': {
+    translation: itIT
+  },
+  'es-ES': {
+    translation: esES
+  },
+  'sv-SE': {
+    translation: svSE
+  },
+  'da-DK': {
+    translation: daDK
+  },
+  'nb-NO': {
+    translation: nbNO
+  },
+  'ru-RU': {
+    translation: ruRU
   },
   // Add common browser locale mappings
   'en': {
@@ -118,7 +146,28 @@ i18n
           'fr-ch': 'fr-FR', // Swiss French uses same translations
           'pt': 'pt-BR',
           'pt-br': 'pt-BR',
-          'pt-pt': 'pt-BR' // Portuguese from Portugal uses Brazilian Portuguese for now
+          'pt-pt': 'pt-BR', // Portuguese from Portugal uses Brazilian Portuguese for now
+          'de': 'de-DE',
+          'de-de': 'de-DE',
+          'de-at': 'de-DE', // Austrian German uses same translations
+          'de-ch': 'de-DE', // Swiss German uses same translations
+          'it': 'it-IT',
+          'it-it': 'it-IT',
+          'it-ch': 'it-IT', // Swiss Italian uses same translations
+          'es': 'es-ES',
+          'es-es': 'es-ES',
+          'es-mx': 'es-ES', // Mexican Spanish uses same translations
+          'es-ar': 'es-ES', // Argentinian Spanish uses same translations
+          'sv': 'sv-SE',
+          'sv-se': 'sv-SE',
+          'da': 'da-DK',
+          'da-dk': 'da-DK',
+          'nb': 'nb-NO',
+          'nb-no': 'nb-NO',
+          'nn': 'nb-NO', // Norwegian Nynorsk uses same translations as Bokmål
+          'no': 'nb-NO', // Generic Norwegian uses Bokmål
+          'ru': 'ru-RU',
+          'ru-ru': 'ru-RU'
         };
 
         // Return mapped language or fallback to English
