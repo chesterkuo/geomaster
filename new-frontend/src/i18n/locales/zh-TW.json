@@ -22,7 +22,10 @@
     "upgrade": {
       "title": "升級方案",
       "description": "解鎖更多功能",
-      "button": "立即升級"
+      "button": "立即升級",
+      "contactTitle": "聯繫我們",
+      "contactMessage": "請聯繫 cs@plusblocks.io 團隊",
+      "backButton": "返回"
     }
   },
   "common": {
@@ -491,6 +494,13 @@
     "analysisPreview": "分析預覽",
     "registerToViewDetails": "註冊以查看詳細分析",
     "authenticationRequired": "需要身份驗證",
+    "faq": "常見問題",
+    "faqChargingQuestion": "服務如何收費？",
+    "faqChargingAnswer": "我們的免費計劃包括最多3個網站的基礎AI可見性診斷。如需詳細深度分析、技術優化建議和競爭對手比較，您需要註冊。如需升級到入門版、專業版或企業版計劃，請聯絡 cs@plusblocks.io。",
+    "faqScanLimitQuestion": "每個帳戶的網站掃描限制是什麼？",
+    "faqScanLimitAnswer": "免費帳戶可以追蹤最多3個網站。高級計劃提供更高的網站限制和高級功能。如需計劃升級和增加網站限制，請聯絡 cs@plusblocks.io 討論入門版、專業版或企業版選項。",
+    "faqApiKeyQuestion": "如何使用自己的AI API金鑰進行追蹤？",
+    "faqApiKeyAnswer": "您可以在設定頁面的AI API金鑰管理中整合來自ChatGPT、Gemini、Claude和Perplexity的API金鑰。使用自己的API金鑰可以實現直接平台存取，增強追蹤功能、即時監控，並無限制地呼叫API而不消耗您的帳戶積分。",
     "pleaseLoginToStartScan": "請登入以開始掃描",
     "accessDenied": "存取被拒絕",
     "noPermissionForScanType": "您沒有此掃描類型的權限",

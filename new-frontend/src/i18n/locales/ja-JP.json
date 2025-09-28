@@ -22,7 +22,10 @@
     "upgrade": {
       "title": "アップグレードプラン",
       "description": "より多くの機能を解放",
-      "button": "今すぐアップグレード"
+      "button": "今すぐアップグレード",
+      "contactTitle": "お問い合わせ",
+      "contactMessage": "cs@plusblocks.io チームまでお問い合わせください",
+      "backButton": "戻る"
     }
   },
   "common": {
@@ -360,6 +363,13 @@
     "analysisPreview": "分析プレビュー",
     "registerToViewDetails": "登録して詳細分析を表示",
     "authenticationRequired": "認証が必要",
+    "faq": "よくある質問",
+    "faqChargingQuestion": "サービスの料金はどのような仕組みですか？",
+    "faqChargingAnswer": "無料プランでは最大3つのウェブサイトの基本的なAI可視性診断が含まれます。詳細な深度分析、技術最適化提案、競合他社比較をご希望の場合は、登録が必要です。スタータープラン、プロフェッショナルプラン、エンタープライズプランへのアップグレードについては、cs@plusblocks.io までお問い合わせください。",
+    "faqScanLimitQuestion": "アカウントあたりのウェブサイトスキャン制限は何ですか？",
+    "faqScanLimitAnswer": "無料アカウントでは最大3つのウェブサイトを追跡できます。プレミアムプランではより高いウェブサイト制限と高度な機能を提供します。プランのアップグレードとウェブサイト制限の増加については、cs@plusblocks.io にお問い合わせして、スタータープラン、プロフェッショナルプラン、エンタープライズプランのオプションについてご相談ください。",
+    "faqApiKeyQuestion": "自分のAI APIキーをトラッキングに使用するにはどうすればよいですか？",
+    "faqApiKeyAnswer": "設定ページのAI APIキー管理で、ChatGPT、Gemini、Claude、PerplexityからのAPIキーを統合できます。独自のAPIキーを使用することで、直接的なプラットフォームアクセス、強化されたトラッキング機能、リアルタイム監視が可能になり、アカウントクレジットを消費することなく無制限にAPIを呼び出すことができます。",
     "pleaseLoginToStartScan": "スキャンを開始するにはログインしてください",
     "accessDenied": "アクセス拒否",
     "noPermissionForScanType": "このスキャンタイプの権限がありません",

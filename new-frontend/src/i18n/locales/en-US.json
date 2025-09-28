@@ -22,7 +22,10 @@
     "upgrade": {
       "title": "Upgrade Plan",
       "description": "Unlock More Features",
-      "button": "Upgrade Now"
+      "button": "Upgrade Now",
+      "contactTitle": "Contact Us",
+      "contactMessage": "Please contact cs@plusblocks.io team",
+      "backButton": "Back"
     }
   },
   "common": {
@@ -317,6 +320,13 @@
     "analysisPreview": "Analysis Preview",
     "registerToViewDetails": "Register to view detailed analysis",
     "authenticationRequired": "Authentication Required",
+    "faq": "Frequently Asked Questions",
+    "faqChargingQuestion": "How is the service charged?",
+    "faqChargingAnswer": "Our free plan includes basic AI visibility diagnosis for up to 3 websites. For detailed deep analysis with technical optimization suggestions and competitor comparison, you'll need to register. For upgrades to Starter, Professional, or Enterprise plans, please contact cs@plusblocks.io.",
+    "faqScanLimitQuestion": "What are the website scan limits per account?",
+    "faqScanLimitAnswer": "Free accounts can track up to 3 websites. Premium plans offer higher website limits and advanced features. For plan upgrades and increased website limits, please contact cs@plusblocks.io to discuss Starter, Professional, or Enterprise options.",
+    "faqApiKeyQuestion": "How can I use my own AI API keys for tracking?",
+    "faqApiKeyAnswer": "You can integrate your own AI API keys from ChatGPT, Gemini, Claude, and Perplexity in the Settings page under AI API Key Management. Using your own API keys enables direct platform access for enhanced tracking capabilities, real-time monitoring, and unlimited API calls without consuming your account credits.",
     "pleaseLoginToStartScan": "Please login to start scanning",
     "accessDenied": "Access Denied",
     "noPermissionForScanType": "You don't have permission for this scan type",

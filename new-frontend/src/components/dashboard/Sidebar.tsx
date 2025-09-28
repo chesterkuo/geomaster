@@ -34,6 +34,7 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   const location = useLocation();
   const { t } = useTranslation();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [showContactMessage, setShowContactMessage] = useState(false);
 
   // Check if SEO features are enabled
   const enableSeoFeatures = import.meta.env.VITE_ENABLE_SEO_FEATURES === 'true';
@@ -147,11 +148,32 @@ export const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
           "bg-gradient-card rounded-lg p-3 text-center border border-border",
           collapsed && "hidden"
         )}>
-          <div className="text-sm font-medium text-foreground mb-1">{t('nav.upgrade.title')}</div>
-          <div className="text-xs text-muted-foreground mb-2">{t('nav.upgrade.description')}</div>
-          <Button size="sm" className="w-full bg-primary text-primary-foreground">
-            {t('nav.upgrade.button')}
-          </Button>
+          {!showContactMessage ? (
+            <>
+              <div className="text-sm font-medium text-foreground mb-1">{t('nav.upgrade.title')}</div>
+              <div className="text-xs text-muted-foreground mb-2">{t('nav.upgrade.description')}</div>
+              <Button
+                size="sm"
+                className="w-full bg-primary text-primary-foreground"
+                onClick={() => setShowContactMessage(true)}
+              >
+                {t('nav.upgrade.button')}
+              </Button>
+            </>
+          ) : (
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-foreground">{t('nav.upgrade.contactTitle')}</div>
+              <div className="text-xs text-muted-foreground">{t('nav.upgrade.contactMessage')}</div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowContactMessage(false)}
+              >
+                {t('nav.upgrade.backButton')}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

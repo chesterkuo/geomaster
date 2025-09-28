@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Globe, Scan, CheckCircle, AlertTriangle, X, TrendingUp, Users, Target, Search, AlertCircle, Loader2, Lock, Star, ArrowRight, Zap, Brain, FileText, BarChart3 } from "lucide-react";
+import { Globe, Scan, CheckCircle, AlertTriangle, X, TrendingUp, Users, Target, Search, AlertCircle, Loader2, Lock, Star, ArrowRight, Zap, Brain, FileText, BarChart3, ChevronDown, ChevronUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { scanService, type Scan as ScanType, type ScanResults, type BasicScanResults, type DetailedScanResults } from "@/lib/api/scans";
 import { contentService, type OptimizationRequest } from "@/lib/api/content";
@@ -73,8 +73,14 @@ const Tracking = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [optimizationResults, setOptimizationResults] = useState<any>(null);
   const [showOptimizationResults, setShowOptimizationResults] = useState(false);
+  const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
   const { toast } = useToast();
   const { isAuthenticated, user, isLoading, checkAuthStatus } = useAuth();
+
+  // FAQ toggle function
+  const toggleFaq = (faqId: string) => {
+    setExpandedFaq(expandedFaq === faqId ? null : faqId);
+  };
 
   // 載入掃描歷史記錄
   const loadScanHistory = async () => {
@@ -1411,6 +1417,89 @@ const Tracking = () => {
               </Card>
             </div>
 
+          </div>
+
+          {/* FAQ Section */}
+          <div className="mt-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-foreground mb-4">
+                {t("tracking.faq")}
+              </h2>
+            </div>
+
+            <div className="max-w-3xl mx-auto space-y-4">
+              {/* FAQ Item 1 */}
+              <div className="bg-card rounded-lg border border-border overflow-hidden">
+                <button
+                  onClick={() => toggleFaq("charging")}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-muted/50 transition-colors"
+                >
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {t("tracking.faqChargingQuestion")}
+                  </h3>
+                  {expandedFaq === "charging" ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedFaq === "charging" && (
+                  <div className="px-6 pb-6 pt-0">
+                    <p className="text-muted-foreground leading-relaxed">
+                      {t("tracking.faqChargingAnswer")}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ Item 2 */}
+              <div className="bg-card rounded-lg border border-border overflow-hidden">
+                <button
+                  onClick={() => toggleFaq("scanLimit")}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-muted/50 transition-colors"
+                >
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {t("tracking.faqScanLimitQuestion")}
+                  </h3>
+                  {expandedFaq === "scanLimit" ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedFaq === "scanLimit" && (
+                  <div className="px-6 pb-6 pt-0">
+                    <p className="text-muted-foreground leading-relaxed">
+                      {t("tracking.faqScanLimitAnswer")}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* FAQ Item 3 */}
+              <div className="bg-card rounded-lg border border-border overflow-hidden">
+                <button
+                  onClick={() => toggleFaq("apiKey")}
+                  className="w-full p-6 text-left flex items-center justify-between hover:bg-muted/50 transition-colors"
+                >
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {t("tracking.faqApiKeyQuestion")}
+                  </h3>
+                  {expandedFaq === "apiKey" ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedFaq === "apiKey" && (
+                  <div className="px-6 pb-6 pt-0">
+                    <p className="text-muted-foreground leading-relaxed">
+                      {t("tracking.faqApiKeyAnswer")}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           </>
         )}
